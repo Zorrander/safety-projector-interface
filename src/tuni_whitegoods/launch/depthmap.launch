@@ -1,0 +1,3 @@
+<launch>
+   <node name="pcl_fusion" pkg="pcl_fusion" type="pcl_fusion_node" output="screen"/>
+</launch>

@@ -1,0 +1,13 @@
+##Description: Indicate a location where the operator can pick object object
+##The action is completed when the projector start projecting the border. 
+
+#goal definition
+string request_id       #uniquely identifies this request.Subsequent requests overide previous request.
+string id               #id of the border booked
+int32 status     # -1 to release all operator bookings or 0 to only release this one
+---
+#result definition
+string[] displayed_request_ids
+---
+#feedback
+string[] displayed_request_ids

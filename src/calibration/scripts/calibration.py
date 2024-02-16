@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
 
+#this code calibrate the camera with the videoprojector
+#The homographies serve to display the smart interface and another code find the homographies to deisplay the borders
+#the aruco markers detection only detect the appropriate corner -> id 0 top left corner of the marker, id 1 top right of the marker ... id 3 bottom left of the marker
+#inspired by this method https://dvic.devinci.fr/tutorial/how-to-automatically-calibrate-a-camera-projector-system
+
 import rospy
 import numpy as np
 from math import pi
@@ -21,11 +26,10 @@ class Calibration(object):
       self.sub_buttons = rospy.Subscriber("/interface_poi/buttons", InterfacePOI, self.callback_buttons)
       self.get_image = True
       self.rgb_img = None
+      #resolution of projector
       self.screen = (1920, 1080)
       self.projected_coords = [[4,4], [1810, 4], [1810,970],[4,970]] #topleft topright bottomright bottom left
       self.projected_coords_pts = [[4,4], [1916, 4], [1916,1076],[4,1076]]
-      #self.projected_coords = [[150,4], [1550, 4], [1550,950],[150,950]] #topleft topright bottomright bottom left
-      #self.projected_coords_pts = [[150,4], [1656, 4], [1656,1056],[150,1056]]
       self.pts_projected =  np.float32([self.projected_coords_pts[0],self.projected_coords_pts[1],self.projected_coords_pts[2],self.projected_coords_pts[3]])
       self.pts_screen = np.float32([[0,0],[self.screen[0],0],[self.screen[0],self.screen[1]],[0,self.screen[1]]])
       self.corners_table_rgb = []
@@ -36,14 +40,17 @@ class Calibration(object):
       self.parameters = aruco.DetectorParameters_create()
       self.detected_aruco = []
       self.matrix_table = None
+      #get he folder where to save the homographies
       self.folder = rospy.get_param("calibration_homography")
       self.home = os.environ.get("HOME")
 
+   #get RGB camera image
    def callback_image(self,msg):
       #if self.get_image:
       self.rgb_img = CvBridge().imgmsg_to_cv2(msg, "bgr8")
       self.get_image = False
 
+   #for debugging, to be sure that the homographies are good. 
    def callback_buttons(self,msg):
       for i in msg.poi:
          x = i.elem.x
@@ -53,6 +60,7 @@ class Calibration(object):
       cv2.imshow("buttons", self.rgb_img)
       cv2.waitKey(5)
 
+   #detect the aruco corners and sort them in order - top left, top-right, bottom-right, bottom-left
    def detect_aruco_corners(self):
       corners, ids, rejectedImgPoints = aruco.detectMarkers(self.rgb_img, self.dict_aruco, parameters=self.parameters)
       sum_arr = 0
@@ -92,6 +100,7 @@ class Calibration(object):
 
       return tmp, img
    
+   #detect a single corner of a marker. id 0 top-left marker corner, id 1 - top-right marker corner, id 2 - bottom-right marker corner, id 3 - bottom-left marker corner
    def detect_single_corner(self):
       corners, ids, rejectedImgPoints = aruco.detectMarkers(self.rgb_img, self.dict_aruco, parameters=self.parameters)
       sum_arr = 0
@@ -137,6 +146,7 @@ class Calibration(object):
             sum_arr = sum_arr + 1
       return img, cor, pt
 
+   #draw an image with one marker on each corner - id 0 top-left, id 1 - top-right, id 2 - bottom-right, id 3 - bottom-left
    def draw_aruco_projector(self):
       #place aruco patters on images at projected_coords coordinates
       arucoFrame=np.full((1080,1920,3), 255,np.uint8)
@@ -152,6 +162,8 @@ class Calibration(object):
 
       return arucoFrame 
    
+   #Here, we place aruco markers on the table where the interface will be displayed
+   #it match the detected markers
    def calibrate_projection_to_table(self):
       print("place arucos on the corners")
       k = 0
@@ -172,6 +184,9 @@ class Calibration(object):
       pts_table = np.float32([corners[0],corners[1],corners[2],corners[3]])
       self.corners_table_rgb_rev = pts_table
 
+   #project some markers in the corners and detect them
+   #the goal is to match the projected markers with the detected ones
+   # The detection happens one by one begining by top left, so hide the other ones.
    def calibrate_detected_to_projection(self):
       ok = False
       corners = []
@@ -180,6 +195,7 @@ class Calibration(object):
       projected_aruco_img = self.draw_aruco_projector()
       cv2.namedWindow("projection", cv2.WND_PROP_FULLSCREEN)
       cv2.setWindowProperty("projection", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
+      #modify second parameter to the X resolution of your screen here
       cv2.moveWindow("projection", 2560,0)
       cv2.imshow("projection", projected_aruco_img)
       cv2.waitKey(50)
@@ -204,6 +220,7 @@ class Calibration(object):
       
    #IMPORTANT -> HIDE ALL CORNERS EXCEPT ONE FOR THE PROJECTION, THEN SHOW MARKER ONE BY ONE.
    #FIRST POINT COUNT AND WAIT "c" to record second
+   #the calibration works for a single camera-videoprojection system. Repeat the process for a second one.
    def system_calibration(self):
       name_zone = "table"#input("name of the zone to calibrate : ")
       self.calibrate_detected_to_projection()
@@ -212,6 +229,7 @@ class Calibration(object):
       print("pts_projected",self.pts_projected)
       print("detected_projected_rev",self.detected_projected_rev)
       print("corners_rev",self.corners_table_rgb_rev)
+      #get the matrix transofmr that would be the homopraphies
       m1 = cv2.getPerspectiveTransform(self.pts_screen,self.pts_projected)
       m2 = cv2.getPerspectiveTransform(self.detected_projected_rev,self.pts_projected)
       m3 = cv2.getPerspectiveTransform(self.pts_projected,self.corners_table_rgb_rev)
@@ -225,6 +243,7 @@ class Calibration(object):
       np.save(name_hom_proj_moving,projection_matrix_moving)
       np.save(name_cam_screen,m1)
       np.save(name_hom_cam_static,m3)
+      #generate calbrations
       n_hps = "hom_proj_static"
       n_hpm = "hom_proj_moving"
       n_hcsp = "hom_cam_screen_to_proj"
@@ -262,6 +281,7 @@ class Calibration(object):
       n = "/home/altair/odin/src/calibration/homography/" + name+".npy"
       np.save(n,mat)
 
+   #not used, for debugging
    def test(self):
       pts_screen = np.load("/home/altair/odin/src/calibration/homography/pts_screen.npy")
       pts_projected = np.load("/home/altair/odin/src/calibration/homography/pts_projected.npy")
@@ -270,7 +290,6 @@ class Calibration(object):
       img_detected = cv2.imread("/home/altair/odin/src/calibration/homography/detected_corners_rgb.jpg")
       hom = np.load("/home/altair/odin/src/calibration/homography/hom_proj_moving_table.npy")
       print(corners_table_rgbs)
-      #resized = cv2.resize(img_detected,(1920,1080),interpolation = cv2.INTER_LINEAR)
       rx = 1920/1280
       ry = 1080/720
       tmp = []
@@ -292,17 +311,14 @@ class Calibration(object):
       print("corners_rev",corners_table_rgbs_rev)
       m4 = cv2.getPerspectiveTransform(pts_screen,corners_table_rgbs)
       mat = m1.dot(m2).dot(m3)
-      #self.save_matrix("hom_proj_table",mat)
       out = cv2.warpPerspective(interface,hom,self.screen,flags=cv2.INTER_LINEAR)
-      #res_out = cv2.resize(out,(1280,720),interpolation = cv2.INTER_LINEAR)
-      #cv2.imshow("projected", img_detected)
-      #cv2.waitKey(1)
       cv2.namedWindow("projection", cv2.WND_PROP_FULLSCREEN)
       cv2.setWindowProperty("projection", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
       cv2.moveWindow("projection", 2560,0)
       cv2.imshow("projection", out)
       cv2.waitKey(50)
 
+   #test code to organize the files as yaml calibration
    def generate_yaml(self):
       hom = np.load("/home/altair/odin/src/calibration/homography/hom_proj_moving.npy")
       name = "table"

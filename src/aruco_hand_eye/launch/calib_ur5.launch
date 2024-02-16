@@ -1,0 +1,15 @@
+<launch>
+  <include file="$(find aruco_hand_eye)/launch/aruco_hand_eye.launch">
+    <arg name="markerid"   value="589"/>
+    <arg name="markersize" value="0.145"/>
+    <arg name="publish_tf" value="true"/>
+
+    <arg name="marker_parent_frame" value="/flange"/>
+    <arg name="camera_parent_frame" value="/base"/>
+
+    <arg name="camera" value="rgb/image_rect_color"/>
+    <arg name="camera_frame" value="rgb_camera_link"/>
+    <!--<arg name="xyz_optical_base" value="[-0.0319884, -0.000301269, 0.00391921]"/>
+    <arg name="rpy_optical_base" value="[0.46584, -1.56968, 1.10337]"/>-->
+  </include>
+</launch>

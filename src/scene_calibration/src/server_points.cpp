@@ -1,3 +1,8 @@
+/*
+This code is exactly the same as the package depth_interface
+The ony difference is to be used only for calibration because it's a service
+it uses tf to get the transform camera to robot space
+*/
 #include <ros/ros.h>
 #include <tf2_ros/buffer.h>
 #include <tf2/transform_datatypes.h>
@@ -359,7 +364,7 @@ class ServerPoints
     {
       std::string line;
       std::string home = std::getenv("HOME");
-      std::string name_file = home + calibration_folder + "params.txt";
+      std::string name_file = calibration_folder + "params.txt";
       std::ifstream icpfile(name_file);
       if(icpfile.is_open())
       {

@@ -21,6 +21,7 @@
 #include <std_msgs/Header.h>
 #include "unity_msgs/BorderProj.h"
 #include <integration/SafetyBorderViolation.h>
+#include <cmath>
 
 using namespace message_filters;
 using namespace std;
@@ -29,22 +30,28 @@ static const std::string OPENCV_WIN = "Image window";
 class StaticBorder : public Border
 {
    public:
-      StaticBorder(std::string r_id, std::string z, geometry_msgs::PolygonStamped bord ,std::string b_topic, std_msgs::ColorRGBA b_color, bool filling, int thic, ros::Duration life, bool track);
+      StaticBorder(std::string r_id, std::string z, int pos_row, int pos_col, geometry_msgs::PolygonStamped bord ,std::string b_topic, std_msgs::ColorRGBA b_color, bool filling, int thic, ros::Duration life, bool track);
       StaticBorder(const StaticBorder &cpctr);
+      float getBorderDiagonal();
       geometry_msgs::PolygonStamped getBorderCameraSpace();
       geometry_msgs::PolygonStamped getBorderRobotSpace();
       cv::Mat drawMask();
       std::string getZone();
       std::string getId();
+      int getCol();
+      int getRow();
       bool getTracking();
       cv::Mat drawBorder();
       geometry_msgs::Point getCenter();
-      void changeBorderColor(std_msgs::ColorRGBA col);
+      void changeBorderColor(std_msgs::ColorRGBA& col);
+      std_msgs::ColorRGBA getColor();
       
    private:
       geometry_msgs::PolygonStamped border_robot_space;
       geometry_msgs::PolygonStamped border_camera_space;
       cv::Mat border_mask;
+      int position_row;
+      int position_col;
       
 };
 #endif

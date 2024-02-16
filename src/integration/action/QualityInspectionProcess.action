@@ -4,6 +4,8 @@
 integration/QualityInspectionRequest[] quality_inspection_targets
 ---
 #result definition
+## A related image for reference
+sensor_msgs/CompressedImage resource_image
 integration/QualityInspectionResult[] quality_inspection_results
 ---
 #feedback

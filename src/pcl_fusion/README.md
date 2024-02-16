@@ -1,28 +1,32 @@
-# pcl_fusion
+# Point Cloud Fusion
 
-Fuse 2 point clouds aligned to robot frame together.
-Produce a depth map of the fused point cloud.
-Since the pointclouds are aligned to robot_tf, the fused cloud is upside down. It is corrected during the 
-depthmap generation by flipping y coordinates (*-1) inside the pcl.
+This package is in charge of merging pointclouds coming from several cameras together in order to generate a depthmap. The package also works with only one pointcloud.
 
-## timing
-Depending on the filtering, the fusion and  generation of depthmap can vary.
-With a low filter, voxel leafs of 0.005 :
-fuse pcl together : 51ms
-generate depthmap : 23ms
+# Launch parameters
 
-With a filter of 0.02 :
-fuse pcl : between 3.5ms and 4.09ms
-generate depthmap : between 1.75ms and 3.2ms
+The package needs to access the following parameters defined as global params inside the ros_params.launch :
+```
+number_cam
+```
+The number of cameras used. If there is more than 1, the code will perform an icp to match the master camera before generating the depthmap.
+```
+calibration_folder
+```
+calibration folder containings the files necessary to the creation of the depthmap. If the folder is empty, the code will generate the files at that location during the first startup of the code.
+```
+sub_pcl_master
+```
+topic name outputing the transformed pointcloud (to robot frame) coming from master camera.
+```
+sub_pcl_sub
+```
+topic name outputing the transformed pointcloud (to robot frame) coming from slave camera.
 
-### Fused pointcloud with a filter (leaf) of 0.02
+for TUNI whitegoods, the package can be lanched by :
+```
+roslaunch tuni_whitegoods depthmap.launch
+```
 
-![pcl_fused](../../images/fused.png)
+# Output
 
-### Depthmap with filter 0.02
-
-![depth](../../images/depth.png)
-
-### Depthmap with low filter 0.005
-
-![depth_filter](../../images/depth_lowfilter.png)
+The package will advertise a depthmap image on the topic /detection/depthmap. This will be the basis for any future detection.

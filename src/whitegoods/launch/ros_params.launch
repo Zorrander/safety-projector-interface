@@ -1,0 +1,3 @@
+<launch>
+	<rosparam file="$(find whitegoods)/config/parameters.yaml" />
+</launch>

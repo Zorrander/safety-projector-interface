@@ -1,3 +1,7 @@
+/*
+This code is a cpp wrapper to calibrate RGB points to depthmap
+It receives RGB points and send them to a service that convert them to their location in depthmap
+*/
 #include <ros/ros.h>
 // PCL specific includes
 #include <sensor_msgs/PointCloud2.h>

@@ -1,0 +1,3 @@
+<launch>
+    <node name="hand_tracker" pkg="hand_tracker" type="hand_tracker.py" output="screen"/>
+</launch>

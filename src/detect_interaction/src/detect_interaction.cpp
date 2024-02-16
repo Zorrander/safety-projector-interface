@@ -1,3 +1,8 @@
+/*
+Class to detect smart interface interactions.
+here, we receive the buttons positions in the depthmap from the projected interface, we monitor the depth and trigger an event to openflow
+if a button is pressed (i.e if a hand is hovering on top of it)
+*/
 #include <ros/ros.h>
 // PCL specific includes
 #include <sensor_msgs/PointCloud2.h>
@@ -27,7 +32,6 @@
 using namespace sensor_msgs;
 using namespace message_filters;
 using namespace integration;
-//static const std::string OPENCV_WINDOW = "Image window";
 static const std::string OPENCV_LINE = "Line";
 
 class InteractionDetection
@@ -74,9 +78,6 @@ class InteractionDetection
       sub_poi = nh_.subscribe("/depth_interface/poi_depthmap", 1, &InteractionDetection::pointsOfInterestCb,this);
       sub_changes = nh_.subscribe("/aruco_markers_warped/changes", 1, &InteractionDetection::arucoChangesCallback,this);
       //dm_sub_ = it_.subscribe("/detection/depth_map", 1,&InteractionDetection::DepthMapCallback, this);
-      //safety_sub_ = it_.subscribe("/safety_line/line_dm", 1,&InteractionDetection::SafetyLineCallback, this);
-      //safety_inside_sub_ = it_.subscribe("/safety_line/inside_zone", 1,&InteractionDetection::InsideZoneCallback, this);
-      //pub_event = nh_.advertise<VirtualButtonEventArray> ("/execution/projector_interface/integration/topics/virtual_buttons_pressed", 1);
       pub_event = nh_.advertise<VirtualButtonEventArray> ("/execution/projector_interface/integration/topics/virtual_button_event_array", 1);
       depth_map = cv::Mat(1024, 1024, CV_8U,cv::Scalar(std::numeric_limits<float>::min()));
       //res_bitwise = cv::Mat(1024, 1024, CV_8U,cv::Scalar(std::numeric_limits<float>::min()));
@@ -95,7 +96,6 @@ class InteractionDetection
       threshold_depth = 0.1;
       test = false;
       changes = false;
-      //cv::namedWindow(OPENCV_WINDOW,cv::WINDOW_NORMAL);
       cv::namedWindow(OPENCV_LINE,cv::WINDOW_NORMAL);
     }
     ~InteractionDetection()
@@ -103,7 +103,7 @@ class InteractionDetection
       //cv::destroyWindow(OPENCV_WINDOW);
       cv::destroyWindow(OPENCV_LINE);
     }
-
+    //subscriber for display - only used for debugging
     void DepthMapCallback(const sensor_msgs::ImageConstPtr& msg_dm)
     {
         cv_bridge::CvImagePtr cv_ptr;
@@ -129,7 +129,8 @@ class InteractionDetection
         //cv::imshow(OPENCV_LINE, sf_line);
         //cv::waitKey(1);
     }
-
+    //Here we detect if there is any changes in the aruco position on the table if the support to display the interface can be moved.
+    //This could avoid redefining a baseline all the time
     void arucoChangesCallback(const std_msgs::BoolConstPtr& msg)
     {
       changes = msg->data;
@@ -141,13 +142,13 @@ class InteractionDetection
         previous_events.virtual_button_events.clear();
       }
     }
-
+    //subscriber of the buttons positions. We define a baseline (buttons not pressed) and we check if the table has been moved.
+    // Once wwe define a baseline, we monitor the depth positions of the buttons compared to baseline, and if there is a change we throw an event.
     void pointsOfInterestCb(const unity_msgs::InterfacePOIConstPtr& msg)
     {
       events.virtual_button_events.clear();
       poi_interface_dm.poi.clear();
       size_elem = msg->poi.size();
-      //tic.tic();
       //check if there is a baseline
       if(previous_changes && !changes)
       {
@@ -157,9 +158,9 @@ class InteractionDetection
         init_baseline = true;
         count_baseline = 0;
       }
+      //if no changes and there isn't a baseline, create one
       if(!changes && !previous_changes)
       {
-        //std::cout<<"no changes\n";
         if(init_baseline)
         {
           //std::cout<<count_baseline<<"\n";
@@ -177,7 +178,7 @@ class InteractionDetection
               baseline.poi.push_back(p);
             }
           }
-          //continue the baseline until reaching 10 samples
+          //continue the baseline until reaching 10 samples of depth for each buttons. The baseline depth for a button will be the the average of the 10 samples
           else if(count_baseline < 10)
           {
             for(int i = 0; i < baseline.poi.size(); i++)
@@ -234,7 +235,9 @@ class InteractionDetection
             }
           }
         }
+        //if there is a baseline already, compare changes with the current buttons depth
         VirtualButtonEventArray msgs = compareEvents();
+        //if changes, send an event
         if(msgs.virtual_button_events.size() > 0)
         {
           pub_event.publish(msgs);
@@ -257,7 +260,7 @@ class InteractionDetection
       }
       //std::cout<<tic.toc()<<"ms\n";
     }
-
+    //compare 2 arrays of buttons to detect changes. I baseically compare the depth of each buttons in baseline with each current depth buttons
     VirtualButtonEventArray compareEvents()
     {
       VirtualButtonEventArray msgs;

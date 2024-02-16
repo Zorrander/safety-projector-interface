@@ -10,6 +10,7 @@ project(test_interface)
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   std_msgs
+  sensor_msgs
   #use_class
   border
   integration
@@ -105,7 +106,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-  CATKIN_DEPENDS roscpp std_msgs border integration
+  CATKIN_DEPENDS roscpp std_msgs sensor_msgs border integration
 )
 
 ###########

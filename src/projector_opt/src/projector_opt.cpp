@@ -1,3 +1,10 @@
+/*
+Class that project everything. An instance of this class is launched for each projector connected.
+It basically receives a list of projection that contains everything to display (smart interface, borders...) 
+each projection is an image with a transform to display them. 
+For a system with only one camera and projector, it only need to run once.
+*/
+
 #include <ros/ros.h>
 #include <iostream>
 #include <image_transport/image_transport.h>
@@ -27,18 +34,13 @@ class Projector
 public:
   Projector()
   {
-    // Subscrive to input video feed and publish output video feed
-    //image_sub_ = it_.subscribe("/interface", 1, &Projector::imageCb, this);
-    //change_transform_sub = nh_.subscribe("/change_transform", 1, &Projector::changeTf,this);
-    //transform_sub = nh_.subscribe("/list_projection", 1, &Projector::projectionCb,this);
     transform_sub = nh_.subscribe("/list_dp", 1, &Projector::transformProject,this);
+    //ros param to get id of device (videoprojector) and how much to shift the screen. Since there is one projector by computer, shere is no need for shift anymore for HRC.
     ros::param::get("~shiftX", shift);
     ros::param::get("~id", id_device);
     cv::namedWindow(OPENCV_WINDOW,cv::WINDOW_NORMAL);
     cv::moveWindow(OPENCV_WINDOW,shift, 0);
     cv::setWindowProperty(OPENCV_WINDOW, cv::WND_PROP_FULLSCREEN, cv::WINDOW_FULLSCREEN);
-    //nh_.getParam("/shiftX_two", shift);
-    
   }
 
   ~Projector()
@@ -81,8 +83,6 @@ public:
       }
     }
     
-    //cv::Mat hom = getMatrix(msg->homography);
-    //cv::warpPerspective(cv_ptr->image,img_transformed,hom,cv_ptr->image.size());
     // Update GUI Window
     if(suc == false)
     {
@@ -108,36 +108,8 @@ public:
         k++;
       }
     }
-    //std::cout<<"print matrix : \n";
-    //printTransform(transform);
     
     return cv_transform;
-  }
-
-  void printTransform(double transform[3][3])
-  {
-    std::cout.precision(10);
-    for(int i = 0; i < 3; i++)
-    {
-      for(int j = 0; j < 3; j++)
-      {
-        if(j == 0)
-        {
-          std::cout<<"\n";
-        }
-        std::cout<<transform[i][j]<<" ";
-      }
-    }
-    std::cout<<"\n";
-  }
-
-  cv::Mat transformUI(cv_bridge::CvImagePtr img_ptr)
-  {
-    //im_tmp = cv2.warpPerspective(interface_tmp, np.matmul(proj['vertHomTable'], self.UI_transform),(1920,1080))#UI on table level
-    cv::Mat result;
-    
-
-    return result;
   }
 };
 

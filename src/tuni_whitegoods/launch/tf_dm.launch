@@ -1,0 +1,6 @@
+<launch>
+    <include file="$(find tuni_whitegoods)/launch/static_tf_base_cam.launch" />
+    <include file="$(find tuni_whitegoods)/launch/voxel.launch" />
+    <include file="$(find tuni_whitegoods)/launch/transform.launch" />
+    <include file="$(find tuni_whitegoods)/launch/depthmap.launch" />
+</launch>

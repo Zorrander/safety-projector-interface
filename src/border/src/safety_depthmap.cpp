@@ -1,3 +1,6 @@
+/*
+Old class to draw the safety line, not used but kept just in case.
+*/
 #include <ros/ros.h>
 #include <iostream>
 #include <fstream>

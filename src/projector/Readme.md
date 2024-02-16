@@ -1,33 +1,20 @@
-# Projector-Mirror User Interface
+# Projector Interface
 
-<p float="left">
-  <img width="420" height="260" src="https://i.imgur.com/jJ4nFwq.jpg">
-  <img width="420" height="370" src="https://i.imgur.com/PpHlDED.png">
-</p>
+This package project everything that needs to be projected (borders, interface etc...)
+For interface creation, it basically receives information from the openflow server. Otherwise, it receives the elements to be projected (static borders, dynamic borders) as image and the code associate a transform to display them correctly.
 
-## Description
-This repository contains libraries and tools for projection-based user interface. 
-To replicate the research work a standard 3LCD projector must be installed above the working area pointing donwards to the shared workspace. A mirror can be used to expand the projection area. To be able to use the interactive buttons the Kinect V2 sensor must be installed next to the projector. 
+# Launch
 
-Currently the module contains the following example UI components:
-- a dynamic danger zone isolating the robot and the manipulated object
-- _GO_ and _STOP_ button to start and stop the robot, respectively
-- _CONFIRM_ button to verify and add changed regions to the current model
-- _ENABLE_ button that needs to be pressed simultaneously with the _GO_ and _CONFIRM_ buttons to take effect
-- a graphical display box (image and text) to show the robot status and instructions to the operator
+For whitegoods
 
-## Configuration
-The module contains example configurations for the UI components (see _unity_msgs_ folder). To succesfully use the module in a real environment the [homography matrix](https://docs.opencv.org/master/d9/dab/tutorial_homography.html) between image plane and the work table must be estimated. An example matrix can be found from _unity_msgs_ folder.
+```
+roslaunch projector projection_ur5.launch
+```
 
-## Running the module
-1: Start the robot driver: ```roslaunch ur_modern_driver ur5_bringup.launch robot_ip:=<robot_ip>```
+For HRC, there need to be some harmonization in the organization of the calibration folder. The old code still works :
 
-2: Start the camera driver: ```roslaunch kinect2_bridge kinect2_bridge.launch max_depth:=<max depth in meters>```
-
-3: Start the projector display: ```rosrun projector projector_interface.py```
-
-4: Start the button monitor: ```rosrun projector handle_interaction_markers``` 
-
-
-## Additional tools
-Move and modify UI components: ```rosrun place_interface_components.py```
+```
+<launch>
+    <node name="projection_system" pkg="projector" type="projector_interface.py" output="screen"/>
+</launch>
+```

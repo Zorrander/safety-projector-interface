@@ -1,6 +1,28 @@
-#projector_opt
+# projector_opt package
 
-Packages that subscribe to the python node and perform a transform to display the interface on the table.
+This package project everything that needs to be projected. It receives a list of images with their transformations.
+The package need to be run once per videoprojector.
 
-Currently, the calibration does not seem great since the image projected is 1m ahead of the table.
-The orientation of the interface seems aligned though.
+# parameters
+
+The package needs some parameters to be launched
+
+```
+<param name="~id" value="0" />
+```
+id of the projector. which match the cam id. id 0 goes with camera 0
+```
+<param name="~shiftX" value="0" />
+```
+shift the projection along the X axis. If the package is run on a laptop connected to a videoprojector, it will shift the display so it's not displaying on the aptop screen. X value should be the resolution of the screen.
+
+# Launch
+ To be launched on each desktop connected to a videoprojector. adapt the id.
+```
+<launch>
+    <param name="~id" value="0" />
+    <param name="~shiftX" value="0" />
+    <node name="projector_optimized_one" pkg="projector_opt" type="projector_opt_node" output="screen"/>
+</launch>
+```
+

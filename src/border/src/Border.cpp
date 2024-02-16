@@ -11,14 +11,14 @@ void Border::depthMapCallback(const sensor_msgs::ImageConstPtr& msg_dm)
 {
 
 }*/
-
+//reads params for depthmap
 void Border::readParamsDepthMap()
 {
    std::string line;
    std::string home = std::getenv("HOME");
    std::string pwd;
    ros::param::get("calibration_folder", pwd);
-   std::string name_file = home + pwd + "params.txt";
+   std::string name_file = pwd + "params.txt";
    //std::ifstream dm_file("/home/altair/odin/src/pcl_fusion/calibration/params.txt");
    std::ifstream dm_file(name_file);
    if(dm_file.is_open())
@@ -38,7 +38,7 @@ void Border::readParamsDepthMap()
       dm_file.close();
    }
 }
-
+//tranform a Polygon from the robot space to the depthmap
 geometry_msgs::PolygonStamped Border::transformToDepthMap(geometry_msgs::PolygonStamped border)
 {
    readParamsDepthMap();
@@ -67,7 +67,7 @@ geometry_msgs::PolygonStamped Border::transformToDepthMap(geometry_msgs::Polygon
 
    return tmp;
 }
-
+//transform a point in depthmap to the robot space
 geometry_msgs::Pose Border::transformPtToDepthMap(double x, double y)
 {
    int pixel_pos_x;
@@ -83,7 +83,7 @@ geometry_msgs::Pose Border::transformPtToDepthMap(double x, double y)
 
    return p;
 }
-
+//transform a point in depthmap to the robot space
 geometry_msgs::Pose Border::transformPtToRobotSpace(int px, int py)
 {
    readParamsDepthMap();

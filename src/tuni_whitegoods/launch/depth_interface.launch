@@ -1,0 +1,7 @@
+<launch>
+   <param name="~robot_base" value="base" />
+   <param name="~topic_depth" value="/depth/image_raw" />
+   <param name="~topic_depth_to_rgb" value="/depth_to_rgb/image_raw" />
+   <param name="~name_transform_robot_space" value="master_to_base" />
+   <node name="depth_interface" pkg="depth_interface" type="depth_interface_node" output="screen"/>
+</launch>

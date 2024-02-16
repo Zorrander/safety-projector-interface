@@ -4,6 +4,8 @@
 #goal definition
 string request_id   #uniquely identifies this request.Subsequent requests overide previous request.
 string zone
+int32 position_row   #can be any value in case of dynamic border
+int32 position_col   #can also be any value
 geometry_msgs/PolygonStamped border  # the initial border to display, can be empty/null. In which case it should be ignored.
 string border_topic                  # The safety border to follow is published in this topic. Its type is geometry_msgs/PolygonStamped
 std_msgs/ColorRGBA border_color      # Color [0.0-1.0]

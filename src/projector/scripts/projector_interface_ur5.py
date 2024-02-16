@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+#This code draws an interface or elements that comes from the openflow server.
+#It also project everything that needs to be projected by associating each element to be projected (interface, instructions, borders...) with an homography
+#
+
 from multiprocessing.resource_sharer import stop
 import cv2
 import sys
@@ -99,6 +103,7 @@ class Button():
         print(self._zone)
         print(self._button_color)
 
+#class to draw instructions
 class Instruction():
     def __init__(self, id_, zone, target, title, title_c, description, desc_c, lifetime):
         self._id = id_
@@ -211,9 +216,6 @@ class InterfaceUI():
             i.print_button()
         
 
-   
-        
-
 #class for visualizing with projector
 class Projector():
     def __init__(self, interface_configs_path, common_configs, homogprahy_path):
@@ -221,7 +223,7 @@ class Projector():
         self.mainCamera = {}
         self.name_f = rospy.get_param("calibration_homography")
         self.home = os.environ.get("HOME")
-        self.name_folder = self.home+self.name_f
+        self.name_folder = self.name_f
         self.is_moving = rospy.get_param("is_moving")
         self.is_init = False
         self.depthIm = None
@@ -277,10 +279,12 @@ class Projector():
         #self.init(interface_configs_path, common_configs)
         rospy.loginfo("Projector interface initialized!")
 
+    #get aruco marker on the table
     def callbackArrayMarkers(self,msg):
         self.arr_markers = msg.array_markers
         self.s_marker = len(self.arr_markers)
 
+    #check if aruco marker changed location
     def callback_aruco_change(self,msg):
         self.aruco_changed = msg.data
 
@@ -290,15 +294,18 @@ class Projector():
         self.depth2rgb = CvBridge().imgmsg_to_cv2(depth2RGB_data, "passthrough")
 	#[sub.sub.unregister() for sub in subscribers]
 
+    #get safety line if any
     def callback_safety_line(self,msg):
         self.sl_dm = CvBridge().imgmsg_to_cv2(msg, "passthrough")
         #self.sl_dm = cv2.cvtColor(tmp,cv2.COLOR_GRAY2RGB)
         self.received = True
 
+    #get dynamic border
     def callback_border(self,msg):
         self.sl_dm = CvBridge().imgmsg_to_cv2(msg.img, "passthrough")
         self.received = True
 
+    #get static borders
     def callback_static_border(self,msg):
         self.static_border = []
         for i in msg.list_borders:
@@ -311,7 +318,8 @@ class Projector():
         #cv2.imshow("interface", self.static_border[0].img)
         #cv2.waitKey(1)
 
-
+    #get a button if the openflow server sends any. But we usually create interface and not just button
+    #it was mainly to test openflow
     def callback_button(self, msg):
         b = Button(msg.id,msg.zone,msg.name,msg.description,msg.text,msg.button_color,msg.text_color,msg.center,msg.radius,msg.hidden)
         add_success = False
@@ -340,6 +348,7 @@ class Projector():
             if not i.get_hidden():
                 i.modify_button_color(msg)
 
+    #get a predefined UI
     def callback_preset_ui(self,msg):
         list_button = []
         for i in msg.virtual_button_references:
@@ -348,10 +357,11 @@ class Projector():
         interface = InterfaceUI(msg.resource_id,msg.zone,msg.name,msg.description,list_button)#add hidden
         self._list_interface.append(interface)
 
+    #remove a UI
     def callback_unset(self,msg):
         if msg.data:
             self._list_interface = []
-
+    #get some instructions
     def callback_instruction(self,msg):
         print("got instruction")
         for i in self._list_interface:
@@ -360,6 +370,10 @@ class Projector():
                 inst = Instruction(msg.request_id,msg.zone,msg.target_location,msg.title,msg.title_color,msg.description,msg.description_color,msg.lifetime)
                 i.add_instruction(inst)
 
+    #initiate the zones where to display elements by getting the calibration files
+    #the calibrations files are homographies
+    #this method is the previous way of doing it (when the calibration folder was a mess)
+    #
     def init_zones(self):
         name = ""
         with open('/home/altair/odin/src/projector/projector_devices_ur5.json') as f: #data for projectors and the kinect
@@ -386,7 +400,8 @@ class Projector():
                     self.mainCamera['hom_cam_screen_to_proj'] = np.load(name+cam_data['hom_cam_screen_to_proj'])
                     #self.mainCamera['corners_table'] = np.load(name+cam_data['corners'])
         self.find_static_ui_transform()
-
+    
+    #this method takes the calibration files and initialize the transform with the homographies
     def init_zones_tmp(self):
         calib_file = self.name_folder + "projection_calibration.yaml"
         with open(calib_file) as file:
@@ -397,17 +412,17 @@ class Projector():
                tmp = {}
                tmp['id'] = proj['id']
                tmp['zone'] = proj['zone']
-               tmp['hom_proj_moving'] = np.load(self.home+proj['hom_proj_moving'])
-               tmp['hom_proj_static'] = np.load(self.home+proj['hom_proj_static'])
-               tmp['homDepthProj'] = np.load(self.home+proj['homDepthProj'])
+               tmp['hom_proj_moving'] = np.load(proj['hom_proj_moving'])
+               tmp['hom_proj_static'] = np.load(proj['hom_proj_static'])
+               tmp['homDepthProj'] = np.load(proj['homDepthProj'])
                self.projectors.append(tmp)
             #print(tmp)
             for cam in data['cam']:
                tmp = {}
                tmp['id'] = proj['id']
                tmp['zone'] = proj['zone']
-               tmp['hom_cam_screen_to_proj'] = np.load(self.home+cam['hom_cam_screen_to_proj'])
-               tmp['hom_cam_static'] = np.load(self.home+cam['hom_cam_static'])
+               tmp['hom_cam_screen_to_proj'] = np.load(cam['hom_cam_screen_to_proj'])
+               tmp['hom_cam_static'] = np.load(cam['hom_cam_static'])
                self.mainCamera = tmp
                #cameras.append(tmp)
             #print(camera)
@@ -420,6 +435,8 @@ class Projector():
             #self.matrix = self.mainCamera['hom_cam_static']
             self.matrix_projected = self.mainCamera['hom_cam_screen_to_proj']
 
+    #method called when the display is dynamic like on a moving table.
+    #it has to update the transform so it always fit on the table
     def find_dynamic_ui_transform(self):#find homography for the table
         #M = self.mainCamera['vertHomTable']#transform to vertical view
         #replaced imagefortest by RGB camera
@@ -483,13 +500,14 @@ class Projector():
 
         return
     
+    #same as previous method but with a static zone
     def find_static_ui_transform(self): #find transform from screen to table in the camera
         self.matrix = self.mainCamera['hom_cam_static']
         self.matrix_projected = self.mainCamera['hom_cam_screen_to_proj']
         #print("self matrix",self.matrix)
         #print("matrix projected",self.matrix_projected)
 
-
+    #get buttons position in the RGB camera frame.
     def get_rgb_button_position(self,b,mat):
         px = (mat[0][0]*b[0] + mat[0][1]*b[1] + mat[0][2]) / ((mat[2][0]*b[0] + mat[2][1]*b[1] + mat[2][2]))
         py = (mat[1][0]*b[0] + mat[1][1]*b[1] + mat[1][2]) / ((mat[2][0]*b[0] + mat[2][1]*b[1] + mat[2][2]))
@@ -497,6 +515,7 @@ class Projector():
         
         return button
     
+    #display only active interface
     def get_active_interface_image(self):
         interface = None
         found = False
@@ -507,6 +526,7 @@ class Projector():
 
         return interface, found
 
+    #fill message that send the buttons positions in the RGb camera space
     def fillLayoutMessage(self,l_poi):
         interface = None
         for i in self._list_interface:
@@ -538,33 +558,16 @@ class Projector():
                     k += 1
                     l_poi.poi.append(tmp_elem)
                 self.pub_poi.publish(l_poi)
-        
+    #run in loop
     def run(self):
         while not rospy.is_shutdown():
             #interface_img = np.zeros((self._screen_size[0], self._screen_size[1], 3), np.uint8)
             tmp = np.zeros((self._screen_size[0], self._screen_size[1], 3), np.uint8)
             interface_tmp, exist = self.get_active_interface_image()
             first = True
+            #if the table is moving
             if self.is_moving:
                 self.find_dynamic_ui_transform()
-            #if exist:
-                
-            #    for i in self._list_interface:
-            #        i.print_buttons()
-            #        h = i.get_hidden()
-            #        print("hidden",h)
-                #print("interface here")
-                #cv2.imwrite("/home/altair/odin/src/calibration/homography/interface.jpg",interface_tmp)
-                #first = False
-            #    cv2.imshow("interface", interface_tmp)
-            #    cv2.waitKey(1)
-
-            #else:
-            #    cv2.imshow("interface", tmp)
-            #    cv2.waitKey(1)
-            #self.find_dynamic_ui_transform()#find transformation to the table
-            #self._table_homography_pub.publish(self.table_space_transform.flatten())#pubshish inverse transform for detecting button interactions
-            #generate and send message of POI position in RGB space
             l_poi = InterfacePOI()
             if exist:
                 self.fillLayoutMessage(l_poi)

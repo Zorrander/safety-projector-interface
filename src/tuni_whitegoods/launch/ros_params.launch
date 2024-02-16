@@ -1,0 +1,3 @@
+<launch>
+	<rosparam file="$(find tuni_whitegoods)/config/parameters.yaml" />
+</launch>

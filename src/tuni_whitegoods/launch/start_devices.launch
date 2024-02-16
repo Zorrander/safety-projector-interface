@@ -1,0 +1,7 @@
+<launch>
+    <arg name="node_start_delay" default="2.0" />
+    <!--<include file="$(find startup)/launch/tf_both.launch" />-->
+    <include file="$(find whitegoods)/launch/kinect_simple.launch" />
+    <!--<include file="$(find startup)/launch/transform_master.launch" />-->
+    <!--<node name="projection_system" pkg="projector" type="projector_interface.py" output="screen" launch-prefix="bash -c 'sleep $(arg node_start_delay); $0 $@' "/>-->
+</launch>

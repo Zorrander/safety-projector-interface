@@ -22,6 +22,7 @@ find_package(catkin REQUIRED COMPONENTS
   tf2_sensor_msgs
   unity_msgs
   message_generation
+  integration
 )
 
 find_package(OpenCV 4 REQUIRED)
@@ -128,6 +129,7 @@ catkin_package(
                    image_transport
                    unity_msgs
                    message_filters
+                   integration
   )
 
 ###########
@@ -141,6 +143,7 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
   ${OpenCV_LIBS}
   ${K4A_LIBS}
+  integration
 )
 
 ## Declare a C++ library

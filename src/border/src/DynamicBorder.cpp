@@ -1,3 +1,9 @@
+/*
+This class creates a dynamic border around the robot, monitor it and trigger a safety event if a person is crossing it.
+Basically, it takes some of the joints of the robot in the 3D space to draw a hull around the robot.
+To monitor the line, we actually define a baseline depthmap at the begining then we monitor any changes of depth inside the line.
+Since the robot can move, we also update the baseline depthmap but only with what's inside the line (line included)
+*/
 #include "border/DynamicBorder.hpp"
 
 
@@ -64,13 +70,12 @@ it_(nh)
 
 }
 
+//subscriber that get the joints of the robot in 3D space (not the joint values but where they are in 3D)
 void DynamicBorder::callbackJoints3D(geometry_msgs::TransformStampedConstPtr ts_bl, geometry_msgs::TransformStampedConstPtr ts_l4, 
                                     geometry_msgs::TransformStampedConstPtr ts_l5, geometry_msgs::TransformStampedConstPtr ts_tool, 
                                     geometry_msgs::TransformStampedConstPtr ts_flange)
 {
    cv_image = cv::Mat::zeros(1024,1024,CV_8UC1);
-   // ros::WallTime start_, end_;
-   // start_ = ros::WallTime::now();
    cv::Mat res_contours;
    l_points.clear();
    geometry_msgs::Point bl;
@@ -101,10 +106,9 @@ void DynamicBorder::callbackJoints3D(geometry_msgs::TransformStampedConstPtr ts_
    l_points.push_back(l5);
    l_points.push_back(tool);
    l_points.push_back(flg);
-   //std::cout<<"diff x : "<<diff_x<<"\n";
-   //std::cout<<"diff y : "<<diff_y<<"\n";
-   //std::cout<<"diff z : "<<diff_z<<"\n";
+
    bool stop = false;
+   //Here we check if the robot is moving, it will help to update the depthmap
    for(int i = 0; i < l_points.size(); i++)
    {
       if(prev_l_points.size() > 0)
@@ -112,9 +116,6 @@ void DynamicBorder::callbackJoints3D(geometry_msgs::TransformStampedConstPtr ts_
          diff_x = std::abs(l_points[i].x - prev_l_points[i].x);
          diff_y = std::abs(l_points[i].y - prev_l_points[i].y);
          diff_z = std::abs(l_points[i].z - prev_l_points[i].z);
-         //std::cout<<"diff x : "<<diff_x<<"\n";
-         //std::cout<<"diff y : "<<diff_y<<"\n";
-         //std::cout<<"diff z : "<<diff_z<<"\n";
          if((diff_x > threshold_joints || diff_y > threshold_joints || diff_z > threshold_joints) && !stop)
          {
             joints_moving = true;
@@ -126,19 +127,15 @@ void DynamicBorder::callbackJoints3D(geometry_msgs::TransformStampedConstPtr ts_
    {
       joints_moving = false;
    }
-   //std::cout<<"moving : "<<joints_moving<<"\n";
-
+   //we draw the border
    drawBorder(ts_bl->header);
    prev_l_points.clear();
    for(geometry_msgs::Point p : l_points)
    {
       prev_l_points.push_back(p);
    }
-   // end_ = ros::WallTime::now();
-   // double execution_time = (end_ - start_).toNSec() * 1e-6;
-   // ROS_INFO_STREAM("Exectution time (ms): " << execution_time);
 }
-
+//callback to the depthmap to monitor any crossing of the line
 void DynamicBorder::depthMapCallback(const sensor_msgs::ImageConstPtr& msg_dm)
 {
    ros::WallTime start_, end_;
@@ -156,16 +153,21 @@ void DynamicBorder::depthMapCallback(const sensor_msgs::ImageConstPtr& msg_dm)
       {
          cv_ptr = cv_bridge::toCvCopy(msg_dm, sensor_msgs::image_encodings::TYPE_32FC1);
          depth_map = cv_ptr->image.clone();
+         //create a bseline
          if(!first_baseline)
          {
             baseline_dm = cv_ptr->image.clone();
             first_baseline = true;
          }
+         //if there is a baseline and the robot is moving and the line is drawned
+         // since this callback is not syncronized with the drawing of the line, we make sure we are not updating the baseline while a line from the past iterations 
          if(first_baseline && joints_moving && lock_zone)
          {
             //std::cout<<"update !\n";
+            //update baseline
             depth_map.copyTo(baseline_dm,sf_line_inside);
          }
+         //if there is a baseline and we have the mask of the line
          if(got_mask && first_baseline)
          {
             baseline_dm.copyTo(res_bl,safety_line_mask);
@@ -181,7 +183,9 @@ void DynamicBorder::depthMapCallback(const sensor_msgs::ImageConstPtr& msg_dm)
             //back to depth
             cv::cvtColor(tmp3,tmp4,cv::COLOR_RGB2GRAY);
             tmp4.convertTo(tmp, CV_32FC1, 1/255.0);
+            //detect any changes of depth
             is_cluster = detectCluster(tmp);
+            //if changes, throw an event with the location of the crossing
             if(is_cluster)
             {
                //std::cout<<"cluster !\n";
@@ -206,20 +210,13 @@ void DynamicBorder::depthMapCallback(const sensor_msgs::ImageConstPtr& msg_dm)
          ROS_ERROR("cv_bridge exception: %s", e.what());
          return;
       }
-      cv::imshow(OPENCV_WINDOW, tmp);
-      cv::waitKey(1);
+      //display for demo
+      //cv::imshow(OPENCV_WINDOW, tmp);
+      //cv::waitKey(1);
    }
-   
-   end_ = ros::WallTime::now();
-   double execution_time = (end_ - start_).toNSec() * 1e-6;
-   //ROS_INFO_STREAM("Exectution time (ms): " << execution_time);
 }
 
-void DynamicBorder::echo()
-{
-   std::cout<<"hello\n";
-}
-
+//draw the dynamic border here
 void DynamicBorder::drawBorder(std_msgs::Header header)
 {
    int pixel_pos_x;
@@ -234,12 +231,14 @@ void DynamicBorder::drawBorder(std_msgs::Header header)
    border_rgb_frame.header = header;
    border_rgb_frame.header.frame_id = "base_robot_master";
    //transform to depth map space to be able to find and draw the hull
+   //l_points contains the 5 joint locations in 3D space, we need to project them to the depthmap
    for(int i = 0; i < l_points.size(); i++)
    {
       geometry_msgs::Pose pt = transformPtToDepthMap(l_points[i].x,l_points[i].y);
       cv::Point center(pt.position.x, pt.position.y);
       circle(cv_image, center,100, cv::Scalar(255, 255, 0), 1);
    }
+   //we find the contours of these points to draw a hull 
    std::vector<std::vector<cv::Point>> contours;
    std::vector<cv::Vec4i> hierarchy;
    cv::findContours(cv_image, contours, hierarchy, cv::RETR_TREE, cv::CHAIN_APPROX_SIMPLE);
@@ -274,12 +273,13 @@ void DynamicBorder::drawBorder(std_msgs::Header header)
    p.x = hull[0][0].x;
    p.y = hull[0][0].y;
    border_rgb_frame.polygon.points.push_back(p);
-   
+   //transform the hull who is in the depthmap space to the robot space
    transformToRobotSpace(border_rgb_frame);
+   //publish the hull
    publishHulls();
    
 }
-
+//publish the hull
 void DynamicBorder::publishHulls()
 {
    unity_msgs::BorderProj border_msg;
@@ -292,7 +292,7 @@ void DynamicBorder::publishHulls()
    msg_inside = cv_bridge::CvImage(std_msgs::Header(), sensor_msgs::image_encodings::TYPE_8UC1, sf_line_inside).toImageMsg();
    pub_safety_inside.publish(msg_inside);
 }
-
+//transform a polygon who is in depthmap to the robot spae
 void DynamicBorder::transformToRobotSpace(geometry_msgs::PolygonStamped cv_poly)
 {
    border.polygon.points.clear();
@@ -313,7 +313,10 @@ void DynamicBorder::transformToRobotSpace(geometry_msgs::PolygonStamped cv_poly)
    border.header = cv_poly.header;
    pub_border_poly.publish(border);
 }
-
+//detect cluster of depth value in the depth map
+//Here, we provide the substraction between the baseline and the current depthmap (with some filtering),
+//so if there is any white pixels, it means there is a change of depth.
+//It finds white pixels and count how many other white pixels are around. bove a certain threshold, it means we have a cluster so it's most likely something crossing the line
 bool DynamicBorder::detectCluster(cv::Mat img)
 {
    bool res = false;
@@ -330,7 +333,6 @@ bool DynamicBorder::detectCluster(cv::Mat img)
          float t = img.at<float>(i,j);
          int k = 0;
          int l = 0;
-         //cout<<t<<"\n";
          if(img.at<float>(i,j) > threshold_depth_inf)
          {
             sum = 0;
@@ -340,10 +342,6 @@ bool DynamicBorder::detectCluster(cv::Mat img)
               {
                   if(img.at<float>(i+k,j+l) > threshold_depth_inf)
                   {
-                     //detect = img.at<float>(i+k,j+l);
-                     //cout<<detect<<"\n";
-                     //cout<<"k "<<k<<"\n";
-                     //cout<<"l "<<l<<"\n";
                      sum++;
                   }
               }
@@ -363,6 +361,5 @@ bool DynamicBorder::detectCluster(cv::Mat img)
          }
       }
    }
-   //std::cout<<"sum : "<<best_sum<<"\n";
    return res;
 }

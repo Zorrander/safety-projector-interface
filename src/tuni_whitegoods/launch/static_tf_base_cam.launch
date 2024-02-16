@@ -1,0 +1,6 @@
+<launch>
+    <node pkg="tf2_ros" type="static_transform_publisher" name="rgb_to_base" args="0.501192 -0.271756 1.311792 -0.685276 0.727083 -0.014888 0.039050 base rgb_camera_link"/>     <!--WORKING FOR UR5 SETTINGS--> 
+    <!--<node pkg="tf2_ros" type="static_transform_publisher" name="rgb_to_base_rect" args="0.845004 0.849501 2.129671 0.960092 -0.279637 -0.001753 0.004841 base rgb_camera_link"/>--> <!--settings ur10 after calib procedure  1.045004 0.619501-->
+    <!--<node pkg="tf2_ros" type="static_transform_publisher" name="rgb_to_base_rect" args="0.9045004 1.049501 2.129671 0.993367 0.0218377 -0.000634056 0.112888 base rgb_camera_link"/>--> <!--settings ur10 after hand tuning  1.045004 0.619501-->
+    <!--<node pkg="tf2_ros" type="static_transform_publisher" name="depth_to_base" args="0.671331 -0.256551 1.251727 -0.701023 0.706256 0.085686 -0.049276 base depth_camera_link"/>-->
+</launch>

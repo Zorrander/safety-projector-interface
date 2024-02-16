@@ -120,6 +120,7 @@ catkin_package(
                    image_transport
                    unity_msgs
                    message_filters
+                   integration
   )
 
 ###########

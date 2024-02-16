@@ -6,6 +6,7 @@ geometry_msgs/PoseStamped[] trajectory
 ## Defines the way the server executes the movement, no argument executes the MOVE_NO_PAUSE_MODE
 string mode
 ##Default mode, movement is executed immediately
+string move_group
 string MOVE_NO_PAUSE_MODE=move
 ##Pauses movement for confirmation from external source
 string MOVE_WITH_PAUSE_MODE=move_pause

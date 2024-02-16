@@ -10,6 +10,7 @@ project(projector_interface)
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   std_msgs
+  sensor_msgs
   #actionlib
   #actionlib_msgs
   integration
@@ -108,7 +109,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## DEPENDS: system dependencies of this project that dependent projects also need
 #actionlib actionlib_msgs message_generation message_runtime
 catkin_package(
-  CATKIN_DEPENDS roscpp std_msgs border
+  CATKIN_DEPENDS roscpp std_msgs sensor_msgs border
 )
 
 ###########

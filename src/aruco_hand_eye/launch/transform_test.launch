@@ -1,0 +1,6 @@
+<launch>
+    <node pkg="tf" type="static_transform_publisher" name="kinect_to_base_one" args="0.418971 -0.219864 1.337739 -0.680214 0.730274 -0.057523 0.026462 base rgb_camera_link 200"/>
+    <!--<node pkg="tf" type="static_transform_publisher" name="kinect_to_base_one" args="0.497903 -0.305966 2.242808 0.873751 0.482279 0.045931 0.043080 base depth_camera_link 200"/>
+    0.405626 -0.208885 1.316986 -0.673249 0.736885 -0.054164 0.028315
+    0.418971 -0.219864 1.337739 -0.680214 0.730274 -0.057523 0.026462-->
+</launch>

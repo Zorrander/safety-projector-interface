@@ -1,0 +1,7 @@
+<launch>
+   <!--<param name="file_recorded" value="/odin/ur10_720.mkv" />
+   <param name="calibration_homography" value="/odin/src/whitegoods/calibration/homography/" />-->
+   <include file="$(find scene_calibration)/launch/start_wrapper.launch" />
+   <include file="$(find scene_calibration)/launch/start_calibration.launch" />
+   <include file="$(find calibration)/launch/hom_depthmap.launch" />
+</launch>

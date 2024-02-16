@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+#this code project an aruco grid, detect them on the camera and send them tot he ROS service
+
 import rospy
 import cv2
 from cv_bridge import CvBridge, CvBridgeError
@@ -44,6 +46,7 @@ class DepthHom():
 		self.bridge = CvBridge()
 		self.rgb_img = None
 
+	#display the aruco board
 	def display_grid(self):
 		self.aruc_id = 0	
 		self.testim = np.zeros((1080, 1920, 1), dtype="uint8")+255 
@@ -56,11 +59,12 @@ class DepthHom():
 				self.aruc_id+=1
 		#print(aruc_id)
 		cv2.namedWindow("window", cv2.WND_PROP_FULLSCREEN)
+		#change second parameter to fit your screen resolution
 		cv2.moveWindow("window", 2560, 0)
 		cv2.setWindowProperty("window", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
 		cv2.imshow("window", self.testim)
 		cv2.waitKey(100) 
-
+	#only draw the selected markers
 	def draw_save_markers(self):
 		ending = False
 		tmp = np.copy(self.rgb_img)	
@@ -101,7 +105,7 @@ class DepthHom():
 		cv2.destroyAllWindows()
 
 		return ending
-	
+	#exclude some markers based on user input
 	def set_excluded(self,inp):
 		tab = inp.split(",")
 		for i in tab:
@@ -128,7 +132,7 @@ class DepthHom():
 		self.input_points = inp_pts
 		self.rospoints_input = ros_pts
 		
-
+	#get the transformed points from ROS service
 	def pointsCallback(self,data):
 		ptss = data.pts
 		res = []
@@ -137,7 +141,7 @@ class DepthHom():
 		print(res)
 		name_f = self.home + self.folder + "dm_master_points"
 		np.savetxt(name_f,res)
-
+	#get camera image
 	def rgb_callback(self, msg):
 		self.rgb_img = None
 		try:
@@ -152,6 +156,7 @@ if __name__ == "__main__":
 	#dh.display_grid()
 	#dh.draw_save_markers(True)
 	end = False
+	#display markers and based on user inputs, exclude some of them
 	while not end:
 #		val = input("Excluded values: ")
 		dh.display_grid()
@@ -166,7 +171,7 @@ if __name__ == "__main__":
 	print("generating homography")
 	rospy.sleep(5.0)
 	projectors = ['master']
-	
+	#generate the homography file
 	for proj in projectors:
 		name_cp = dh.home + dh.folder + "proj_{}_points"
 		name_cd = dh.home + dh.folder + "dm_{}_points"

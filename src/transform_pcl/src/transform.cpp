@@ -1,3 +1,6 @@
+/*
+Class transforming the pointcloud coming from the kinect camera
+The goal is to align the point cloud to the robot base so the scene is flat*/
 #include <ros/ros.h>
 // PCL specific includes
 #include <tf2_ros/buffer.h>
@@ -27,7 +30,6 @@
 #include <geometry_msgs/TransformStamped.h>
 #include <image_transport/image_transport.h>
 #include <cv_bridge/cv_bridge.h>
-//#include <message_filters/synchronizer.h>
 #include <message_filters/sync_policies/approximate_time.h>
 #include <image_transport/subscriber_filter.h>
 #include <message_filters/subscriber.h>
@@ -39,14 +41,13 @@ class Transform
 {
   private:
       ros::NodeHandle nh_;
-      //image_transport::ImageTransport it_;
       std::string tf_robot_frame;
       std::string tf_depth_frame;
       std::string tf_rgb_frame;
       std::string name_topic_pcl_tf;
       std::string name_topic_tf_poi;
       std::string name_sub;
-      std::string tf_cam;
+      std::string name_tf_robot;
       int num_cam;
       bool icp;
       ros::Subscriber sub_cloud;
@@ -56,20 +57,10 @@ class Transform
       typedef image_transport::SubscriberFilter ImageSubscriber;
       ImageSubscriber depth_rgb_sub_;
       ImageSubscriber depth_sub_;
-      tf2_ros::Buffer tfBuffer;
-      //tf2_ros::Buffer tfBuffer_rgb;
-      //tf2_ros::TransformListener tfListener;
-      //tf2_ros::TransformListener tfListener_rgb;
-      std::shared_ptr<tf2_ros::TransformListener> tfListener;
-      //tf2_ros::Buffer tf_buffer_;
       std_msgs::Header sub_header;
-      //typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::Image> MySyncPolicy;
-      //message_filters::Synchronizer< MySyncPolicy > sync;
       ros::Publisher pub;
       ros::Publisher pub_d;
       ros::Publisher pub_poi;
-      //tf::TransformListener listener;
-      //tf::StampedTransform transform;
       Eigen::Matrix4d icp_matrix;
       Eigen::Affine3d robot_space;
       bool tf_in;
@@ -87,6 +78,7 @@ class Transform
       pcl::PointCloud<pcl::PointXYZ> poi_interface;
       geometry_msgs::TransformStamped transformStamped;
       geometry_msgs::TransformStamped transformStamped_rgb;
+      geometry_msgs::Transform rgb_to_base;
       Eigen::Matrix4d robot_frame;
       Eigen::Matrix4d camera_depth_frame;
       int compare;
@@ -96,35 +88,24 @@ class Transform
   public:
     Transform()
     {
-      tfListener = std::make_shared<tf2_ros::TransformListener>(tfBuffer);
-      ros::param::get("~tf_cam", tf_cam);
-      ros::param::get("robot_base", tf_robot_frame);
-      ros::param::get("~depth_camera", tf_depth_frame);
+      //params from ROS
+      ros::param::get("~robot_base", tf_robot_frame);
       ros::param::get("~topic_pcl_master", name_topic_pcl_tf);
       ros::param::get("~sub_points", name_sub);
-      ros::param::get("~icp", icp);
-      //std::cout<<icp<<"\n";
+      ros::param::get("~name_transform_robot_space", name_tf_robot);
+      ros::param::get("~number_cam", num_cam);
+
+      //get ICP params so it can align the pcl from the second camera. For HRC scenario
       readICPFromFile();
-      tf_in = false;
+      initTransformToBase();
       tf_rgb_sub = false;
       tf_rgb_master = false;
       tf_rgb = false;
-      if(icp)
+      //To subscribe to 2nd camera if there is one
+      if(num_cam > 1)
       {
         sub_sub = nh_.subscribe("/voxel_grid_master/output", 1, &Transform::subPclCallback,this);
       }
-      // compare = tf_robot_frame.compare("base_robot_master");
-      // if(compare == 0)
-      // {
-      //   name_topic_tf = "/kinect_master/cloud_robot_frame";
-      //   pub_poi = nh_.advertise<sensor_msgs::PointCloud2> ("/kinect_master/poi_robot_frame", 1);
-      //   //sub_sub = nh_.subscribe("/voxel_grid_sub/output", 1, &Transform::subPclCallback,this);
-      // }
-      // else
-      // {
-      //   name_topic_tf = "/kinect_sub/cloud_robot_frame";
-      //   //sub_sub = nh_.subscribe("/voxel_grid_master/output", 1, &Transform::subPclCallback,this);
-      // }
       pub = nh_.advertise<sensor_msgs::PointCloud2> (name_topic_pcl_tf, 1, true);
       //sub_poi = nh_.subscribe("/interface_poi", 1, &Transform::poiCb,this);
       sub_cloud = nh_.subscribe(name_sub, 1, &Transform::alignToRobotBase,this);       
@@ -139,9 +120,25 @@ class Transform
     {
         sub_header = cloud_msg->header;
     }
+    //read camera robot calibration. This matrix is the base for aligning the pcl camera to the robot frame 
+    void initTransformToBase()
+    {
+      std::vector<double> tf_list;
+      nh_.getParam(name_tf_robot, tf_list);
+      rgb_to_base.translation.x = tf_list[0];
+      rgb_to_base.translation.y = tf_list[1];
+      rgb_to_base.translation.z = tf_list[2];
+      rgb_to_base.rotation.x = tf_list[3];
+      rgb_to_base.rotation.y = tf_list[4];
+      rgb_to_base.rotation.z = tf_list[5];
+      rgb_to_base.rotation.w = tf_list[6];
+      Eigen::Isometry3d mat = tf2::transformToEigen(rgb_to_base);
+      robot_frame = mat.matrix();
+      tf_in = true;
+    }
 
 
-    //align PointCloud camera_rgb -> depth_frame then to robot base and depending on the camera, use icp translation to align both pointcloud.
+    //align PointCloud camera_rgb -> depth_frame (for HRC) then to robot base and depending on the camera, use icp translation to align both pointcloud.
     void alignToRobotBase(const sensor_msgs::PointCloud2ConstPtr& cloud_msg)
     {
       // Create a container for the data.
@@ -155,72 +152,24 @@ class Transform
       pcl_conversions::toPCL(*cloud_msg, pcl_pc2);
       pcl::fromPCLPointCloud2(pcl_pc2,*temp_cloud);
       tic.tic();
-      if(!tf_in)
+      pcl::transformPointCloud(*temp_cloud,*final_cloud,robot_frame);
+      if(num_cam > 1)
       {
-        listenTransform();
-      }
+        pcl::transformPointCloud(*final_cloud, *icp_cloud, icp_matrix);
+        pcl::toROSMsg(*icp_cloud,cloud_tf);
+      } 
       else
       {
-        pcl::transformPointCloud(*temp_cloud,*final_cloud,robot_frame);
-        if(icp != 0)
-        {
-          //pcl::transformPointCloud(*temp_cloud,*depth_tf_cloud,camera_frame_master);
-          //std::cout<<"icp: "<<tic.toc()<<"ms\n";
-          pcl::transformPointCloud(*final_cloud, *icp_cloud, icp_matrix);
-          pcl::toROSMsg(*icp_cloud,cloud_tf);
-          // cloud_tf.header = cloud_msg->header;
-          // cloud_tf.header.frame_id = tf_depth_frame;
-          //std::cout<<"transform sub: "<<cloud_tf.header<<"\n";
-          //std::cout<<"transform sub: "<<cloud_msg->header<<"ms\n";
-          //std::cout<<"sub: "<<tic.toc()<<"ms\n";
-        } 
-        else
-        {
-          pcl::toROSMsg(*final_cloud,cloud_tf);
-          //cloud_tf.header = cloud_msg->header;
-          cloud_tf.header.stamp = sub_header.stamp;
-          //cloud_tf.header.frame_id = tf_depth_frame;
-          //std::cout<<"transform master: "<<cloud_tf.header<<"\n";
-          //std::cout<<"transform master : "<<cloud_msg->header<<"ms\n";
-          //std::cout<<"master: "<<tic.toc()<<"ms\n";
-        }
-        cloud_tf.header = cloud_msg->header;
-        cloud_tf.header.frame_id = tf_robot_frame;
-        pub.publish(cloud_tf);
+        pcl::toROSMsg(*final_cloud,cloud_tf);
+        cloud_tf.header.stamp = sub_header.stamp;
       }
+      cloud_tf.header = cloud_msg->header;
+      cloud_tf.header.frame_id = tf_robot_frame;
+      pub.publish(cloud_tf);
+      
     }
 
-    void listenTransform()
-    {
-      bool error = false;
-      Eigen::Affine3d cmp = Eigen::Affine3d::Identity();
-      while(cmp.isApprox(robot_space))
-      {
-        try
-        {
-          std::cout<<"trying to get transform \n";
-          transformStamped = tfBuffer.lookupTransform(tf_robot_frame, tf_depth_frame,ros::Time(5.0));
-        } 
-        catch (tf2::TransformException &ex) 
-        {
-          ROS_WARN("%s", ex.what());
-          error = true;
-          //ros::Duration(1.0).sleep();
-        }
-        //if(error == false)
-        {
-          //tf_in = true;
-          robot_space = tf2::transformToEigen(transformStamped);
-          Eigen::Isometry3d mat = tf2::transformToEigen(transformStamped);
-          robot_frame = mat.matrix();
-          //std::cout<<"SUCCESS Transform"<<tf_robot_frame<<" \n";
-        }      
-      }
-      tf_in = true;
-      std::cout<<"SUCCESS Transform"<<tf_robot_frame<<" \n";
-    }
-
-    //icp matrix hard coded
+    //icp matrix hard coded - deprecated
     void initMatrixTransform()
     {
       icp_matrix = Eigen::Matrix4d::Identity();
@@ -256,7 +205,7 @@ class Transform
     void readICPFromFile()
     {
       std::string line;
-      std::ifstream icpfile ("/home/altair/catkin_abb/src/transform_pcl/config/icp.txt");
+      std::ifstream icpfile ("/home/altair/odin/src/transform_pcl/config/icp.txt");
       if(icpfile.is_open())
       {
         for(int i = 0; i < 4; i++)
