@@ -1,0 +1,3 @@
+<launch>
+    <node name="fuse_pcl" pkg="pcl_test" type="pcl_test_node" output="screen"/>
+</launch>

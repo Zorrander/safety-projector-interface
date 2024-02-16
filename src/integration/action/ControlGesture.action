@@ -1,0 +1,14 @@
+##Description: Action that controls the Gestures configuration
+
+#goal definition
+bool enabled
+---
+#result definition
+bool enabled
+#Human readable status-Only for visualization/debug
+string status
+---
+#feedback
+bool enabled
+#Human readable status-Only for visualization/debug
+string status

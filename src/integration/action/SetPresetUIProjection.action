@@ -1,0 +1,17 @@
+##Description: Action that projects information that are modeled in a resource repository
+
+#goal definition
+string request_id
+string zone
+string resource_id
+string name #Human readable name
+string description #Human readable description
+bool hidden       #if this interface is hidden e.g for later use
+integration/VirtualButtonReference[] virtual_button_references #list of VirtualButtonReference to include in the interface
+---
+#result definition
+string[] displayed_request_ids
+---
+#feedback
+string[] displayed_request_ids
+

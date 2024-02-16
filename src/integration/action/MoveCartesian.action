@@ -1,0 +1,20 @@
+##Description: Moves robot arm to a specified sequence of poses.
+
+#goal definition                       
+## array of desired cartesian positions to move          
+geometry_msgs/PoseStamped[] trajectory
+## Defines the way the server executes the movement, no argument executes the MOVE_NO_PAUSE_MODE
+string mode
+##Default mode, movement is executed immediately
+string MOVE_NO_PAUSE_MODE=move
+##Pauses movement for confirmation from external source
+string MOVE_WITH_PAUSE_MODE=move_pause
+
+integration/ActionRequest action_request
+---
+#result definition
+integration/ActionResult action_result
+---
+#feedback
+uint32 goal_index # current index of PoseStamped[] trajectory array tracked
+integration/ActionFeedback action_feedback

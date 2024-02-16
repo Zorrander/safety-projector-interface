@@ -1,0 +1,13 @@
+##Description: Executes a SKILL that is provided in a serialized format.
+
+#goal definition
+string skill
+integration/ActionRequest action_request
+---
+#result definition
+integration/ActionResult action_result
+---
+#feedback
+integration/ActionFeedback action_feedback
+
+

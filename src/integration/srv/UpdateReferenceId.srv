@@ -1,0 +1,12 @@
+##Called to provide info about a reference_id that has been provided on call
+## The reference id created during call
+string reference_id
+
+##Update status
+string update_status
+---
+bool success
+##If possible try to provide a debug comment
+string debug_comment
+
+

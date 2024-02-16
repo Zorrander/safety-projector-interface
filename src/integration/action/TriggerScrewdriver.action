@@ -1,0 +1,12 @@
+##Description: Trigger the screwing action. Screwdriver automatically detects succesful screwing based on torque (pre configured).
+
+#goal definition
+integration/ActionRequest action_request
+---
+#result definition
+integration/ActionResult action_result
+---
+#feedback
+integration/ActionFeedback action_feedback
+
+

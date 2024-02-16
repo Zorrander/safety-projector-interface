@@ -1,0 +1,10 @@
+##Description: Trigger Quality Inspection for a particular product
+
+#goal definition
+integration/QualityInspectionRequest[] quality_inspection_targets
+---
+#result definition
+integration/QualityInspectionResult[] quality_inspection_results
+---
+#feedback
+integration/QualityInspectionResult[] quality_inspection_feedback

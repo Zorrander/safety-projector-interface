@@ -1,0 +1,13 @@
+##Description: Action that controls digital IOs
+
+#goal definition
+integration/IOState[] states_to_set
+integration/ActionRequest action_request
+---
+#result definition
+integration/IOState[] digital_states
+integration/ActionResult action_result
+---
+#feedback
+integration/IOState[] digital_states
+integration/ActionFeedback action_feedback

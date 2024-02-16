@@ -1,0 +1,6 @@
+<launch>
+    <param name="~id" value="0" />
+    <param name="~shiftX" value="0" />
+    <!--<param name="~shiftX" value="2560" />-->
+    <node name="projector_optimized_one" pkg="projector_opt" type="projector_opt_node" output="screen"/>
+</launch>

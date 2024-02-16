@@ -1,0 +1,9 @@
+<launch> 
+    <param name="~tf_cam" value="master" />
+    <param name="robot_base" value="base" />
+    <param name="~depth_camera" value="rgb_camera_link" />
+    <param name="~topic_pcl_master" value="/kinect_master/cloud_robot_frame" />
+    <param name="~sub_points" value="/voxel_grid_master/output" />
+    <param name="~icp" value="false" />
+    <node name="kinect_transformed_master" pkg="transform_pcl" type="transform_pcl_node" output="screen"/> 
+</launch>

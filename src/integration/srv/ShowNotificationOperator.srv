@@ -1,0 +1,8 @@
+##Shows a message to Human Operator, a MODE can be specified for the message.
+
+string title
+string message
+#See HumanActionPurposes.msg MODES
+string mode
+---
+bool success

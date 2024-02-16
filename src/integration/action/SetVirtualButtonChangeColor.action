@@ -1,0 +1,12 @@
+##Description: Change color of a Virtual Button, only for simple test case
+
+#goal definition
+string request_id   #uniquely identifies this drawing request.Subsequent requests with the same request_id overide previous request.
+string resource_id  #unique id of the virtual button to change
+std_msgs/ColorRGBA button_color  # New Color [0.0-1.0] of the button, we only change the background
+---
+#result definition
+string[] displayed_request_ids
+---
+#feedback
+string[] displayed_request_ids

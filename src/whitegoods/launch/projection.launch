@@ -1,0 +1,14 @@
+<launch>
+    <arg name="node_start_delay" default="2.0" />
+    <param name="calibration_homography" value="/odin/src/whitegoods/calibration/homography/" />
+    <param name="file_recorded" value="/odin/ur10_720.mkv" />
+    <param name="is_moving" value="false" />
+    <include file="$(find aruco_detection)/launch/detect.launch" />
+    <include file="$(find whitegoods)/launch/projector.launch" />
+    <!--<include file="$(find projector_opt)/launch/projector_one.launch" />-->
+    <include file="$(find projector_interface)/launch/server.launch" />
+    <include file="$(find projector)/launch/projection_ur5.launch" />
+    <include file="$(find whitegoods)/launch/depth_interface.launch" />
+    <include file="$(find detect_interaction)/launch/detection.launch" />
+    <!--<node name="projection_system" pkg="projector" type="projector_interface.py" output="screen" launch-prefix="bash -c 'sleep $(arg node_start_delay); $0 $@' "/>-->
+</launch>

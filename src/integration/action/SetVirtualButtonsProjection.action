@@ -1,0 +1,13 @@
+##Description: Draw virtual buttons
+
+#goal definition
+string request_id   #uniquely identifies this drawing request.Subsequent requests with the same request_id overide previous request.
+string zone
+integration/VirtualButtonReference virtual_button #Virtual button to be visualized
+---
+#result definition
+string displayed_request_ids
+---
+#feedback
+string displayed_request_ids
+

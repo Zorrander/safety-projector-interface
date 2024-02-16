@@ -1,0 +1,4 @@
+<launch>
+    <include file="$(find scene_calibration)/launch/start_calibration.launch" />
+    <include file="$(find detect_interaction)/launch/wrapper.launch" />
+</launch>

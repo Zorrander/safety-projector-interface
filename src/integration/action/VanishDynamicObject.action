@@ -1,0 +1,34 @@
+##Description: Removes dynamic objects from a specific scene.
+
+#The id of the related Scene
+string scene_id
+
+#The id of the applicable simulation instance
+string simulation_id
+
+#Dynamic object instance_ids to vanish
+string[] instance_ids
+---
+#result definition
+#The id of the related Scene
+string scene_id
+
+#The id of the applicable simulation instance
+string simulation_id
+
+##Cumulative instances removed OK, the list contains the instance_ids. 
+string[] successes
+##Cumulative instances that cannot be removed OK, the list contains the instance_ids. 
+string[] errors
+---
+#feedback
+##Feedback provision is optional, implementations may return only the result.
+#The id of the related Scene
+string scene_id
+#The id of the applicable simulation instance
+string simulation_id
+
+##Cumulative instances removed OK, the list contains the instance_ids.
+string[] successes
+##Cumulative instances that cannot be removed OK, the list contains the instance_ids.
+string[] errors

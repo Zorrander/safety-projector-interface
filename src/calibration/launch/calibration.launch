@@ -1,0 +1,3 @@
+<launch>
+    <node name="calibration" pkg="calibration" type="calibration.py" output="screen"/>
+</launch>

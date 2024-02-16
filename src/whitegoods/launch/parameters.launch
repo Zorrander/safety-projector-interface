@@ -1,0 +1,7 @@
+<launch>
+  <!-- declare arg to be passed in -->
+  <arg name="hoge" /> 
+
+  <!-- read value of arg -->
+  <param name="param" value="$(arg hoge)"/>
+</launch>

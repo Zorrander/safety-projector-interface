@@ -1,0 +1,8 @@
+<launch>
+    <param name="~robot_base" value="base_robot_sub" />
+    <param name="~depth_camera" value="sub_depth_camera_link" />
+    <param name="~rgb_camera" value="sub_rgb_camera_link" />
+    <!--<param name="~sub_points" value="/sub/points2" />-->
+    <param name="~sub_points" value="/voxel_grid_sub/output" />
+    <node name="kinect_transformed_sub" pkg="transform_pcl" type="transform_pcl_node" output="screen"/>
+</launch>

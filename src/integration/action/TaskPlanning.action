@@ -1,0 +1,16 @@
+##Description: Initiates a task planning for the tasks (referenced by ids) that should be carried out by a specific set of resources (referenced by ids).
+## The result is a jsonSchedule that can be run.
+
+#goal definition
+string product_plan_id #The id of the productPlan to create task plan
+string[] task_ids #AssignableTasks (ids) to be rescheduled
+string[] resource_ids #AssignableResources (ids) that are available
+bool schedule_will_be_considered_full #The schedule generated will be considered full. If ==true, then the schedule will be the result from full re-planning and not partial (It will be shown in the UI).
+integration/ActionRequest action_request
+---
+#result definition
+string json_schedule
+integration/ActionResult action_result
+---
+#feedback
+integration/ActionFeedback action_feedback

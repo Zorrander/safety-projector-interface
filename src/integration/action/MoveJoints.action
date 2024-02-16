@@ -1,0 +1,19 @@
+##Description: Moves robot arm to a specified sequence of poses.
+
+#goal definition
+#For the moment only the JointTrajectory.joint_names and JointTrajectory.JointTrajectoryPoint.positions will be used.
+#At the same time only one single frame is expected in the JointTrajectory.JointTrajectoryPoint array.
+trajectory_msgs/JointTrajectory trajectory
+integration/ActionRequest action_request
+
+---
+#result definition
+uint32 goal_index # final index of JointTrajectoryPoint[] in trajectory->points array tracked
+integration/ActionResult action_result
+
+---
+
+#feedback
+uint32 goal_index # current index of JointTrajectoryPoint[] in trajectory->points array tracked
+integration/ActionFeedback action_feedback
+

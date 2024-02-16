@@ -1,0 +1,4 @@
+<launch>
+  <include file="$(find projector_opt)/launch/projector_one.launch" />
+  <include file="$(find projector_opt)/launch/projector_two.launch" />
+</launch>

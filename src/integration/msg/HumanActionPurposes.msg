@@ -1,0 +1,7 @@
+#Constants
+string OPERATIONAL_ACTION_EXECUTION_PURPOSE=OperationalActionExecutionPurpose
+string OPERATIONAL_EXCEPTION_PURPOSE=OperationalExceptionMode
+string SAFETY_EMERGENCY_STOP_PURPOSE=SafetyEmergencyStopPurpose
+string SAFETY_ZONE_VIOLATION_PURPOSE=SafetyZoneViolationPurpose
+string SECURITY_INCIDENT_PURPOSE=SecurityIncidentPurpose
+

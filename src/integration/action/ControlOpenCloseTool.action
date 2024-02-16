@@ -1,0 +1,14 @@
+##Description: Action that requests a tool to open/close.
+
+#goal definition
+##If true, the tool is closed
+bool tool_closed
+integration/ActionRequest action_request
+---
+#result definition
+bool tool_closed
+integration/ActionResult action_result
+---
+#feedback
+bool tool_closed
+integration/ActionFeedback action_feedback

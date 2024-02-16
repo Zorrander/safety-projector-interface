@@ -1,0 +1,35 @@
+{
+	"projectors": [
+	{
+		"id":1,
+		"homDirect": "/home/altair/catkin_abb/src/projector/homographies/H_right.npy",
+		"homFromVert": "/home/altair/catkin_abb/src/projector/homographies/H_right_vert.npy",
+		"homTable": "/home/altair/catkin_abb/src/projector/homographies/proj_topTable_hom.npy",
+		"homTableVert": "/home/altair/catkin_abb/src/projector/homographies/fromVert_to_projTopTable_hom.npy",
+		"shiftX": 4480,
+		"shiftY": 0
+	},
+	{
+		"id":0,
+		"homDirect": "/home/altair/catkin_abb/src/projector/homographies/H_left.npy",
+		"homFromVert": "/home/altair/catkin_abb/src/projector/homographies/H_left_vert.npy",
+		"homTable": "/home/altair/catkin_abb/src/projector/homographies/proj_botTable_hom.npy",
+		"homTableVert": "/home/altair/catkin_abb/src/projector/homographies/fromVert_to_projBotTable_hom.npy",
+		"shiftX": 2560,
+		"shiftY": 0
+	}
+	],
+	"cameras": [
+	{
+		"id":0,
+		"mainCam": 1,
+		"vertHomGround": "/home/altair/catkin_abb/src/projector/homographies/H_hor.npy",
+		"vertHomGroundInv": "/home/altair/catkin_abb/src/projector/homographies/H_hor_inv.npy",
+		"vertTable": "/home/altair/catkin_abb/src/projector/homographies/vert_view_table_hom.npy",
+		"vertTableInv": "/home/altair/catkin_abb/src/projector/homographies/vert_view_table_inv_hom.npy",
+		"camRobHom": "/home/altair/catkin_abb/src/projector/homographies/robcamhom_01_06.npy"
+
+	}
+	]
+}
+

@@ -1,0 +1,4 @@
+<launch>
+    <!--<include file="$(find scene_calibration)/launch/start_calibration.launch" />-->
+    <node name="wrapper_depth" pkg="scene_calibration" type="points_wrapper" output="screen"/>
+</launch>
