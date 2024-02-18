@@ -898,18 +898,18 @@ int main(int argc, char** argv)
    g_spinner.reset(new ros::AsyncSpinner(0, &queue));
    
    // Create an action server object and spin ROS
-   ProjectorInterface srv(&nh, "execution/projector_interface/integration/actions/set_layout_static_borders",
-                        "execution/projector_interface/integration/actions/set_virtual_buttons_projection",
-                        "execution/projector_interface/integration/actions/set_virtual_button_change_color",
-                        "execution/projector_interface/integration/actions/set_safety_border_projection",
-                        "execution/projector_interface/integration/actions/set_preset_ui_projection",
-                        "execution/projector_interface/integration/actions/unset_projection",
-                        "execution/projector_interface/integration/actions/set_instructions_projection",
-                        "execution/projector_interface/integration/actions/set_book_robot_static_border",
-                        "execution/projector_interface/integration/actions/set_release_robot_static_border",
-                        "execution/projector_interface/integration/actions/set_book_operator_static_border",
-                        "execution/projector_interface/integration/actions/set_release_operator_static_border",
-                        "execution/cobot/integration/actions/move_arm_joint");
+   LayoutStaticBorderServer srv(&nh, "execution/projector_interface/integration/actions/set_layout_static_borders");
+   ButtonProjectionServer srv2(&nh, "execution/projector_interface/integration/actions/set_virtual_buttons_projection");
+   ButtonColorServer srv3(&nh, "execution/projector_interface/integration/actions/set_virtual_button_change_color");
+   SafetyBorderServer srv3"execution/projector_interface/integration/actions/set_safety_border_projection");
+   UIProjectionServer srv3"execution/projector_interface/integration/actions/set_preset_ui_projection");
+   UnsetProjectionServer srv3"execution/projector_interface/integration/actions/unset_projection");
+   InstructionProjectionServer srv3"execution/projector_interface/integration/actions/set_instructions_projection");
+   BookRobotStaticBorderServer srv3"execution/projector_interface/integration/actions/set_book_robot_static_border");
+   ReleaseRobotStaticBorderServer srv3"execution/projector_interface/integration/actions/set_release_robot_static_border");
+   BookOeratorStaticBorder srv3"execution/projector_interface/integration/actions/set_book_operator_static_border");
+   ReleaseOperatorStaticBorder srv3"execution/projector_interface/integration/actions/set_release_operator_static_border");
+   MoveRobotServer srv3"execution/cobot/integration/actions/move_arm_joint");
    
    g_spinner->start();
    ros::waitForShutdown();
