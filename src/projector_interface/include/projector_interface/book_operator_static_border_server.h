@@ -23,7 +23,7 @@ struct BorderStatus {
 };
 
 
-class BookOeratorStaticBorderServer
+class BookOperatorStaticBorderServer
 {
 protected:
     // NodeHandle instance must be created before this line. Otherwise strange error occurs.
@@ -38,6 +38,7 @@ protected:
 
     //attributes to monitor situation
     //monitor active buttons and publish them
+    std::vector<std::string> displayed_request_ids;
     std::vector<std::string> border_operator_booked;
     std::vector<BorderStatus> release_border_operator;
     std::vector<StaticBorder> l_borders;

@@ -1,18 +1,16 @@
-/*
-The class is the openflow server that will receives all the actions coming from openflow
-*/
 
 #include "projector_interface/book_operator_static_border_server.h"
 
 
 using namespace integration;
 
-    BookOeratorStaticBorderServer(ros::NodeHandle* nh_, std::string name_book_operator) :
+    BookOperatorStaticBorderServer(ros::NodeHandle* nh_, std::string name_book_operator) :
         // Bind the callback to the action server. False is for thread spinning
         //nh_border_(*n),
-        as_book_operator(*nh_, name_book_operator, boost::bind(&BookOeratorStaticBorderServer::executeBookOperator, this, _1), false),
+        as_book_operator(*nh_, name_book_operator, boost::bind(&BookOperatorStaticBorderServer::executeBookOperator, this, _1), false),
         action_name_book_operator(name_book_operator)
     {
+        displayed_request_ids.clear();
         border_operator_booked.clear();
         as_book_operator.start();
     }

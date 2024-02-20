@@ -5,9 +5,9 @@
 using namespace integration;
 
 
-    ProjectorInterface(ros::NodeHandle* nh_, std::string name_cc) :
+    ButtonColorServer(ros::NodeHandle* nh_, std::string name_cc) :
 
-        as_change(*nh_, name_cc, boost::bind(&ProjectorInterface::executeChangeButtonColor, this, _1), false),
+        as_change(*nh_, name_cc, boost::bind(&ButtonColorServer::executeChangeButtonColor, this, _1), false),
 
         action_name_color_(name_cc)
 

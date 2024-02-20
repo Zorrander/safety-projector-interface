@@ -50,6 +50,7 @@ protected:
     BookRobotStaticBorderResult result_book_robot_;
 
     std::vector<std::string> border_robot_booked;
+    std::vector<std::string> displayed_request_ids;
 
 public:
 

@@ -9,6 +9,7 @@ using namespace integration;
         as_book_robot(*nh_, name_book_robot, boost::bind(&ProjectorInterface::executeBookRobot, this, _1), false),
         action_name_book_robot(name_book_robot)
     {
+        displayed_request_ids.clear();
         border_robot_booked.clear();
       
         as_book_robot.start();
