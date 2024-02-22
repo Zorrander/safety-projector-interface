@@ -1,9 +1,0 @@
-##Description: notifies the simulation system that a simulation has finished.
-##This service call is only a termination signal, it should carry only minimal information.
-
-#goal definition
-string simulation_id #The simulationId provided by the caller during the initialization of the simulation
----
-#result definition
-bool simulation_finished ##True if the simulation ended
-bool simulation_successful ##True if the simulation ended with no problems. Note that a simulation can be successful AND the result of the successful simulation could show that the schedule is not feasible.

@@ -1,1 +1,0 @@
-ArucoMarker[] array_markers

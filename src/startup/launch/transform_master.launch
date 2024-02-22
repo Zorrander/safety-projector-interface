@@ -1,4 +1,0 @@
-<launch>
-    <include file="$(find transform_pcl)/launch/voxel_master.launch" />
-    <include file="$(find transform_pcl)/launch/kinect_master.launch" />
-</launch>

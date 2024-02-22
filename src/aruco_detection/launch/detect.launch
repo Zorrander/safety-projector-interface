@@ -1,3 +1,0 @@
-<launch>
-    <node name="aruco_detector" pkg="aruco_detection" type="aruco_detection_node" output="screen"/>
-</launch>

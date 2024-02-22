@@ -1,4 +1,0 @@
-<launch>
-    <include file="$(find startup)/launch/transform_master.launch" />
-    <include file="$(find startup)/launch/transform_sub.launch" />
-</launch>

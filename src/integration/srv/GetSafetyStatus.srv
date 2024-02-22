@@ -1,7 +1,0 @@
-##Description: returns the safety status upon request
-
-#input definition
-#no input needed
----
-#result definition
-integration/SafetyEvent safety_status

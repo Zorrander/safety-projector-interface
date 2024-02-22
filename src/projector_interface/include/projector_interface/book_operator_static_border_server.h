@@ -1,31 +1,27 @@
-/*
-The class is the openflow server that will receives all the actions coming from openflow
-*/
+#ifndef BookOperatorStaticBorderServer_H
+#define BookOperatorStaticBorderServer_H
+
 #include <ros/ros.h>
-#include <ros/spinner.h>
-#include <ros/callback_queue.h>
-#include <actionlib/client/simple_action_client.h>
+
 #include <actionlib/server/simple_action_server.h>
 #include <integration/BookOperatorStaticBorderAction.h>
-#include "border/DynamicBorder.hpp"
-#include "border/StaticBorder.hpp"
-#include "border/StaticBorderManager.hpp"
-#include <thread>
+#include "border/DynamicBorder.h"
+#include "border/StaticBorder.h"
+#include "border/StaticBorderManager.h"
+
 #include <std_msgs/Bool.h>
 #include <std_msgs/String.h>
-
+#include <string>
 
 using namespace integration;
 
-struct BorderStatus {
-    std::string id_border;
-    int status;
-};
+
 
 
 class BookOperatorStaticBorderServer
 {
 protected:
+
     // NodeHandle instance must be created before this line. Otherwise strange error occurs.
     actionlib::SimpleActionServer<BookOperatorStaticBorderAction> as_book_operator;
 
@@ -40,14 +36,18 @@ protected:
     //monitor active buttons and publish them
     std::vector<std::string> displayed_request_ids;
     std::vector<std::string> border_operator_booked;
-    std::vector<BorderStatus> release_border_operator;
+    std::vector<std::string> release_border_operator;
     std::vector<StaticBorder> l_borders;
 
 
 public:
+    BookOperatorStaticBorderServer(ros::NodeHandle* nh_, std::string name_book_operator);
 
     void executeBookOperator(const BookOperatorStaticBorderGoalConstPtr& goal);
 
     void sendFeedbackBookOperator(std::string req_id);
 
     void sendResultBookOperator(std::string req_id);
+
+};
+#endif

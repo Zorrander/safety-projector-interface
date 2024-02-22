@@ -1,4 +1,0 @@
-integration/HumanTasks human_task_list
-uint8 list_operation
----
-bool success

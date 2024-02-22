@@ -1,7 +1,0 @@
-<launch>
-    <param name="~robot_base" value="base" />
-    <param name="~depth_camera" value="rgb_camera_link" />
-    <param name="~topic_depth" value="/depth/image_raw" />
-    <param name="~topic_depth_to_rgb" value="/depth_to_rgb/image_raw" />
-    <node pkg="scene_calibration" type="points_depth" name="server_rgb" />
-</launch>

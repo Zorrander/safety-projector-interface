@@ -1,5 +1,0 @@
-<launch>
-    <node name="projection_system" pkg="projector" type="projector_interface.py" output="screen"/>
-    <include file="$(find projector_opt)/launch/projector_one.launch" />
-    <include file="$(find startup)/launch/transform_master.launch" />
-</launch>

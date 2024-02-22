@@ -1,5 +1,0 @@
-<launch>
-    <include file="$(find abb_robot_bringup_examples)/launch/ex1_rws_only.launch">
-      <arg name="robot_ip" value="192.168.125.1" />
-    </include>
-</launch>

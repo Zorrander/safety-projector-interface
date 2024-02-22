@@ -1,15 +1,13 @@
+#include "projector_interface/move_robot_server.h"
+
 #include <ros/ros.h>
 #include <ros/spinner.h>
 #include <ros/callback_queue.h>
-#include <actionlib/client/simple_action_client.h>
-#include <actionlib/server/simple_action_server.h>
-#include "projector_interface/move_robot_server.h"
 
-using namespace integration;
 
 int main(int argc, char** argv)
 {
-   ros::init(argc, argv, "projector_interface_srv");
+   ros::init(argc, argv, "move_robot_server");
    boost::shared_ptr<ros::AsyncSpinner> g_spinner;
    ros::CallbackQueue queue;
    ros::NodeHandle nh;
@@ -18,9 +16,14 @@ int main(int argc, char** argv)
    g_spinner.reset(new ros::AsyncSpinner(0, &queue));
    
    // Create an action server object and spin ROS
-   MoveRobotServer srv2(&nh, "execution/projector_interface/integration/actions/set_virtual_buttons_projection");
+   MoveRobotServer moveRobotServer(&nh, "execution/projector_interface/integration/actions/set_virtual_buttons_projection");
    
    g_spinner->start();
+
+   while (ros::ok()) {
+      queue.callAvailable();
+   }
+
    ros::waitForShutdown();
    
 

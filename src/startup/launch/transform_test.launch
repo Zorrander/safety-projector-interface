@@ -1,6 +1,0 @@
-<launch>
-    <!--<node pkg="tf2_ros" type="static_transform_publisher" name="rgb_to_base" args="0.418971 -0.219864 1.337739 -0.680214 0.730274 -0.057523 0.026462 base rgb_camera_link"/>-->
-    <node pkg="tf2_ros" type="static_transform_publisher" name="rgb_to_base_rect" args="0.501192 -0.271756 1.311792 -0.685276 0.727083 -0.014888 0.039050 base rgb_camera_link"/>
-    <!--<node pkg="tf2_ros" type="static_transform_publisher" name="kinect_to_rgb" args="0.031989802201341726 0.002552100717573809 -0.0036561437277825614 0.052831802800641176 -0.0002913415167962993 0.0007797710832161784 0.9986030760705474 depth_camera_link rgb_camera_link"/>-->
-    <!--<node pkg="tf2_ros" type="static_transform_publisher" name="depth_to_base" args="0.671331 -0.256551 1.251727 -0.701023 0.706256 0.085686 -0.049276 base depth_camera_link"/>-->
-</launch>
