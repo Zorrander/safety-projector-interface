@@ -1,8 +1,0 @@
-calibration_homography: /home/altair/odin/src/hrc/calibration/homography/
-file_recorded: /home/altair/odin/src/hrc/calibration/wfov.mkv
-calibration_folder: /home/altair/odin/src/hrc/calibration/depthmap/
-is_moving: true
-sub_pcl_master: /kinect_master/cloud_robot_frame
-sub_pcl_sub: /kinect_sub/cloud_robot_frame 
-master_to_base: [1.42171, 0.721405, 3.30467, 0.954849, -0.271477, -0.0412644, 0.113405]
-sub_to_base: [0.871956, -0.0937203, 3.22243, 0.201299, 0.96444, 0.167247, 0.036916]

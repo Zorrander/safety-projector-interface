@@ -1,7 +1,4 @@
-calibration_homography: /home/altair/odin/src/tuni_whitegoods/calibration/homography/
-file_recorded: /home/altair/odin/src/tuni_whitegoods/calibration/ur5.mkv
-calibration_folder: /home/altair/odin/src/tuni_whitegoods/calibration/depthmap/
-is_moving: false
-sub_pcl_master: /kinect_master/cloud_robot_frame
-sub_pcl_sub: /kinect_sub/cloud_robot_frame 
+calibration_folder: /home/odin3/calibration/depthmap/
+calibration_homography: /home/odin3/calibration/homography/
 master_to_base: [0.501192, -0.271756, 1.311792, -0.685276, 0.727083, -0.014888, 0.039050]
+

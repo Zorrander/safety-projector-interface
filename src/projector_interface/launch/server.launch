@@ -1,3 +1,0 @@
-<launch>
-    <node name="projector_interface_server" pkg="projector_interface" type="projector_interface_node" output="screen"/>
-</launch>

@@ -1,0 +1,3 @@
+<launch>
+    <node name="hand_tracker" pkg="tuni_whitegoods_perception" type="hand_tracker.py" output="screen"/>
+</launch>

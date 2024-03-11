@@ -1,3 +1,0 @@
-<launch>
-	<rosparam file="$(find hrc)/config/parameters.yaml" />
-</launch>

@@ -1,0 +1,10 @@
+<launch>
+	<rosparam file="$(find tuni_whitegoods_projector)/config/projector_params.yaml" />
+
+    <!--<include file="$(find aruco_detection)/launch/detect.launch" /> -->
+
+    <node name="projection_system" pkg="tuni_whitegoods_projector" type="projector_interface_ur5.py" output="screen"/>
+    <node name="projector_optimized_one" pkg="tuni_whitegoods_projector" type="projector_opt_node" output="screen"/>
+    <!--<node name="projector_optimized_two" pkg="tuni_whitegoods_projector" type="border_node" output="screen"/>-->
+</launch>
+

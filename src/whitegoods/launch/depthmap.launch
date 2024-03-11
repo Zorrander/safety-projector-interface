@@ -1,6 +1,0 @@
-<launch>
-   <param name="~number_cam" type="int" value="1" />
-   <param name="~sub_pcl_master" value="/kinect_master/cloud_robot_frame" />
-   <param name="~sub_pcl_sub" value="/kinect_sub/cloud_robot_frame" />
-   <node name="pcl_fusion" pkg="pcl_fusion" type="pcl_fusion_node" output="screen"/>
-</launch>

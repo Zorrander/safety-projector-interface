@@ -1,8 +1,0 @@
-calibration_homography: /home/odin-lms1/odin/src/whitegoods/calibration/homography/
-file_recorded: /home/odin-lms1/odin/ur10_720.mkv
-calibration_folder: /home/odin-lms1/odin/src/whitegoods/calibration/depthmap/
-is_moving: false
-sub_pcl_master: /kinect_master/cloud_robot_frame
-sub_pcl_sub: /kinect_sub/cloud_robot_frame 
-master_to_base: [0.9045004, 1.049501, 2.129671, 0.993367, 0.0218377, -0.000634056, 0.112888]
-number_cam: 1

@@ -1,8 +1,0 @@
-<launch>
-   <param name="~robot_base" value="base" />
-   <param name="~depth_camera" value="rgb_camera_link" />
-   <param name="~rgb_camera" value="rgb_camera_link" />
-   <param name="~topic_depth" value="/depth/image_raw" />
-   <param name="~topic_depth_to_rgb" value="/depth_to_rgb/image_raw" />
-   <node name="depth_interface" pkg="depth_interface" type="depth_interface_node" output="screen"/>
-</launch>

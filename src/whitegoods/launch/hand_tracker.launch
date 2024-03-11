@@ -1,4 +1,0 @@
-<launch>
-    <include file="$(find hand_tracker)/launch/hand_tracking.launch" />
-    <include file="$(find whitegoods)/launch/depth_interface.launch" />
-</launch>

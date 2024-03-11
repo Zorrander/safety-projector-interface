@@ -1,4 +1,0 @@
-<launch>
-    <!--<include file="$(find scene_calibration)/launch/start_calibration.launch" />-->
-    <node name="detection_cal" pkg="detect_interaction" type="wrapper_node" output="screen"/>
-</launch>

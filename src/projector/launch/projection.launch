@@ -1,6 +1,0 @@
-<launch>
-    <include file="$(startup)/launch/tf_both.launch" />
-    <include file="$(find aruco_detection)/launch/detect.launch" />
-    <node name="projection_system" pkg="projector" type="projector_interface.py" output="screen"/>
-    <include file="$(find projector_opt)/launch/projector_one.launch" />
-</launch>

@@ -1,0 +1,11 @@
+<launch>
+    <arg name="node_start_delay" default="5.0" />
+
+    <node pkg="tf2_ros" type="static_transform_publisher" name="rgb_to_base" args="0.501192 -0.271756 1.311792 -0.685276 0.727083 -0.014888 0.039050 base rgb_camera_link"/>     <!--WORKING FOR UR5 SETTINGS--> 
+    
+    <!-- first kinect (the one that's closer to VR setup)-->
+    <node pkg="tf" type="static_transform_publisher" name="kinect_to_base_one" args="1.42171 0.721405 3.30467 0.954849 -0.271477 -0.0412644 0.113405 base_robot_master master_depth_camera_link 200" launch-prefix="bash -c 'sleep $(arg node_start_delay); $0 $@' "/>
+
+    <!--second kinect--> 
+    <node pkg="tf" type="static_transform_publisher" name="kinect_to_base_two" args="0.871956 -0.0937203 3.22243 0.201299 0.96444 0.167247 0.036916 base_robot_sub sub_depth_camera_link 200" launch-prefix="bash -c 'sleep $(arg node_start_delay); $0 $@' "/>
+</launch>

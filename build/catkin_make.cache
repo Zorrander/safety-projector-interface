@@ -1,0 +1,2 @@
+tuni_whitegoods:tuni_whitegoods_calibration:tuni_whitegoods_openflow_interface:tuni_whitegoods_perception:tuni_whitegoods_projector
+-DCATKIN_DEVEL_PREFIX=/home/odin3/safety-projector-interface/devel -DCMAKE_INSTALL_PREFIX=/home/odin3/safety-projector-interface/install -G Unix Makefiles

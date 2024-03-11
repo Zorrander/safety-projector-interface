@@ -1,0 +1,26 @@
+<launch>
+    <!--<arg name="node_start_delay" default="2.0" /> 
+    <arg name="node_service_delay" default="3.0" />
+    <include file="$(find transform_pcl)/launch/all_kinect.launch" />-->
+    <!--<include file="$(find transform_pcl)/launch/voxel_and_pcltf.launch" />-->
+
+    <node pkg="nodelet" type="nodelet" name="pcl_manager" args="manager" output="screen" />
+
+    <node pkg="nodelet" type="nodelet" name="voxel_grid_master" args="load pcl/VoxelGrid pcl_manager" output="screen">
+      <remap from="~input" to="/points2" />
+      <rosparam>
+        filter_field_name: z
+        filter_limit_min: 0.0
+        filter_limit_max: 3.5
+        filter_limit_negative: False
+        leaf_size: 0.008
+      </rosparam>
+    </node>
+
+	<node pkg="tuni_whitegoods_perception" name="kinect_transformed_master" type="transform_pcl_node" output="screen"/> 
+
+    <node pkg="tuni_whitegoods_perception" name="pcl_fusion"  type="pcl_fusion_node" output="screen"/>
+
+    <node pkg="tuni_whitegoods_perception" name="depth_interface" type="depth_interface_node" output="screen"/>
+
+</launch>

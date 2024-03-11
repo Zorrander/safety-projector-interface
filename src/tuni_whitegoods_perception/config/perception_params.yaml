@@ -1,0 +1,17 @@
+robot_base: base
+name_transform_robot_space: master_to_base
+
+sub_points: /voxel_grid_master/output
+topic_depth: /depth/image_raw
+topic_depth_to_rgb: /depth_to_rgb/image_raw
+topic_pcl_master: /kinect_master/cloud_robot_frame
+
+number_cam: 1
+
+file_recorded: /home/odin3/calibration/output.mkv
+
+sub_pcl_master: /kinect_master/cloud_robot_frame
+sub_pcl_sub: /kinect_sub/cloud_robot_frame 
+
+hand_tracking_rgb_coordinates: /hand_tracking/rgb/coordinates
+hand_tracking_dm_coordinates: /hand_tracking/dm/coordinates
