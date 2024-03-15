@@ -23,7 +23,7 @@
     //book robot border
     void BookRobotStaticBorderServer::executeBookRobot(const BookRobotStaticBorderGoalConstPtr& goal)
     {
-        
+        ROS_INFO("MoveRobotServer::executeBookRobot");
         border_robot_booked.push_back(goal->id);
         sbm->bookBorderRobot(goal->id);
         book_robot_border = true;

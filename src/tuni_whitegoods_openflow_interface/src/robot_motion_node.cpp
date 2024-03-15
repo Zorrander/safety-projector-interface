@@ -1,4 +1,5 @@
 #include "projector_interface/move_robot_server.h"
+#include "projector_interface/move_gripper_server.h"
 
 #include <ros/ros.h>
 #include <ros/spinner.h>
@@ -18,8 +19,9 @@ int main(int argc, char** argv)
    g_spinner.reset(new ros::AsyncSpinner(0, &queue));
    
    // Create an action server object and spin ROS
-   MoveRobotServer moveRobotServer(&nh, "execution/cobot/integration/actions/move_arm_joint");
-   
+   MoveRobotServer moveRobotServer(&nh, "execution/ur/integration/actions/move_arm_joint");
+   MoveGripperServer moveGripperServer(&nh, "execution/gripper/integration/actions/control_gripper");
+
    g_spinner->start();
 
    while (ros::ok()) {

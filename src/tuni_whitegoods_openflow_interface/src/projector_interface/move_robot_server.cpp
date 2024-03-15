@@ -24,8 +24,8 @@
          std::string cmd = "movej(["+ std::to_string(goal->trajectory.points[0].positions[0])+","+ std::to_string(goal->trajectory.points[0].positions[1])+","+ std::to_string(goal->trajectory.points[0].positions[2])+","+ std::to_string(goal->trajectory.points[0].positions[3])+","+ std::to_string(goal->trajectory.points[0].positions[4])+","+ std::to_string(goal->trajectory.points[0].positions[5])+"], a=0.3, v=0.13)";
          std_msgs::String command;
          command.data = cmd;
-         pub_cmd_robot.publish(command);
-         ros::Duration(7.0).sleep();
+         //pub_cmd_robot.publish(command);
+         //ros::Duration(30.0).sleep();
          bool success = true;
          sendFeedbackMoveJoints(goal->action_request);
          if (as_move_joints.isPreemptRequested() || !ros::ok())
@@ -37,9 +37,9 @@
          }
          if(success)
          {
-            ROS_INFO("%s: Succeeded", action_name_move_joints.c_str());
             // set the action state to succeeded
             sendResultMoveJoints(goal->action_request);
+            ROS_INFO("%s: Succeeded", action_name_move_joints.c_str());
          }
       }
       //send feedback
@@ -55,6 +55,7 @@
       {
          MoveJointsResult mjr;
          mjr.action_result.action_id = ar.action_id;
+         mjr.action_result.success = true;
          mjr.action_result.millis_passed = ar.expected_duration_millis;
          as_move_joints.setSucceeded(mjr);
       }

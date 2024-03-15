@@ -1,8 +1,0 @@
-prefix=/home/odin3/safety-projector-interface/devel
-
-Name: tuni_whitegoods_calibration
-Description: Description of tuni_whitegoods_calibration
-Version: 0.0.0
-Cflags: 
-Libs: -L${prefix}/lib 
-Requires: 
