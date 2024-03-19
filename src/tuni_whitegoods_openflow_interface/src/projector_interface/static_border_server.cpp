@@ -19,7 +19,6 @@
          release_border_operator.clear();
          // Start the action server
          as_border_manager.start();
-         activate_static_border_manager = false;
          add_static_border = false;
          ros::param::get("book_robot_static_border_server", book_robot_static_border_server_name);
          ros::param::get("release_robot_static_border_server", release_robot_static_border_server_name);
@@ -34,25 +33,21 @@
       void StaticBorderServer::executeSetLayout(const SetLayoutStaticBordersGoalConstPtr &goal)
       {
          bool success = true;
-         if(!activate_static_border_manager)
-         {
-            activate_static_border_manager = true;    
 
-            sbm_ = std::make_shared<StaticBorderManager>(nh_, goal->size_rows, goal->size_cols, goal->safety_factor, goal->book_adjacent, goal->status_booked, goal->status_free, goal->status_operator);
 
-            std::cout<<"BookRobotStaticBorderServer starting\n";
-            book_robot_static_border_server = new BookRobotStaticBorderServer(nh_, book_robot_static_border_server_name, sbm_);
-            std::cout<<"ReleaseRobotStaticBorderServer starting\n";
-            release_robot_static_border_server = new ReleaseRobotStaticBorderServer(nh_, release_robot_static_border_server_name, sbm_);
-            std::cout<<"BookOperatorStaticBorderServer starting\n";
-            book_operator_static_border_server = new  BookOperatorStaticBorderServer(nh_, book_operator_static_border_server_name, sbm_);
-            std::cout<<"ReleaseOperatorStaticBorderServer starting\n";
-            release_operator_static_border_server = new ReleaseOperatorStaticBorderServer(nh_, release_operator_static_border_server_name, sbm_);
-            std::cout<<"SafetyBorderServer starting\n";
-            safety_border_server = new SafetyBorderServer(nh_, safety_border_server_name, sbm_);
+         sbm_ = std::make_shared<StaticBorderManager>(nh_, goal->size_rows, goal->size_cols, goal->safety_factor, goal->book_adjacent, goal->status_booked, goal->status_free, goal->status_operator);
 
-            
-         }
+         ROS_INFO("BookRobotStaticBorderServer starting");
+         book_robot_static_border_server = new BookRobotStaticBorderServer(nh_, book_robot_static_border_server_name, sbm_);
+         ROS_INFO("ReleaseRobotStaticBorderServer starting");
+         release_robot_static_border_server = new ReleaseRobotStaticBorderServer(nh_, release_robot_static_border_server_name, sbm_);
+         ROS_INFO("BookOperatorStaticBorderServer starting");
+         book_operator_static_border_server = new  BookOperatorStaticBorderServer(nh_, book_operator_static_border_server_name, sbm_);
+         ROS_INFO("ReleaseOperatorStaticBorderServer starting");
+         release_operator_static_border_server = new ReleaseOperatorStaticBorderServer(nh_, release_operator_static_border_server_name, sbm_);
+         ROS_INFO("SafetyBorderServer starting");
+         safety_border_server = new SafetyBorderServer(nh_, safety_border_server_name, sbm_);
+
          displayed_ids_borders.push_back(goal->request_id);
          sendFeedbackSetLayout(goal->request_id);
          if (as_border_manager.isPreemptRequested() || !ros::ok() || !success)

@@ -11,7 +11,6 @@ StaticBorderManager::StaticBorderManager(ros::NodeHandle *nh_, int rows, int col
 nh(*nh_),
 it_(nh)
 {
-   std::cout<<"StaticBorderManager starting\n";
    //ros::param::get("highest_depth", highest_depth);
    service_borders = nh.advertiseService("/execution/projector_interface/integration/services/list_static_border_status", &StaticBorderManager::getBordersService, this);
    dm_sub_ = it_.subscribe("/detection/depth_map", 1,&StaticBorderManager::depthMapCallback, this);  
@@ -54,10 +53,9 @@ it_(nh)
    previous_index = -1;
    change_color = false;
    minmax_values.clear();
-
-   std::cout<<"StaticBorderManager running\n";
-
+   ROS_INFO("StaticBorderManager running");
 }
+
 //add a border to the manager. each border is added to an array.
 //Then we split the borders between the display (where they should be projected) and the monitoring
 void StaticBorderManager::addBorder(StaticBorder sb)
@@ -111,9 +109,11 @@ void StaticBorderManager::addBorder(StaticBorder sb)
    }
    redraw = true;
 }
+
 //Book a robot border by its id
 void StaticBorderManager::bookBorderRobot(std::string id)
 {
+   ROS_INFO("BOOKING BORDER %s", id.c_str());
    int tmp_col;
    int tmp_row;
    //get position of the booked border in the grid and book it
@@ -161,13 +161,17 @@ void StaticBorderManager::bookBorderRobot(std::string id)
          }
       }
    }
+   for(BorderContentStatus bdr : borders_status)
+   {
+      ROS_INFO("Border %s --> %d", bdr.id.c_str(), bdr.status);
+   }
    //update the color of the borders
    updateProjection();
 }
+
 //Book a border for the operator. It signals the operator that an object can be picked by using a different color.
 void StaticBorderManager::bookBorderOperator(std::string id)
 {
-   std::cout<<"CODE booking robot border\n";
    for(int i = 0; i < borders_booked.size(); i++)
    {
       if(borders_booked[i].id.compare(id) == 0)
@@ -188,8 +192,9 @@ void StaticBorderManager::bookBorderOperator(std::string id)
 //release a border booked by the robot
 void StaticBorderManager::releaseRobotBorder(std::string id, int status)
 {
+
    //release booking and change color
-   std::cout<<"RELEASING BORDER\n";
+   ROS_INFO("RELEASING BORDER %s -> %i", id.c_str(), status);
    if(status == 0)
    {
       for(int i = 0; i < borders_booked.size(); i++)
@@ -218,7 +223,12 @@ void StaticBorderManager::releaseRobotBorder(std::string id, int status)
                if(borders_booked[i].status == 1)
                {
                   borders[j].changeBorderColor(stat_free);
+                  if(borders_booked[j].id.compare(id) != 0)
+                  {
+                     borders_booked[j].status = 0;
+                  }
                }
+
             }
          }
       }
@@ -336,7 +346,7 @@ std::vector<std::string> StaticBorderManager::getAdjacentBorders(int r, int c)
 // If ther is an object inside a border, this one can't be booked
 bool StaticBorderManager::getBordersService(integration::ListStaticBordersStatus::Request& req, integration::ListStaticBordersStatus::Response& res)
 {
-   std::cout<<"getBordersService border \n";
+   ROS_INFO("Checking border status...");
    res.status_borders.clear();
    getObjectsBorders(depth_map);
    for(BorderContentStatus bdr : borders_status)
@@ -344,11 +354,10 @@ bool StaticBorderManager::getBordersService(integration::ListStaticBordersStatus
       integration::StaticBorderStatus sbs;
       sbs.id = bdr.id;
       sbs.status = bdr.status;
-      std::cout<<"sbs.id: "<<sbs.id<<"\n";
-      std::cout<<"sbs.status : "<<sbs.status<<"\n";
       res.status_borders.push_back(sbs);
+      ROS_INFO("Border %s --> %d", sbs.id.c_str(), sbs.status);
    }
-
+   ROS_INFO("Border status check complete.");
    return true;
 }
 
@@ -516,6 +525,7 @@ void StaticBorderManager::handTrackingCallback(const unity_msgs::poiPCLConstPtr&
 // Check the depth inside the borders to detect if there are any objects
 void StaticBorderManager::getObjectsBorders(cv::Mat& image)
 {
+   ROS_INFO("Looking for objects within the borders...");   
    cv::Mat res_bl = cv::Mat(1024, 1024, CV_32FC1,cv::Scalar(std::numeric_limits<float>::min()));
    cv::Mat enhanced = cv::Mat(1024, 1024, CV_32FC1,cv::Scalar(std::numeric_limits<float>::min()));
    cv::Mat res_mask_dm;     
@@ -536,6 +546,7 @@ void StaticBorderManager::fillOccupancy(cv::Mat& image)
 {
    for(int i = 0; i < borders_status.size(); i++)
    {
+      ROS_INFO("Border %i...", i); 
       bool cluster = isClusterInsideBorder(image,borders_status[i]);
       if(cluster)
       {
@@ -546,9 +557,11 @@ void StaticBorderManager::fillOccupancy(cv::Mat& image)
          if(borders_booked[i].status == 1)
          {
             borders_status[i].status = 1;
+            ROS_INFO("Border booked == 1 --> updating status"); 
          }
          else
          {
+            ROS_INFO("Border booked == 0 --> updating status"); 
             borders_status[i].status = 0;
          }
       }
@@ -611,6 +624,7 @@ bool StaticBorderManager::isClusterInsideBorder(cv::Mat& image, BorderContentSta
    }
    if(count > 12)
    {
+      ROS_INFO("Detected cluster inside border");
       result = true;
    }
 
