@@ -13,14 +13,29 @@
       {
          pub_cmd_robot = nh_->advertise<std_msgs::String>("/ur_hardware_interface/script_command",1);
          as_move_gripper.start();
+         client_load = nh_->serviceClient<ur_dashboard_msgs::Load>("/ur_hardware_interface/dashboard/load_program");
+         client_play = nh_->serviceClient<std_srvs::Trigger>("/ur_hardware_interface/dashboard/play");
        }
 
       //move the joints of the robot to some positions
       void MoveGripperServer::executeMoveGripper(const ControlOpenCloseToolGoalConstPtr &goal)
       {
-         ROS_INFO("MoveRobotServer::executeMoveGripper");
          bool success = true;
-         sendFeedbackMoveGripper(goal->action_request);
+         ROS_INFO("MoveRobotServer::executeMoveGripper");
+         srv_req.request.filename = "ros_control.urp";
+         success = run_dashboard_script(srv_req);
+         ros::Duration(1.0).sleep();
+         if (success){
+            if (goal->tool_action.compare("close") == 0){
+               srv_req.request.filename = "cl.urp";
+               success = run_dashboard_script(srv_req); 
+            } else if (goal->tool_action.compare("open") == 0){
+               srv_req.request.filename = "open.urp";
+               success = run_dashboard_script(srv_req);
+            }
+            sendFeedbackMoveGripper(goal->action_request);           
+         }
+
          if (as_move_gripper.isPreemptRequested() || !ros::ok())
          {
             ROS_INFO("%s: Preempted", action_name_move_gripper.c_str());
@@ -35,6 +50,36 @@
             sendResultMoveGripper(goal->action_request);
          }
       }
+
+      bool MoveGripperServer::run_dashboard_script(ur_dashboard_msgs::Load srv_req)
+      {
+        bool success = true;
+
+        if (client_load.call(srv_req))
+        {
+          std::cout<<srv_req.response.answer<<"\n";
+        }
+        else
+        {
+          ROS_ERROR("Failed to call service load");
+          success = false;
+          //return 1;
+        }
+
+        if (client_play.call(srv_play))
+        {
+          std::cout<<srv_play.response.message<<"\n";
+        }
+        else
+        {
+          ROS_ERROR("Failed to call service play");
+          success = false;
+          //return 1;
+        }
+        ros::Duration(1.0).sleep();
+        return success;
+      }
+
       //send feedback
       void MoveGripperServer::sendFeedbackMoveGripper(ActionRequest ar)
       {
@@ -51,6 +96,4 @@
          result_mgr.action_result.success = true;
          as_move_gripper.setSucceeded(result_mgr);
       }
-
-
 

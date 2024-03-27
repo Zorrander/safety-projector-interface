@@ -24,8 +24,8 @@
          std::string cmd = "movej(["+ std::to_string(goal->trajectory.points[0].positions[0])+","+ std::to_string(goal->trajectory.points[0].positions[1])+","+ std::to_string(goal->trajectory.points[0].positions[2])+","+ std::to_string(goal->trajectory.points[0].positions[3])+","+ std::to_string(goal->trajectory.points[0].positions[4])+","+ std::to_string(goal->trajectory.points[0].positions[5])+"], a=0.3, v=0.13)";
          std_msgs::String command;
          command.data = cmd;
-         //pub_cmd_robot.publish(command);
-         //ros::Duration(30.0).sleep();
+         pub_cmd_robot.publish(command);
+         ros::Duration(10.0).sleep();
          bool success = true;
          sendFeedbackMoveJoints(goal->action_request);
          if (as_move_joints.isPreemptRequested() || !ros::ok())
