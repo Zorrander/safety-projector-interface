@@ -8,8 +8,6 @@ topic_pcl_master: /kinect_master/cloud_robot_frame
 
 number_cam: 1
 
-file_recorded: /home/odin3/calibration/output.mkv
-
 sub_pcl_master: /kinect_master/cloud_robot_frame
 sub_pcl_sub: /kinect_sub/cloud_robot_frame 
 

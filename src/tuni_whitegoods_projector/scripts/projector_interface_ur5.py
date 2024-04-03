@@ -6,6 +6,7 @@
 from multiprocessing.resource_sharer import stop
 import cv2
 import sys
+from pathlib import Path
 import time
 import os
 from gpg import Data
@@ -18,6 +19,7 @@ import cv2.aruco as aruco
 from cv_bridge import CvBridge, CvBridgeError
 import message_filters
 from sensor_msgs.msg import Image
+
 sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/../../robot/scripts/')
 #from ur5_kinematics import ur5
 
@@ -221,9 +223,9 @@ class Projector():
     def __init__(self, interface_configs_path, common_configs, homogprahy_path):
         self.projectors = []
         self.mainCamera = {}
-        self.name_f = rospy.get_param("calibration_homography")
+        self.name_f = Path(rospy.get_param("calibration_folder"))
         self.home = os.environ.get("HOME")
-        self.name_folder = self.name_f
+        self.name_folder = self.name_f.parent / "homography" 
         self.is_moving = rospy.get_param("is_moving")
         self.is_init = False
         self.depthIm = None
@@ -403,7 +405,7 @@ class Projector():
     
     #this method takes the calibration files and initialize the transform with the homographies
     def init_zones_tmp(self):
-        calib_file = self.name_folder + "projection_calibration.yaml"
+        calib_file = self.name_folder / "projection_calibration.yaml"
         with open(calib_file) as file:
          try:
             data = yaml.safe_load(file)

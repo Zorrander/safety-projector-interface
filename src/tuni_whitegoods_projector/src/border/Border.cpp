@@ -5,20 +5,36 @@
 {
 
 }
-
+''
 void Border::depthMapCallback(const sensor_msgs::ImageConstPtr& msg_dm)
 {
 
 }*/
 //reads params for depthmap
+
 void Border::readParamsDepthMap()
 {
-   ros::param::get("a2x", ax);
-   ros::param::get("b2x", bx);
-   ros::param::get("a2y", ay);
-   ros::param::get("b2y", by);
-   ros::param::get("a2z", az);
-   ros::param::get("b2z", bz);
+   std::string line;
+   std::string pwd;
+   ros::param::get("calibration_folder", pwd);
+   std::string name_file = pwd + "params.txt";
+   std::ifstream dm_file(name_file);
+   if(dm_file.is_open())
+   {
+      getline(dm_file,line);
+      ax = std::stod(line); 
+      getline(dm_file,line);
+      bx = std::stod(line);
+      getline(dm_file,line);
+      ay = std::stod(line);
+      getline(dm_file,line);
+      by = std::stod(line);
+      getline(dm_file,line);
+      az = std::stod(line);
+      getline(dm_file,line);
+      bz = std::stod(line);
+      dm_file.close();
+   }
 }
 //tranform a Polygon from the robot space to the depthmap
 geometry_msgs::PolygonStamped Border::transformToDepthMap(geometry_msgs::PolygonStamped border)

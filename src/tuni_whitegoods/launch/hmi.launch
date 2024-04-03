@@ -1,4 +1,8 @@
 <launch>
+	<arg name="calibration_folder" default="$(env HOME)/calibration/depthmap/" />
+
+	<param name="calibration_folder" value="$(arg calibration_folder)" />
+
     <rosparam file="$(find tuni_whitegoods)/config/parameters.yaml" />
 
     <include file="$(find tuni_whitegoods_perception)/launch/whitegoods_perception.launch" />

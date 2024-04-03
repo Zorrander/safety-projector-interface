@@ -1,4 +1,2 @@
-calibration_folder: /home/odin3/calibration/depthmap/
-calibration_homography: /home/odin3/calibration/homography/
 master_to_base: [0.501192, -0.271756, 1.311792, -0.685276, 0.727083, -0.014888, 0.039050]
 

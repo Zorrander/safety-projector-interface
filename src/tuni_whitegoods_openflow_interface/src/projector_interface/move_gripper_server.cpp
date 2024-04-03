@@ -21,6 +21,7 @@
       void MoveGripperServer::executeMoveGripper(const ControlOpenCloseToolGoalConstPtr &goal)
       {
          bool success = true;
+         /*
          ROS_INFO("MoveRobotServer::executeMoveGripper");
          srv_req.request.filename = "ros_control.urp";
          success = run_dashboard_script(srv_req);
@@ -35,6 +36,7 @@
             }
             sendFeedbackMoveGripper(goal->action_request);           
          }
+         */
 
          if (as_move_gripper.isPreemptRequested() || !ros::ok())
          {
@@ -43,6 +45,7 @@
             as_move_gripper.setPreempted();
             success = false;
          }
+
          if(success)
          {
             ROS_INFO("%s: Succeeded", action_name_move_gripper.c_str());

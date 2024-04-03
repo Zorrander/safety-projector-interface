@@ -18,7 +18,9 @@
       //move the joints of the robot to some positions
       void MoveRobotServer::executeMoveJoints(const MoveJointsGoalConstPtr &goal)
       {
+         bool success = true;
          ROS_INFO("MoveRobotServer::executeMoveJoints");
+         /*
          control_msgs::FollowJointTrajectoryGoal goal_ur5;
          goal_ur5.trajectory = goal->trajectory;
          std::string cmd = "movej(["+ std::to_string(goal->trajectory.points[0].positions[0])+","+ std::to_string(goal->trajectory.points[0].positions[1])+","+ std::to_string(goal->trajectory.points[0].positions[2])+","+ std::to_string(goal->trajectory.points[0].positions[3])+","+ std::to_string(goal->trajectory.points[0].positions[4])+","+ std::to_string(goal->trajectory.points[0].positions[5])+"], a=0.3, v=0.13)";
@@ -26,7 +28,7 @@
          command.data = cmd;
          pub_cmd_robot.publish(command);
          ros::Duration(10.0).sleep();
-         bool success = true;
+         
          sendFeedbackMoveJoints(goal->action_request);
          if (as_move_joints.isPreemptRequested() || !ros::ok())
          {
@@ -35,6 +37,7 @@
             as_move_joints.setPreempted();
             success = false;
          }
+         */
          if(success)
          {
             // set the action state to succeeded
