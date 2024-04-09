@@ -400,6 +400,7 @@ void StaticBorderManager::depthMapCallback(const sensor_msgs::ImageConstPtr& msg
       cv_ptr = cv_bridge::toCvCopy(msg_dm, sensor_msgs::image_encodings::TYPE_32FC1);
       depth_map = cv_ptr->image.clone();
       //detect border crossing by providing the mask of the borders
+      
       std::vector<cv::KeyPoint> kpts = detectBorderCrossing(safety_line_mask);
       raiseBorderViolation(kpts,header);
       

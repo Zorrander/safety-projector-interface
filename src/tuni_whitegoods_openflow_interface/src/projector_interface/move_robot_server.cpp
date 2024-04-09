@@ -20,6 +20,7 @@
       {
          bool success = true;
          ROS_INFO("MoveRobotServer::executeMoveJoints");
+         ros::Duration(5.0).sleep();
          /*
          control_msgs::FollowJointTrajectoryGoal goal_ur5;
          goal_ur5.trajectory = goal->trajectory;

@@ -7,7 +7,7 @@
 #include <actionlib/server/simple_action_server.h>
 
 #include <integration/ControlOpenCloseToolAction.h>
-#include <ur_dashboard_msgs/Load.h>
+// #include <ur_dashboard_msgs/Load.h>
 #include <std_srvs/Trigger.h>
 #include <std_msgs/Bool.h>
 #include <std_msgs/String.h>
@@ -29,13 +29,13 @@ class MoveGripperServer
       void sendResultMoveGripper(ActionRequest ar);
       
    protected:
-      bool run_dashboard_script(ur_dashboard_msgs::Load srv_req);
+      // bool run_dashboard_script(ur_dashboard_msgs::Load srv_req);
 
-      ros::ServiceClient client_load;
-      ros::ServiceClient client_play;
+      //ros::ServiceClient client_load;
+      //ros::ServiceClient client_play;
 
-      ur_dashboard_msgs::Load srv_req;
-      std_srvs::Trigger srv_play;
+      //ur_dashboard_msgs::Load srv_req;
+      //std_srvs::Trigger srv_play;
       
       actionlib::SimpleActionServer<ControlOpenCloseToolAction> as_move_gripper;
       

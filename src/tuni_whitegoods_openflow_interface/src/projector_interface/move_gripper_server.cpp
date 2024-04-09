@@ -13,8 +13,8 @@
       {
          pub_cmd_robot = nh_->advertise<std_msgs::String>("/ur_hardware_interface/script_command",1);
          as_move_gripper.start();
-         client_load = nh_->serviceClient<ur_dashboard_msgs::Load>("/ur_hardware_interface/dashboard/load_program");
-         client_play = nh_->serviceClient<std_srvs::Trigger>("/ur_hardware_interface/dashboard/play");
+         //client_load = nh_->serviceClient<ur_dashboard_msgs::Load>("/ur_hardware_interface/dashboard/load_program");
+         //client_play = nh_->serviceClient<std_srvs::Trigger>("/ur_hardware_interface/dashboard/play");
        }
 
       //move the joints of the robot to some positions
@@ -54,6 +54,7 @@
          }
       }
 
+      /*
       bool MoveGripperServer::run_dashboard_script(ur_dashboard_msgs::Load srv_req)
       {
         bool success = true;
@@ -81,7 +82,7 @@
         }
         ros::Duration(1.0).sleep();
         return success;
-      }
+      }*/
 
       //send feedback
       void MoveGripperServer::sendFeedbackMoveGripper(ActionRequest ar)
