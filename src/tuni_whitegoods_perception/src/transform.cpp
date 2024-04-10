@@ -205,7 +205,10 @@ class Transform
     void readICPFromFile()
     {
       std::string line;
-      std::ifstream icpfile ("/home/altair/odin/src/transform_pcl/config/icp.txt");
+      std::string calibration_folder;
+      ros::param::get("calibration_folder", calibration_folder);
+      std::string name_file = calibration_folder + "../ICP/icp.txt";
+      std::ifstream icpfile (name_file);
       if(icpfile.is_open())
       {
         for(int i = 0; i < 4; i++)

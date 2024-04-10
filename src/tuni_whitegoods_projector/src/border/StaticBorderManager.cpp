@@ -87,10 +87,12 @@ void StaticBorderManager::addBorder(StaticBorder sb)
             p.img = p.img + sb.drawBorder().clone();
             p.mask = p.mask + sb.drawMask().clone();
             added = true;
+            ROS_INFO("Projection added");
          }
       }
       if(!added)
       {
+         ROS_INFO("Projection not added");
          Projection np;
          np.zone = sb.getZone();
          np.img = sb.drawBorder().clone();
@@ -380,7 +382,7 @@ void StaticBorderManager::depthMapCallback(const sensor_msgs::ImageConstPtr& msg
          sf_line_colored = sf_line_colored + i.img.clone();
          safety_line_mask = safety_line_mask + i.mask.clone();
       }
-      publishBorder();
+      // publishBorder();
       redraw = false;
       first_baseline = true;
       first_init = true;
@@ -665,5 +667,6 @@ void StaticBorderManager::publishBorder()
       border_msg.img = *msg_col;
       msg.list_borders.push_back(border_msg);
    }
+
    pub_border_projection.publish(msg);
 }

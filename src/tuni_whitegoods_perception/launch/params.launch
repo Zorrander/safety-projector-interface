@@ -1,0 +1,8 @@
+<launch>
+	<arg name="file_recorded" default="$(env HOME)/calibration/output.mkv" />
+    
+    <param name="file_recorded" value="$(arg file_recorded)" />
+
+	<rosparam file="$(find tuni_whitegoods_perception)/config/perception_params.yaml" />
+
+</launch>

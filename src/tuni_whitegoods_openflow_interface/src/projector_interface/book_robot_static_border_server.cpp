@@ -26,6 +26,7 @@
         ROS_INFO("MoveRobotServer::executeBookRobot");
         border_robot_booked.push_back(goal->id);
         sbm->bookBorderRobot(goal->id);
+        sbm->publishBorder();
         book_robot_border = true;
         bool success = true;
         sendFeedbackBookRobot(goal->request_id);

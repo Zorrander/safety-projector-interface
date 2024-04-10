@@ -1,230 +1,31 @@
-#!/usr/bin/env python3
-#This code draws an interface or elements that comes from the openflow server.
-#It also project everything that needs to be projected by associating each element to be projected (interface, instructions, borders...) with an homography
-#
-
-from multiprocessing.resource_sharer import stop
 import cv2
-import sys
-from pathlib import Path
-import time
-import os
-from gpg import Data
-import numpy as np
-import rospy
+import uuid
 import yaml
 import json
-import rospkg
-import cv2.aruco as aruco
+import rospy
+import numpy as np
+from pathlib import Path
 from cv_bridge import CvBridge, CvBridgeError
-import message_filters
-from sensor_msgs.msg import Image
 
-sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/../../robot/scripts/')
-#from ur5_kinematics import ur5
-
-from sensor_msgs.msg import JointState
-from unity_msgs.msg import MarkerDataArray
-from unity_msgs.msg import ManipulatedObject
-from unity_msgs.msg import HomographyMtx
 from unity_msgs.msg import DataProj
-from unity_msgs.msg import Projection
-from unity_msgs.msg import ListProjection
 from unity_msgs.msg import ListDataProj
 from unity_msgs.msg import ArucoArray
 from unity_msgs.msg import ArucoMarker
 from unity_msgs.msg import InterfacePOI
 from unity_msgs.msg import ElementUI
 from unity_msgs.msg import BorderProj
-from unity_msgs.msg import Instructions
-from unity_msgs.msg import LBorder
-from geometry_msgs.msg import TransformStamped
-from std_msgs.msg import String
-from std_msgs.msg import ColorRGBA
-from std_msgs.msg import Bool
-from geometry_msgs.msg import Point
-from geometry_msgs.msg import Pose
-from integration.msg import VirtualButtonReference
-from integration.msg import ProjectorUI
-import uuid
 
-# class for drawing simple images with text at given location 
-class Button():
-    def __init__(self, id_, zone, name, description, text, b_color, t_color, center, radius, hidden):
-        self._id = id_
-        self._zone = zone
-        self._name = name
-        self._description = description
-        self._text = text
-        self._button_color = (b_color.b*255, b_color.g*255, b_color.r*255)
-        self._text_color = (t_color.b*255, t_color.g*255, t_color.r*255)
-        self._center = (int(center.position.x),int(center.position.y))
-        self._radius = int(radius)
-        self._hidden = hidden
+from tuni_whitegoods_projector.button import Button
+from tuni_whitegoods_projector.instruction import Instruction
+from tuni_whitegoods_projector.ui import InterfaceUI
 
-    def set_button_color(self,b_color):
-        self._button_color = (b_color.b*255, b_color.g*255, b_color.r*255)
-
-    def get_center(self):
-        return self._center
-    
-    def get_zone(self):
-        return self._zone
-    
-    def draw_button(self, img):
-        if not self._hidden:
-            img = cv2.circle(img, self._center, self._radius, self._button_color, -1)
-            TEXT_FACE = cv2.FONT_HERSHEY_DUPLEX
-            TEXT_SCALE, text_size, TEXT_THICKNESS = self.get_text_attributes()
-            text_origin = (self._center[0] - text_size[0] // 2, self._center[1] + text_size[1] // 2)
-            cv2.putText(img, self._text, text_origin, TEXT_FACE, TEXT_SCALE, self._text_color, TEXT_THICKNESS, cv2.LINE_AA)
-
-        return img
-    
-    def get_text_attributes(self):
-        TEXT_FACE = cv2.FONT_HERSHEY_DUPLEX
-        TEXT_SCALE = 0.5
-        TEXT_THICKNESS = 2
-        right_size = False
-        text_size, _ = cv2.getTextSize(self._text, TEXT_FACE, TEXT_SCALE, TEXT_THICKNESS)
-        if text_size[0] > 60:
-            TEXT_THICKNESS = 1
-        while not right_size:
-            if (text_size[0] < self._radius*2-10 and text_size[0] > self._radius*2-25): 
-                right_size = True
-            else:
-                TEXT_SCALE = TEXT_SCALE + 0.1 
-            if TEXT_SCALE > 10:
-                right_size = True
-            text_size, _ = cv2.getTextSize(self._text, TEXT_FACE, TEXT_SCALE, TEXT_THICKNESS)
-
-        return TEXT_SCALE, text_size, TEXT_THICKNESS
-    
-    def print_button(self):
-        print(self._id)
-        print(self._zone)
-        print(self._button_color)
-
-#class to draw instructions
-class Instruction():
-    def __init__(self, id_, zone, target, title, title_c, description, desc_c, lifetime):
-        self._id = id_
-        self._zone = zone
-        self._target = target
-        self._title = title
-        self._title_c = (title_c.b*255, title_c.g*255, title_c.r*255)
-        self._desc = description
-        self._desc_c = (desc_c.b*255, desc_c.g*255, desc_c.r*255)
-        self._lifetime = lifetime
-
-    def draw_instruction(self,img):
-        TEXT_FACE = cv2.FONT_HERSHEY_DUPLEX
-        TEXT_SCALE_TITLE = 2.0
-        TEXT_SCALE = 1.0
-        TEXT_THICKNESS = 2
-        text_size_title, _ = cv2.getTextSize(self._title, TEXT_FACE, TEXT_SCALE_TITLE, TEXT_THICKNESS)
-        text_size, _ = cv2.getTextSize(self._desc, TEXT_FACE, TEXT_SCALE, TEXT_THICKNESS)
-        tot_height = text_size_title[1] + text_size[1]
-        start_title_x = int(self._target.position.x) + int((text_size[0] - text_size_title[0]) / 2)
-        start_title_y = int(self._target.position.y) - (text_size[1] - 10)
-        pos_desc = (int(self._target.position.x),int(self._target.position.y + text_size_title[1]))
-        cv2.putText(img, self._title, (start_title_x,start_title_y), TEXT_FACE, TEXT_SCALE_TITLE, self._title_c, TEXT_THICKNESS, cv2.LINE_AA)
-        cv2.putText(img, self._desc, pos_desc, TEXT_FACE, TEXT_SCALE, self._desc_c, TEXT_THICKNESS, cv2.LINE_AA)
-        tl_corner = (int(self._target.position.x - 10),int(self._target.position.y - tot_height))
-        br_corner = (int(self._target.position.x + text_size[0] + 10),int(self._target.position.y + tot_height))
-        #img = cv2.rectangle(img, tl_corner, br_corner, self._title_c, 2)
-        img = self.draw_border(img,tl_corner,br_corner,self._title_c, 2, 10,20) #80 bracket style
-
-        return img
-
-    def draw_border(self,img, pt1, pt2, color, thickness, r, d):
-        x1,y1 = pt1
-        x2,y2 = pt2
-        # Top left
-        cv2.line(img, (x1 + r, y1), (x1 + r + d, y1), color, thickness)
-        cv2.line(img, (x1, y1 + r), (x1, y1 + r + d), color, thickness)
-        cv2.ellipse(img, (x1 + r, y1 + r), (r, r), 180, 0, 90, color, thickness)
-        # Top right
-        cv2.line(img, (x2 - r, y1), (x2 - r - d, y1), color, thickness)
-        cv2.line(img, (x2, y1 + r), (x2, y1 + r + d), color, thickness)
-        cv2.ellipse(img, (x2 - r, y1 + r), (r, r), 270, 0, 90, color, thickness)
-        # Bottom left
-        cv2.line(img, (x1 + r, y2), (x1 + r + d, y2), color, thickness)
-        cv2.line(img, (x1, y2 - r), (x1, y2 - r - d), color, thickness)
-        cv2.ellipse(img, (x1 + r, y2 - r), (r, r), 90, 0, 90, color, thickness)
-        # Bottom right
-        cv2.line(img, (x2 - r, y2), (x2 - r - d, y2), color, thickness)
-        cv2.line(img, (x2, y2 - r), (x2, y2 - r - d), color, thickness)
-        cv2.ellipse(img, (x2 - r, y2 - r), (r, r), 0, 0, 90, color, thickness)
-
-        return img
-
-
-
-#class for interface image
-class InterfaceUI():
-    def __init__(self, ressource_id, zone, name, description, buttons): #add hidden
-        self._ressource_id = ressource_id
-        self._zone = zone
-        self._name = name
-        self._description = description
-        self._list_buttons = []
-        self._instructions = []
-        self._hidden = False
-        if len(buttons) > 0:
-            self._list_buttons = buttons
-        self._screen_size = (1080,1920) 
-        self._interface_img = np.zeros((self._screen_size[0], self._screen_size[1], 3), np.uint8)
-        self.modified_interface = True
-
-    def add_button(self,button):
-        self._list_buttons.append(button)
-        self.modified_interface = True
-
-    def add_instruction(self,inst):
-        self._instructions.append(inst)
-        self.modified_interface = True
-
-    def get_zone(self):
-        return self._zone
-
-    def get_list_buttons(self):
-        return self._list_buttons
-    
-    def get_hidden(self):
-        return self._hidden
-
-    def draw(self):
-        if self.modified_interface and not self._hidden:
-            for button in self._list_buttons:
-                self._interface_img = button.draw_button(self._interface_img)
-            for instruction in self._instructions:
-                self._interface_img = instruction.draw_instruction(self._interface_img)
-            self.modified_interface = False
-
-        return self._interface_img
-    
-    def modify_button_color(self,button):
-        for i in self._list_buttons:
-            if i._id == button.id:
-                i.set_button_color(button.button_color)
-        self.modified_interface = True
-
-    def get_image_interface(self):
-        return self._interface_img
-    
-    def print_buttons(self):
-        for i in self._list_buttons:
-            i.print_button()
-        
 
 #class for visualizing with projector
 class Projector():
-    def __init__(self, interface_configs_path, common_configs, homogprahy_path):
+    def __init__(self):
         self.projectors = []
         self.mainCamera = {}
         self.name_f = Path(rospy.get_param("calibration_folder"))
-        self.home = os.environ.get("HOME")
         self.name_folder = self.name_f.parent / "homography" 
         self.is_moving = rospy.get_param("is_moving")
         self.is_init = False
@@ -233,25 +34,6 @@ class Projector():
         self.depth2rgb = None
         self.table_space_transform = None
         self.UI_transform = None
-        self.rgb_sub = message_filters.Subscriber("/master/rgb/image_raw", Image)
-        self.depth_sub = message_filters.Subscriber("/master/depth/image_raw", Image)
-        self.depth2RGB_sub = message_filters.Subscriber("/master/depth_to_rgb/image_raw", Image)
-        self.sub_button = rospy.Subscriber("/interfaceUI/openflow/new_button",VirtualButtonReference,self.callback_button)
-        self.sub_button_color = rospy.Subscriber("/interfaceUI/openflow/change_button_color",VirtualButtonReference,self.callback_button_color)
-        self.marker_array_sub = rospy.Subscriber("/aruco_markers_warped", ArucoArray, self.callbackArrayMarkers)
-        self.aruco_change = rospy.Subscriber("/aruco_markers_warped/changes", Bool, self.callback_aruco_change)
-        self.sub_safety_line = rospy.Subscriber("/safety_line/line_proj", Image, self.callback_safety_line)
-        self.sub_preset_ui = rospy.Subscriber("/interfaceUI/openflow/new_interface", ProjectorUI, self.callback_preset_ui)
-        self.sub_border_proj = rospy.Subscriber("/projector_interface/display_dynamic_border", BorderProj, self.callback_border)
-        self.sub_static_border_proj = rospy.Subscriber("/projector_interface/display_static_border", LBorder, self.callback_static_border)
-        self.sub_unset_proj = rospy.Subscriber("/interfaceUI/openflow/unset_projection", Bool, self.callback_unset)
-        self.sub_instruction = rospy.Subscriber("/interfaceUI/openflow/set_instruction", Instructions, self.callback_instruction)
-        im_subs = [self.rgb_sub,self.depth_sub,self.depth2RGB_sub]
-        self.ts = message_filters.ApproximateTimeSynchronizer([self.rgb_sub, self.depth_sub, self.depth2RGB_sub], 1, 2)
-        self.ts.registerCallback(self.img_cb_once,im_subs)
-        self._table_homography_pub = rospy.Publisher("/unity/table_homography", HomographyMtx, queue_size=1)#homography for the table to do visualization
-        self.dp_list_pub = rospy.Publisher("/list_dp", ListDataProj, queue_size=1)
-        self.pub_poi = rospy.Publisher("/interface_poi/buttons", InterfacePOI, queue_size=1)
         self.static_border = []
         self._screen_size = (1080,1920)
         self._vert_view_size = (1024,1024)
@@ -263,7 +45,6 @@ class Projector():
         self._cfg = None
         self._button_info = None
         self._robot_carrying_object = False
-        self._H = np.loadtxt(homogprahy_path)
         self.bridge_interface = CvBridge()
         self.arr_markers = ArucoArray()
         self.marker = ArucoMarker()
@@ -276,9 +57,11 @@ class Projector():
         self.s_marker = 0
         self.received = False
         self.aruco_changed = False
-        self.init_zones_tmp()
+    
+        self.dp_list_pub = rospy.Publisher("/list_dp", ListDataProj, queue_size=1)
+        self.pub_poi = rospy.Publisher("/interface_poi/buttons", InterfacePOI, queue_size=1)
 
-        #self.init(interface_configs_path, common_configs)
+        self.init_zones_tmp()
         rospy.loginfo("Projector interface initialized!")
 
     #get aruco marker on the table
@@ -294,7 +77,7 @@ class Projector():
         self.depthIm = CvBridge().imgmsg_to_cv2(depth2RGB_data, "passthrough")
         self.rgb_img = CvBridge().imgmsg_to_cv2(rgb_data, "bgr8")
         self.depth2rgb = CvBridge().imgmsg_to_cv2(depth2RGB_data, "passthrough")
-    #[sub.sub.unregister() for sub in subscribers]
+	#[sub.sub.unregister() for sub in subscribers]
 
     #get safety line if any
     def callback_safety_line(self,msg):
@@ -525,7 +308,6 @@ class Projector():
             if not i.get_hidden():
                 interface = i.draw()
                 found = True
-
         return interface, found
 
     #fill message that send the buttons positions in the RGb camera space
@@ -610,19 +392,3 @@ class Projector():
                         dp_list.list_proj.append(dp_safety)
                 
             self.dp_list_pub.publish(dp_list)
-
-def main():
-    rospy.init_node('projection_system')
-    rospack = rospkg.RosPack()
-    config_prefix = rospack.get_path('unity_msgs') + '/configs/'
-    interface_config_path = config_prefix + 'mobile_demo/'
-    common_config_path = config_prefix + 'config.yaml'
-    homography_file = config_prefix + 'robot_projector_homography.txt'
-    proj = Projector(interface_config_path, common_config_path, homography_file)
-    rospy.sleep(1.0)
-    proj.run()
-
-
-if __name__ == "__main__":
-    main()
-

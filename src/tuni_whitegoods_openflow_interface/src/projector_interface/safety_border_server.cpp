@@ -38,8 +38,8 @@
             std::cout<<"adding static border...\n";
             StaticBorder sb(goal->request_id,goal->zone, goal->position_row, goal->position_col,goal->border,goal->border_topic,goal->border_color,goal->is_filled,goal->thickness,goal->lifetime,goal->track_violations);
             sbm->addBorder(sb);
+            sbm->publishBorder();
             add_static_border = true;
-
          }
          else
          {

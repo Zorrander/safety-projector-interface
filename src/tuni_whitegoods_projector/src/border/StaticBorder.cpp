@@ -95,6 +95,8 @@ geometry_msgs::PolygonStamped StaticBorder::getBorderRobotSpace()
 cv::Mat StaticBorder::drawBorder()
 {
    sf_line_colored = cv::Mat::zeros(1024,1024,CV_8UC3);
+   ROS_INFO("Top left(x: %i, y:%i)", static_cast<int>(border_camera_space.polygon.points[0].x),static_cast<int>(border_camera_space.polygon.points[0].y)); 
+   ROS_INFO("Bottom right(x: %i, y:%i)", static_cast<int>(border_camera_space.polygon.points[1].x),static_cast<int>(border_camera_space.polygon.points[1].y));
    cv::Point top_l(static_cast<int>(border_camera_space.polygon.points[0].x),static_cast<int>(border_camera_space.polygon.points[0].y));
    cv::Point bottom_r(static_cast<int>(border_camera_space.polygon.points[1].x),static_cast<int>(border_camera_space.polygon.points[1].y));
    cv::rectangle(sf_line_colored,top_l,bottom_r,cv::Scalar(border_color.b*255, border_color.g*255, border_color.r*255),thickness,cv::LINE_8);

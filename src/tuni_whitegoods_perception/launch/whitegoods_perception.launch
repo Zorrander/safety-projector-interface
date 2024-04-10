@@ -1,14 +1,12 @@
 <launch>
-	<arg name="file_recorded" default="$(env HOME)/calibration/output.mkv" />
-    
-    <param name="file_recorded" value="$(arg file_recorded)" />
-
-	<rosparam file="$(find tuni_whitegoods_perception)/config/perception_params.yaml" />
+	<include file="$(find tuni_whitegoods_perception)/launch/params.launch" />
 
 	<include file="$(find tuni_whitegoods_perception)/launch/kinect_simple.launch" />
+
+	<!-- <include file="$(find tuni_whitegoods_perception)/launch/tf.launch" /> -->
 
     <include file="$(find tuni_whitegoods_perception)/launch/depth_interface.launch" />
     <include file="$(find tuni_whitegoods_perception)/launch/hand_tracking.launch" />
     <include file="$(find tuni_whitegoods_perception)/launch/interaction.launch" />
-    <include file="$(find tuni_whitegoods_perception)/launch/tf.launch" />
+   
 </launch>

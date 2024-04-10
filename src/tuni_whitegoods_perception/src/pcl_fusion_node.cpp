@@ -91,6 +91,7 @@ class FusionPcl
       ros::param::get("sub_pcl_master", name_sub_master);
       ros::param::get("sub_pcl_sub", name_sub_sub);
       ros::param::get("calibration_folder", calibration_folder);
+      ROS_INFO("Looking for calibration data at: %s", calibration_folder.c_str());
       single_master = nh_.subscribe(name_sub_master, 1, &FusionPcl::callbackFrameMaster,this);
       //if more than one camera, also subscribe to the slave one - this will be where we generate the depthmap
       if(number_cam > 1)
@@ -453,6 +454,7 @@ class FusionPcl
       ofile << tbz << std::endl;
       ofile.close();
     }
+
     //check for existing calibration
     bool calibrationDepthMap()
     {
@@ -465,6 +467,7 @@ class FusionPcl
       }
       return calib;
     }
+
     //read the linear transform params
     void readParamsDM()
     {

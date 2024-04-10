@@ -29,6 +29,7 @@
          };
          release_border_operator.push_back(bs);
          sbm->releaseOperatorBorder(goal->id, goal->status);
+         sbm->publishBorder();
          release_operator_border = true;
          bool success = true;
          sendFeedbackReleaseOperator(goal->request_id);

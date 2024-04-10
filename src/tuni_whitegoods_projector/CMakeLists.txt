@@ -1,7 +1,9 @@
 cmake_minimum_required(VERSION 3.0.2)
 project(tuni_whitegoods_projector)
 
-add_compile_options(-std=c++11)
+set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 
 find_package(catkin REQUIRED COMPONENTS
   roscpp
@@ -13,6 +15,7 @@ find_package(catkin REQUIRED COMPONENTS
   unity_msgs
   integration
 )
+
 
 find_package(OpenCV 4 REQUIRED)
 
@@ -27,6 +30,9 @@ catkin_package(
                  integration
   LIBRARIES border
 )
+
+catkin_python_setup()
+
 
 include_directories(
   include
@@ -53,13 +59,3 @@ target_link_libraries(projector_opt_node
   ${OpenCV_LIBRARIES}
 )
 
-install(TARGETS border
-  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
-
-install(DIRECTORY include/${PROJECT_NAME}/
-  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-  FILES_MATCHING PATTERN "*.h"
-)
