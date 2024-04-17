@@ -1,0 +1,5 @@
+<launch>
+
+    <node name="move_robot_server" pkg="tuni_whitegoods_openflow_interface" type="robot_motion_node" output="screen"/>
+    
+</launch>

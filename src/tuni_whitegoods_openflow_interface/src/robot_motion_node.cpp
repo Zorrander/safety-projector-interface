@@ -1,5 +1,5 @@
-#include "projector_interface/move_robot_server.h"
-#include "projector_interface/move_gripper_server.h"
+#include "robot_interface/move_robot_server.h"
+#include "robot_interface/move_gripper_server.h"
 
 #include <ros/ros.h>
 #include <ros/spinner.h>

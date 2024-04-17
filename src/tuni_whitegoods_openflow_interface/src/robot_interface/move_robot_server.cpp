@@ -1,4 +1,4 @@
-#include "projector_interface/move_robot_server.h"
+#include "robot_interface/move_robot_server.h"
 
 #include <ros/ros.h>
 #include <integration/MoveJointsAction.h>
