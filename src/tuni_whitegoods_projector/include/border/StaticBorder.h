@@ -42,7 +42,7 @@ class StaticBorder : public Border
       geometry_msgs::PolygonStamped getBorderCameraSpace();
       geometry_msgs::PolygonStamped getBorderRobotSpace();
       cv::Mat drawMask();
-      std::string getZone();
+      std::string getZone() const; 
       std::string getId();
       int getCol();
       int getRow();
@@ -58,6 +58,7 @@ class StaticBorder : public Border
       cv::Mat border_mask;
       int position_row;
       int position_col;
-      
+
+
 };
 #endif

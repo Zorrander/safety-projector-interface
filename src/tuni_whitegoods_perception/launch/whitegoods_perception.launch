@@ -3,9 +3,8 @@
 
 	<include file="$(find tuni_whitegoods_perception)/launch/kinect_simple.launch" />
 
-	<!-- <include file="$(find tuni_whitegoods_perception)/launch/tf.launch" /> -->
-
-    <include file="$(find tuni_whitegoods_perception)/launch/depth_interface.launch" />
+    <include file="$(find tuni_whitegoods_perception)/launch/depth_interface.launch"  />
+    
     <include file="$(find tuni_whitegoods_perception)/launch/hand_tracking.launch" />
     <include file="$(find tuni_whitegoods_perception)/launch/interaction.launch" />
    

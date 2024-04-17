@@ -56,7 +56,7 @@ class StaticBorderManager
 {
    public:
       StaticBorderManager(ros::NodeHandle *nh_, int size_rows, int size_cols, float sf_factor, bool adjacent, std_msgs::ColorRGBA status_booked, std_msgs::ColorRGBA status_free, std_msgs::ColorRGBA status_operator);
-      bool getBordersService(integration::ListStaticBordersStatus::Request& req, integration::ListStaticBordersStatus::Response& res);
+      
       void depthMapCallback(const sensor_msgs::ImageConstPtr& msg_dm);
       void handTrackingCallback(const unity_msgs::poiPCLConstPtr& msg);
       void raiseBorderViolation(std::vector<cv::KeyPoint>& keypoints, std_msgs::Header& header);
@@ -67,15 +67,20 @@ class StaticBorderManager
       void releaseRobotBorder(std::string id, int status);
       void releaseOperatorBorder(std::string id, int status);
       void updateProjection();
-      std::vector<std::string> getAdjacentBorders(int r, int c);
-      void getObjectsBorders(cv::Mat& image);
-      void getMaskDetection(cv::Mat& image);
+      std::vector<std::string> getAdjacentBorders(int row, int col);
+
       bool readRawImage(cv::Mat& image, const std::string& filename);
-      void fillOccupancy(cv::Mat& image);
-      bool isClusterInsideBorder(cv::Mat& image, BorderContentStatus bdr);
-      cv::Mat enhanceDepth(cv::Mat img, float thr);
+ 
       void publishBorder();
-      
+
+      void getMaskDetection(cv::Mat& image);
+      bool isClusterInsideBorder(cv::Mat& image, BorderContentStatus bdr);
+      bool getBordersService(integration::ListStaticBordersStatus::Request& req, integration::ListStaticBordersStatus::Response& res);
+      void updateBorderStatus();
+      void getObjectsDepth(cv::Mat& depth_within_borders, const cv::Mat& mask_detect);
+      cv::Mat enhanceDepth(cv::Mat img, float thr);
+
+
    private:
       ros::NodeHandle nh;
       image_transport::ImageTransport it_;
@@ -93,8 +98,8 @@ class StaticBorderManager
       std::vector<BorderContentStatus> borders_booked;
       std::vector<BorderContentStatus> list_hand_violation;
       cv::Mat safety_line_mask;
-      cv::Mat sf_line_inside;
-      cv::Mat sf_line_colored;
+
+
       cv::Mat baseline_dm;
       cv::Mat sf_line;
       cv::Mat depth_map;
@@ -102,25 +107,22 @@ class StaticBorderManager
       int s_rows;
       int s_cols;
       float safety_factor;
+      bool redraw;
       bool adj;
       std_msgs::ColorRGBA stat_booked;
       std_msgs::ColorRGBA stat_free;
       std_msgs::ColorRGBA stat_operator;
       bool first_baseline;
       bool first_init;
-      bool redraw;
       float threshold_depth_inf;
       float highest_depth;
       std::vector<float> minmax_values;
       bool crossed;
-      int index;
-      string index_redraw;
-      int previous_index;
-      string prev_index_redraw;
       string calibration_folder;
       string name_bl;
       cv::Point loc;
       bool change_color;
+      cv::Mat mask_detect;
 
 };
 #endif

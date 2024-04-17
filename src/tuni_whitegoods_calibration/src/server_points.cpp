@@ -62,11 +62,11 @@ class ServerPoints : public DepthInterface
 
   public:
 
-    ServerPoints(ros::NodeHandle *nh, std::string drgb, std::string d): 
+    ServerPoints(ros::NodeHandle* nh, std::string drgb, std::string d): 
                   DepthInterface(nh, drgb, d),
                   tfListener(tfBuffer)
     {
-      service_points = nh->advertiseService("server_rgb_points", &ServerPoints::getPointsService, this);
+      service_points = nh_->advertiseService("server_rgb_points", &ServerPoints::getPointsService, this);
       pts_map.resize(0);
       
       robot_space = Eigen::Affine3d::Identity();
@@ -120,9 +120,10 @@ class ServerPoints : public DepthInterface
         p.x = req.poi_rgb[i].x;
         p.y = req.poi_rgb[i].y;
         p.z = req.poi_rgb[i].z;
-        pcl::PointXYZ pixel_res = getDepthFromRGB(p);
+            
+        pcl::PointXYZ pixel_res = getDepthFromRGB(cv_depth_rgb, cv_depth, p);
         //generate a point XYZ and apply tf
-        pcl::PointXYZ pt_depth = generatePointCloudPOI(pixel_res);
+        pcl::PointXYZ pt_depth = generatePointCloudPOI(cv_depth, pixel_res);
         pcl::PointXYZ final_pt = genPointDepthMap(pt_depth);
         pts_map.push_back(final_pt);
       }
@@ -145,11 +146,10 @@ class ServerPoints : public DepthInterface
 int main(int argc, char **argv)
 {
   ros::init(argc, argv, "points_depthmap");
-  ros::NodeHandle nh;
 
   std::string d;
   std::string drgb;
-      
+  ros::NodeHandle nh;    
   ros::param::get("topic_depth", d);
   ros::param::get("topic_depth_to_rgb", drgb);
   ServerPoints sp(&nh, drgb, d);

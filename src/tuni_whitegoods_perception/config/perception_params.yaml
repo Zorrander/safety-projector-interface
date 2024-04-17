@@ -1,17 +1,14 @@
 robot_base: base
-name_transform_robot_space: master_to_base
+depth_camera: rgb_camera_link
+
 sub_points: /voxel_grid_master/output
 topic_pcl_master: /kinect_master/cloud_robot_frame
-
-depth_camera: rgb_camera_link
+topic_pcl_sub: /kinect_sub/cloud_robot_frame 
 
 topic_depth: /depth/image_raw
 topic_depth_to_rgb: /depth_to_rgb/image_raw
 
 number_cam: 1
-
-sub_pcl_master: /kinect_master/cloud_robot_frame
-sub_pcl_sub: /kinect_sub/cloud_robot_frame 
 
 hand_tracking_rgb_coordinates: /hand_tracking/rgb/coordinates
 hand_tracking_dm_coordinates: /hand_tracking/dm/coordinates

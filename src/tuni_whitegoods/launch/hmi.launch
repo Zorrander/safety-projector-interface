@@ -1,12 +1,23 @@
 <launch>
 	<arg name="calibration_folder" default="$(env HOME)/calibration/depthmap/" />
+	<arg name="robot_example" default="true"/>
 
 	<param name="calibration_folder" value="$(arg calibration_folder)" />
 
     <rosparam file="$(find tuni_whitegoods)/config/parameters.yaml" />
 
     <include file="$(find tuni_whitegoods_perception)/launch/whitegoods_perception.launch" />
+
+    <include file="$(find tuni_whitegoods_calibration)/launch/tf.launch" /> 
+
     <include file="$(find tuni_whitegoods_projector)/launch/projection.launch" />
-    <include file="$(find tuni_whitegoods_openflow_interface)/launch/server.launch" />
+    <include file="$(find tuni_whitegoods_openflow_interface)/launch/projector_interface.launch" />
+    
+    <group if="$(arg robot_example)">
+    	<include file="$(find tuni_whitegoods_openflow_interface)/launch/robot_interface.launch" />
+    </group>
+
+
+    
     
 </launch>

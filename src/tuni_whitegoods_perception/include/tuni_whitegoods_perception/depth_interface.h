@@ -44,31 +44,34 @@ using namespace std;
 class DepthInterface
 {
   private:
-    image_transport::ImageTransport it_;
     typedef image_transport::SubscriberFilter ImageSubscriber;
-    std::string tf_rgb_frame;
-    std::string calibration_folder;
-    ros::ServiceServer service_points;
+    typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::Image> MySyncPolicy;
+
+    string calibration_folder;
+    vector<double>  master_to_base;
+    string file_recorded;
+
+    image_transport::ImageTransport it_;
+
     ImageSubscriber depth_rgb_sub_;
     ImageSubscriber depth_sub_;
+
     ros::Subscriber sub_hand_poi;
     ros::Subscriber sub_poi;
     ros::Publisher pub_poi;
     ros::Publisher pub_poi_pcl;
     ros::Publisher pub_hand_tracker_dm;
+
     image_transport::Subscriber dm_sub_;
-    typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::Image> MySyncPolicy;
+    
     message_filters::Synchronizer< MySyncPolicy > sync;
+
     k4a::playback handle;
     k4a::calibration k4aCalibration;
     k4a::transformation k4aTransformation;
-    std::vector<pcl::PointXYZ> list_poi;
-    std::vector<pcl::PointXYZ> pix_depth;
-    std::string name_recording;
-    std::string file_recorded;
 
-    sensor_msgs::PointCloud2 poi_cloud;
-    
+    geometry_msgs::Transform rgb_to_base;
+
     bool depth_images;
     Eigen::Affine3d robot_space;
     unity_msgs::InterfacePOI list_points;
@@ -79,16 +82,14 @@ class DepthInterface
     double by;
     double az;
     double bz;
-    std::string name_tf_robot;
-    string hand_tracking_rgb_coordinates, hand_tracking_dm_coordinates;
+    
 
   public:
-    DepthInterface(ros::NodeHandle *nh_, std::string name_drgb, std::string name_d);
+    DepthInterface(ros::NodeHandle* nh, string name_drgb, string name_d);
     //get the camera robot transform
     void initTransformToBase();
+    void initTransformToBaseTF();
 
-    //Display hand locaiton on depthmap for debugging
-    void callbackDepthMap(const sensor_msgs::ImageConstPtr& msg_dm);
     //get the rgb_to_depth and depth images
     void callbackRGBDepth(const sensor_msgs::ImageConstPtr& rgbdepth_msg, const sensor_msgs::ImageConstPtr& depth_msg);
     
@@ -99,10 +100,10 @@ class DepthInterface
     void poiCallback(const unity_msgs::InterfacePOIConstPtr& msg);
 
    // get the depth value of the interface pixels given their location in the RGB space
-    pcl::PointXYZ getDepthFromRGB(pcl::PointXYZ p);
+    pcl::PointXYZ getDepthFromRGB(cv::Mat depth_rgb, cv::Mat depth, pcl::PointXYZ p);
 
     // generate the 3D point(s) of the RGB coordinates we are interested in (hands, interface buttons)
-    pcl::PointXYZ generatePointCloudPOI(pcl::PointXYZ pix);
+    pcl::PointXYZ generatePointCloudPOI(cv::Mat depth_image, pcl::PointXYZ pix);
 
     // fill point cloud with only the point we are interested in, then we apply transform to robot frame.
     pcl::PointXYZ fillPointCloud(const k4a::image& pointcloud_image, sensor_msgs::PointCloud2Ptr& point_cloud);
@@ -115,8 +116,10 @@ class DepthInterface
 
     bool tf_in;
 
-    std::string tf_robot_frame;
-    std::string tf_depth_frame;
+    ros::NodeHandle* nh_;
+
+    string tf_robot_frame;
+    string tf_depth_frame;
     cv::Mat cv_depth_rgb;
     cv::Mat cv_depth;
 };

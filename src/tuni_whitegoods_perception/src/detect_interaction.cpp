@@ -77,7 +77,7 @@ class InteractionDetection
     {
       sub_poi = nh_.subscribe("/depth_interface/poi_depthmap", 1, &InteractionDetection::pointsOfInterestCb,this);
       sub_changes = nh_.subscribe("/aruco_markers_warped/changes", 1, &InteractionDetection::arucoChangesCallback,this);
-      //dm_sub_ = it_.subscribe("/detection/depth_map", 1,&InteractionDetection::DepthMapCallback, this);
+      dm_sub_ = it_.subscribe("/detection/depth_map", 1,&InteractionDetection::DepthMapCallback, this);
       pub_event = nh_.advertise<VirtualButtonEventArray> ("/execution/projector_interface/integration/topics/virtual_button_event_array", 1);
       depth_map = cv::Mat(1024, 1024, CV_8U,cv::Scalar(std::numeric_limits<float>::min()));
       //res_bitwise = cv::Mat(1024, 1024, CV_8U,cv::Scalar(std::numeric_limits<float>::min()));
@@ -98,11 +98,13 @@ class InteractionDetection
       changes = false;
       cv::namedWindow(OPENCV_LINE,cv::WINDOW_NORMAL);
     }
+
     ~InteractionDetection()
     {
       //cv::destroyWindow(OPENCV_WINDOW);
       cv::destroyWindow(OPENCV_LINE);
     }
+
     //subscriber for display - only used for debugging
     void DepthMapCallback(const sensor_msgs::ImageConstPtr& msg_dm)
     {
@@ -126,8 +128,6 @@ class InteractionDetection
             ROS_ERROR("cv_bridge exception: %s", e.what());
             return;
         }
-        //cv::imshow(OPENCV_LINE, sf_line);
-        //cv::waitKey(1);
     }
     //Here we detect if there is any changes in the aruco position on the table if the support to display the interface can be moved.
     //This could avoid redefining a baseline all the time
