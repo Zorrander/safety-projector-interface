@@ -1,11 +1,9 @@
 <launch>
-	<include file="$(find tuni_whitegoods_perception)/launch/params.launch" />
-
-	<include file="$(find tuni_whitegoods_perception)/launch/kinect_simple.launch" />
-
-    <include file="$(find tuni_whitegoods_perception)/launch/depth_interface.launch"  />
+	
     
     <include file="$(find tuni_whitegoods_perception)/launch/hand_tracking.launch" />
-    <include file="$(find tuni_whitegoods_perception)/launch/interaction.launch" />
+
+    <include file="$(find tuni_whitegoods_perception)/launch/smart_interface_interaction.launch" />
    
+    <!-- <include file="$(find tuni_whitegoods_perception)/launch/border_violation_tracking.launch" /> -->
 </launch>

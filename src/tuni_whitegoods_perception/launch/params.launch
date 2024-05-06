@@ -3,6 +3,12 @@
     
     <param name="file_recorded" value="$(arg file_recorded)" />
 
+	<arg name="calibration_folder" default="$(env HOME)/calibration/depthmap/" />
+	<arg name="robot_example" default="true"/>
+
+	<param name="calibration_folder" value="$(arg calibration_folder)" />
+
 	<rosparam file="$(find tuni_whitegoods_perception)/config/perception_params.yaml" />
+
 
 </launch>

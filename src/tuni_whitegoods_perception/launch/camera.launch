@@ -1,0 +1,42 @@
+<launch>
+
+    <!-- <node pkg="tf2_ros" type="static_transform_publisher" name="rgb_to_base_rect" args="0.501192 -0.271756 1.311792 -0.685276 0.727083 -0.014888 0.039050 base camera1_rgb_camera_link"/> -->
+
+    <include file="$(find tuni_whitegoods_perception)/launch/params.launch"/>
+
+    <!-- Start pcl_manager nodelet manager -->
+    <node pkg="nodelet" type="nodelet" name="pcl_manager" args="manager" output="screen" />
+
+    <!-- Include camera driver launch file -->
+    <include ns="camera1"  file="$(find tuni_whitegoods_perception)/launch/kinect_simple.launch">
+         <arg name="sensor_sn" value="000837321712" />
+         <arg name="tf_prefix" value="camera1_" />
+    </include>
+
+
+    <!-- Load VoxelGrid filter nodelet for camera1 -->
+    <node pkg="nodelet" type="nodelet" name="voxel_grid_filter" args="load pcl/VoxelGrid pcl_manager" output="screen">
+        <remap from="~input" to="/camera1/points2" />
+        <remap from="~output" to="/camera1/filtered_pointcloud" />
+        <rosparam>
+            filter_field_name: z
+            filter_limit_min: 0.0
+            filter_limit_max: 3.5
+            filter_limit_negative: False
+            leaf_size: 0.008
+        </rosparam>
+    </node>
+    
+    <group ns="depth_interface_nodes">
+
+        <!-- Pass camera name to depth_interface_node for camera1 -->
+        <node pkg="tuni_whitegoods_perception" name="points_depthmap" ns="camera1" type="depth_interface_node" output="screen">
+            <param name="camera_name" value="camera1"/>
+            <param name="topic_depth" value="/depth/image_raw"/>
+            <param name="topic_depth_to_rgb" value="/depth_to_rgb/image_raw"/>
+        </node>
+
+        <!-- Add more nodes for additional cameras as needed -->
+    </group>
+
+</launch>

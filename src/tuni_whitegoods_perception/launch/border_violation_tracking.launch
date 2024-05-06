@@ -1,0 +1,5 @@
+<launch>
+
+    <node name="detection" pkg="tuni_whitegoods_perception" type="border_violation_tracking_node" output="screen"/>
+    
+</launch>

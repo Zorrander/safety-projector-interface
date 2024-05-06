@@ -14,6 +14,7 @@ from geometry_msgs.msg import Point
 
 #The mediapipe module does all the work
 
+
 class HandTracker(object):
    def __init__(self,mode=False, maxHands=2, detectionCon=0.1,modelComplexity=1,trackCon=0.1):
       super(HandTracker, self).__init__()

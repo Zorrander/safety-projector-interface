@@ -46,9 +46,10 @@ Then, we project this 3D point aligned with the robot frame to the depthmap with
 using namespace std;
 
 
- DepthInterface::DepthInterface(ros::NodeHandle* nh, string name_drgb, string name_d):
+ DepthInterface::DepthInterface(ros::NodeHandle* nh, string name_drgb, string name_d, string cam_name):
     nh_(nh),
     it_(*nh),
+    camera_name(cam_name),
     depth_rgb_sub_( it_, name_drgb, 1),
     depth_sub_( it_, name_d, 1),
     sync( MySyncPolicy(10), depth_rgb_sub_, depth_sub_)
@@ -56,24 +57,36 @@ using namespace std;
       ROS_INFO("Fetching parameters for DepthInterface.");
 
       try {
-          if (!nh_->getParam("robot_base", tf_robot_frame)) {
+          if (!nh_->getParam("/robot_base", tf_robot_frame)) {
               ROS_ERROR("Failed to get parameter 'robot_base'");
           }
 
-          if (!nh_->getParam("depth_camera", tf_depth_frame)) {
+          if (!nh_->getParam("/depth_camera", tf_depth_frame)) {
               ROS_ERROR("Failed to get parameter 'depth_camera'");
           }
 
-          if (!nh_->getParam("calibration_folder", calibration_folder)) {
+          if (!nh_->getParam("/calibration_folder", calibration_folder)) {
               ROS_ERROR("Failed to get parameter 'calibration_folder'");
           }
 
-          if (!nh_->getParam("file_recorded", file_recorded)) {
+          if (!nh_->getParam("/file_recorded", file_recorded)) {
               ROS_ERROR("Failed to get parameter 'file_recorded'");
           }
 
-          if (!nh_->getParam("master_to_base", master_to_base)) {
+          if (!nh_->getParam("/master_to_base", master_to_base)) {
               ROS_ERROR("Failed to get parameter 'master_to_base'");
+          }
+
+          if (!nh_->getParam("/topic_pcl_master", name_topic_pcl_tf)) {
+              ROS_ERROR("Failed to get parameter 'topic_pcl_master'");
+          }
+
+          if (!nh_->getParam("/sub_points", name_sub)) {
+              ROS_ERROR("Failed to get parameter 'sub_points'");
+          }
+
+          if (!nh_->getParam("/number_cam", num_cam)) {
+              ROS_ERROR("Failed to get parameter 'number_cam'");
           }
       } catch (ros::InvalidNameException& e) {
         ROS_ERROR("Invalid parameter name: %s", e.what());
@@ -82,18 +95,29 @@ using namespace std;
           ROS_ERROR("Invalid parameter: %s", e.what());
       }
 
-      ROS_INFO("DephtInterface successfully retrieved parameters.");
+      ROS_INFO("DephtInterface successfully retrieved parameters. %s", ("/"+camera_name+name_sub).c_str());
 
-      sync.registerCallback( boost::bind( &DepthInterface::callbackRGBDepth, this, _1, _2) );
-      sub_hand_poi = nh_->subscribe("/hand_tracking/rgb/coordinates", 1, &DepthInterface::handTrackerCallback,this);
-      sub_poi = nh_->subscribe("/interface_poi/buttons", 1, &DepthInterface::poiCallback,this);
-      pub_poi = nh_->advertise<unity_msgs::InterfacePOI> ("/depth_interface/poi_depthmap", 1);
-      pub_poi_pcl = nh_->advertise<sensor_msgs::PointCloud2> ("/depth_interface/poi_pcl", 1);
-      pub_hand_tracker_dm = nh_->advertise<unity_msgs::poiPCL> ("/hand_tracking/dm/coordinates", 1);
+      //sync.registerCallback( boost::bind( &DepthInterface::callbackRGBDepth, this, _1, _2) );
+      //sub_hand_poi = nh_->subscribe("/hand_tracking/rgb/coordinates", 1, &DepthInterface::handTrackerCallback,this);
+      //sub_poi = nh_->subscribe("/interface_poi/buttons", 1, &DepthInterface::poiCallback,this);
+      //pub_poi = nh_->advertise<unity_msgs::InterfacePOI> ("/depth_interface/poi_depthmap", 1);
+      //pub_poi_pcl = nh_->advertise<sensor_msgs::PointCloud2> ("/depth_interface/poi_pcl", 1);
+      //pub_hand_tracker_dm = nh_->advertise<unity_msgs::poiPCL> ("/hand_tracking/dm/coordinates", 1);
       robot_space = Eigen::Affine3d::Identity();
       tf_in = false;
+      
       readParamsFile();
-      initTransformToBase();
+      //get ICP params so it can align the pcl from the second camera. For HRC scenario
+      //if(num_cam > 1){
+      //  readICPFromFile();
+      //}
+
+      initTransformToBaseTF();
+
+      pub = nh_->advertise<sensor_msgs::PointCloud2> ("/"+camera_name+name_topic_pcl_tf, 1, true);
+
+      sub_cloud = nh_->subscribe("/"+camera_name+name_sub, 1, &DepthInterface::alignToRobotBase,this); 
+
       handle = k4a::playback::open(file_recorded.c_str());
       k4aCalibration = handle.get_calibration();
       k4aTransformation = k4a::transformation(k4aCalibration);
@@ -118,7 +142,7 @@ using namespace std;
             rgb_to_base = transformStamped.transform;
             ROS_INFO_STREAM(rgb_to_base);
             Eigen::Isometry3d robot_space = tf2::transformToEigen(transformStamped.transform);
-
+            
             tf_in = true;
         }
         catch (tf2::TransformException& ex)
@@ -139,8 +163,39 @@ using namespace std;
       rgb_to_base.rotation.w = master_to_base[6];
       ROS_INFO_STREAM(rgb_to_base);
       robot_space = tf2::transformToEigen(rgb_to_base);
-      
+
       tf_in = true;
+    }
+
+    // Align PointCloud to robot base and optionally apply ICP translation for multiple cameras
+    void DepthInterface::alignToRobotBase(const sensor_msgs::PointCloud2ConstPtr& cloud_msg) {
+        // Create containers for point clouds
+        pcl::PointCloud<pcl::PointXYZ>::Ptr input_cloud(new pcl::PointCloud<pcl::PointXYZ>);
+        pcl::PointCloud<pcl::PointXYZ>::Ptr transformed_cloud(new pcl::PointCloud<pcl::PointXYZ>);
+        sensor_msgs::PointCloud2 cloud_tf;
+
+        // Convert ROS message to PCL point cloud
+        pcl::fromROSMsg(*cloud_msg, *input_cloud);
+
+        // Transform point cloud to robot base frame
+        pcl::transformPointCloud(*input_cloud, *transformed_cloud, robot_space);
+
+        // Optionally apply ICP translation for multiple cameras
+        if (num_cam > 1) {
+            pcl::PointCloud<pcl::PointXYZ>::Ptr icp_cloud(new pcl::PointCloud<pcl::PointXYZ>);
+            pcl::transformPointCloud(*transformed_cloud, *icp_cloud, icp_matrix);
+            pcl::toROSMsg(*icp_cloud, cloud_tf);
+        } else {
+            pcl::toROSMsg(*transformed_cloud, cloud_tf);
+            cloud_tf.header.stamp = cloud_msg->header.stamp;
+        }
+
+        // Set header information for the transformed point cloud
+        cloud_tf.header = cloud_msg->header;
+        cloud_tf.header.frame_id = tf_robot_frame;
+
+        // Publish the transformed point cloud
+        pub.publish(cloud_tf);
     }
 
     //get the rgb_to_depth and depth images
@@ -149,51 +204,15 @@ using namespace std;
       cv_bridge::CvImagePtr cv_bridge_depth_rgb = cv_bridge::toCvCopy(rgbdepth_msg, sensor_msgs::image_encodings::TYPE_16UC1);
       cv_bridge::CvImagePtr cv_bridge_depth = cv_bridge::toCvCopy(depth_msg, sensor_msgs::image_encodings::TYPE_16UC1);
       cv_depth_rgb = cv_bridge_depth_rgb->image.clone();
-      cv_depth = cv_bridge_depth->image.clone();
+      cv::Mat cv_depth_uint16 = cv_bridge_depth->image.clone();
       //cout<<"depth rgb :"<<cv_depth_rgb.size<<"\n";
       //cout<<"depth :"<<cv_depth.size<<"\n";
       depth_images = true;
 
     }
-    //callback that transform RGB point of the hands to their coordinates in the depthmap
-    void DepthInterface::handTrackerCallback(const unity_msgs::poiPCLConstPtr& msg)
-    {
-      pcl::PointCloud<pcl::PointXYZ>::Ptr final_cloud(new pcl::PointCloud<pcl::PointXYZ>);
-      list_points_hand.pts.clear();
-      if(!tf_in)
-      {
-        initTransformToBase();
-      }
-      else
-      {
-        
-        for(int i = 0; i < msg->pts.size(); i++)
-        {
-          geometry_msgs::Point current_elem;
-          pcl::PointXYZ p;
-          p.x = static_cast<float>(msg->pts[i].x);
-          p.y = static_cast<float>(msg->pts[i].y);
-          p.z = static_cast<float>(msg->pts[i].z);
-          if(depth_images)
-          {
-            pcl::PointXYZ pixel_res = getDepthFromRGB(cv_depth_rgb,cv_depth,p);
-            pcl::PointXYZ pt_depth = generatePointCloudPOI(cv_depth, pixel_res);
-            pcl::PointXYZ final_pt = genPointDepthMap(pt_depth);
-            
-            current_elem.x = static_cast<double>(final_pt.x);
-            current_elem.y = static_cast<double>(final_pt.y);
-            current_elem.z = static_cast<double>(final_pt.z);
-            list_points_hand.pts.push_back(current_elem);
-          }
-        }
-        list_points_hand.header = msg->header;
-        //publish hand coordinates in the depthmap
-        pub_hand_tracker_dm.publish(list_points_hand);
-      }
-    }
 
     //get rgb points from interface and find them in the global depth map
-    void DepthInterface::poiCallback(const unity_msgs::InterfacePOIConstPtr& msg)
+    /*void DepthInterface::poiCallback(const unity_msgs::InterfacePOIConstPtr& msg)
     {
       pcl::PointCloud<pcl::PointXYZ>::Ptr final_cloud(new pcl::PointCloud<pcl::PointXYZ>);
       list_points.poi.resize(0);
@@ -232,151 +251,8 @@ using namespace std;
       cloud_publish.header = msg->header;
       cloud_publish.header.frame_id = tf_robot_frame; //changed here
       pub_poi_pcl.publish(cloud_publish);
-    }
+    }*/
 
-   // get the depth value of the interface pixels given their location in the RGB space
-    pcl::PointXYZ DepthInterface::getDepthFromRGB(cv::Mat depth_rgb, cv::Mat depth, pcl::PointXYZ p)
-    {
-      vector<pcl::PointXYZ> elem;
-      elem.resize(0);
-      //get point from depth image
-      pcl::PointXYZ p_tmp;
-      float x = p.x;
-      float y = p.y;
-      unsigned short val = depth_rgb.at<unsigned short>(static_cast<int>(y),static_cast<int>(x));
-      //cout<<"marker gen 2\n";
-      float d = static_cast<float>(val);
-      p_tmp.x = x;
-      p_tmp.y = y;
-      p_tmp.z = d;
-      //get corresponding point in depth frame
-      k4a_float2_t pixel_source;
-      k4a_float2_t pixel_dest;  
-      float d_;
-      pixel_source.xy.x = p_tmp.x;
-      pixel_source.xy.y = p_tmp.y;
-      d_ = p_tmp.z;
-      
-      bool suc = k4aCalibration.convert_2d_to_2d(pixel_source,d_,K4A_CALIBRATION_TYPE_COLOR,K4A_CALIBRATION_TYPE_DEPTH,&pixel_dest);
-      pcl::PointXYZ pixel_depth;
-      //cout<<"marker gen 3\n";
-      if(suc == true)
-      {
-        pixel_depth.x = pixel_dest.xy.x;
-        pixel_depth.y = pixel_dest.xy.y;
-        pixel_depth.z = d;
-      }
-      return pixel_depth;
-    }
-
-    // generate the 3D point(s) of the RGB coordinates we are interested in (hands, interface buttons)
-    pcl::PointXYZ DepthInterface::generatePointCloudPOI(cv::Mat depth_image, pcl::PointXYZ pix)
-    {
-      sensor_msgs::PointCloud2Ptr pt_cloud(new sensor_msgs::PointCloud2);
-      float zero_d = 0;
-      unsigned short z = static_cast<unsigned short> (zero_d);
-      for(int i = 0; i < depth_image.rows;i++)
-      {
-        for(int j = 0; j < depth_image.cols;j++)
-        {
-          depth_image.at<unsigned short> (j,i) = z;
-        }
-      }
-
-      int x = static_cast<int>(pix.x);
-      int y = static_cast<int>(pix.y);
-      float max_de = pix.z;
-      unsigned short m_ = static_cast<unsigned short> (max_de);
-      depth_image.at<unsigned short> (y,x) = m_;
-      pcl::PointXYZ pt;
-
-      k4a::image image_k = k4a::image::create_from_buffer(K4A_IMAGE_FORMAT_DEPTH16,depth_image.cols,depth_image.rows,(int)depth_image.step,depth_image.data,depth_image.step * depth_image.rows,nullptr,nullptr);
-      k4a::image pc = k4aTransformation.depth_image_to_point_cloud(image_k,K4A_CALIBRATION_TYPE_DEPTH);
-      pt = fillPointCloud(pc,pt_cloud);
-      
-      return pt;
-    }
-
-    // fill point cloud with only the point we are interested in, then we apply transform to robot frame.
-    pcl::PointXYZ DepthInterface::fillPointCloud(const k4a::image& pointcloud_image, sensor_msgs::PointCloud2Ptr& point_cloud)
-    {
-      pcl::PointCloud<pcl::PointXYZ>::Ptr temp_cloud(new pcl::PointCloud<pcl::PointXYZ>);
-      pcl::PointCloud<pcl::PointXYZ>::Ptr camera_cloud(new pcl::PointCloud<pcl::PointXYZ>);
-      pcl::PointCloud<pcl::PointXYZ>::Ptr final_cloud(new pcl::PointCloud<pcl::PointXYZ>);
-      pcl::PointXYZ pt_trans;
-      point_cloud->height = pointcloud_image.get_height_pixels();
-      point_cloud->width = pointcloud_image.get_width_pixels();
-      point_cloud->is_dense = false;
-      point_cloud->is_bigendian = false;
-
-      const size_t point_count = pointcloud_image.get_height_pixels() * pointcloud_image.get_width_pixels();
-
-      sensor_msgs::PointCloud2Modifier pcd_modifier(*point_cloud);
-      pcd_modifier.setPointCloud2FieldsByString(1, "xyz");
-
-      sensor_msgs::PointCloud2Iterator<float> iter_x(*point_cloud, "x");
-      sensor_msgs::PointCloud2Iterator<float> iter_y(*point_cloud, "y");
-      sensor_msgs::PointCloud2Iterator<float> iter_z(*point_cloud, "z");
-
-      pcd_modifier.resize(point_count);
-
-      const int16_t* point_cloud_buffer = reinterpret_cast<const int16_t*>(pointcloud_image.get_buffer());
-      //std::cout<<"entering CONSTRUCTION...\n";
-      for (size_t i = 0; i < point_count; i++, ++iter_x, ++iter_y, ++iter_z)
-      {
-        float z = static_cast<float>(point_cloud_buffer[3 * i + 2]);
-
-        if (z <= 0.0f)
-        {
-          *iter_x = *iter_y = *iter_z = numeric_limits<float>::quiet_NaN();
-        }
-        else
-        {
-          constexpr float kMillimeterToMeter = 1.0 / 1000.0f;
-          *iter_x = kMillimeterToMeter * static_cast<float>(point_cloud_buffer[3 * i + 0]);
-          *iter_y = kMillimeterToMeter * static_cast<float>(point_cloud_buffer[3 * i + 1]);
-          *iter_z = kMillimeterToMeter * z;
-          //std::cout<<"x "<<*iter_x<<" y "<<*iter_y<<" z "<<*iter_z<<"\n";
-          pt_trans.x = *iter_x;
-          pt_trans.y = *iter_y;
-          pt_trans.z = *iter_z;
-        }
-      }
-
-      pcl::PointXYZ tmp_res;
-      pcl::PointXYZ final_pt;
-      
-      if(tf_in)
-      {
-        final_pt = pcl::transformPoint(pt_trans,robot_space);
-      }
-
-      return final_pt;
-    }
-
-    //Transform PointXYZ from point cloud to the depth map perspective
-    pcl::PointXYZ DepthInterface::genPointDepthMap(pcl::PointXYZ point_d)
-    {
-      double px;
-      double py;
-      double pz;
-      int pixel_pos_x;
-      int pixel_pos_y;
-      float pixel_pos_z;
-      px = point_d.x * 1000.0;
-      py = point_d.y * 1000.0;
-      pz = point_d.z * 1000.0;
-      pixel_pos_x = (int) (ax * px + bx);
-      pixel_pos_y = (int) (ay * py + by);
-      pixel_pos_z = (az * pz + bz);
-      pixel_pos_z = pixel_pos_z/1000.0;
-      pcl::PointXYZ p;
-      p.x = static_cast<float>(pixel_pos_x);
-      p.y = static_cast<float>(pixel_pos_y);
-      p.z = static_cast<float>(pixel_pos_z);
-
-      return p;
-    }
     //get depthmap parameters
     void DepthInterface::readParamsFile()
     {
@@ -400,3 +276,27 @@ using namespace std;
         calibfile.close();
       }
     }
+
+
+    void DepthInterface::readICPFromFile()
+    {
+      std::string line;
+      std::string calibration_folder;
+      ros::param::get("calibration_folder", calibration_folder);
+      std::string name_file = calibration_folder + "../ICP/icp.txt";
+      std::ifstream icpfile (name_file);
+      if(icpfile.is_open())
+      {
+        for(int i = 0; i < 4; i++)
+        {
+          for(int j = 0; j < 4; j++)
+          {
+            getline(icpfile,line);
+            double tmp = std::stod(line);
+            icp_matrix(i,j) = tmp;
+          }
+        }
+        icpfile.close();
+      }
+    }
+

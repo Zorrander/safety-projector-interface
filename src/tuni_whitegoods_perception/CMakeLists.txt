@@ -66,6 +66,13 @@ target_link_libraries(depth_interface
   ${K4A_LIBS}
 )
 
+#add_library(border_tracking src/tuni_whitegoods_perception/border_tracking.cpp)
+#target_link_libraries(border_tracking
+#  ${catkin_LIBRARIES} 
+#  ${OpenCV_LIBS}
+#  ${K4A_LIBS}
+#)
+
 add_executable(depth_interface_node src/depth_interface_node.cpp)
 target_link_libraries(depth_interface_node
   depth_interface
@@ -81,19 +88,20 @@ target_link_libraries(interaction_detection_node
   ${K4A_LIBS}
 )
 
-add_executable(pcl_fusion_node src/pcl_fusion_node.cpp)
-target_link_libraries(pcl_fusion_node
-   ${catkin_LIBRARIES} 
-   ${OpenCV_LIBS}
-   ${K4A_LIBS}
-)
+#add_executable(border_violation_tracking_node src/border_violation_tracking_node.cpp)
+#target_link_libraries(border_violation_tracking_node
+#  border_tracking
+#  ${catkin_LIBRARIES} 
+#  ${OpenCV_LIBS}
+#  ${K4A_LIBS}
+#)
 
-add_executable(transform_pcl_node src/transform.cpp)
-target_link_libraries(transform_pcl_node
-  ${catkin_LIBRARIES} 
-  ${OpenCV_LIBS} 
-  ${K4A_LIBS}
-)
+#add_executable(pcl_fusion_node src/pcl_fusion_node.cpp)
+#target_link_libraries(pcl_fusion_node
+#   ${catkin_LIBRARIES} 
+#   ${OpenCV_LIBS}
+#   ${K4A_LIBS}
+#)
 
 install(TARGETS depth_interface
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}

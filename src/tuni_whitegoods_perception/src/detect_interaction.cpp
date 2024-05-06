@@ -142,6 +142,7 @@ class InteractionDetection
         previous_events.virtual_button_events.clear();
       }
     }
+    
     //subscriber of the buttons positions. We define a baseline (buttons not pressed) and we check if the table has been moved.
     // Once wwe define a baseline, we monitor the depth positions of the buttons compared to baseline, and if there is a change we throw an event.
     void pointsOfInterestCb(const unity_msgs::InterfacePOIConstPtr& msg)
@@ -260,7 +261,8 @@ class InteractionDetection
       }
       //std::cout<<tic.toc()<<"ms\n";
     }
-    //compare 2 arrays of buttons to detect changes. I baseically compare the depth of each buttons in baseline with each current depth buttons
+
+    //compare 2 arrays of buttons to detect changes. I basically compare the depth of each buttons in baseline with each current depth buttons
     VirtualButtonEventArray compareEvents()
     {
       VirtualButtonEventArray msgs;

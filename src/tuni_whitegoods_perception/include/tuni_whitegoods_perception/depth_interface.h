@@ -61,7 +61,7 @@ class DepthInterface
     ros::Publisher pub_poi;
     ros::Publisher pub_poi_pcl;
     ros::Publisher pub_hand_tracker_dm;
-
+    ros::Publisher depth_pub;
     image_transport::Subscriber dm_sub_;
     
     message_filters::Synchronizer< MySyncPolicy > sync;
@@ -72,10 +72,18 @@ class DepthInterface
 
     geometry_msgs::Transform rgb_to_base;
 
+    ros::Subscriber sub_cloud;
+    ros::Publisher pub;
+    string name_topic_pcl_tf, name_sub;
+    string camera_name;
+
+    int num_cam;
     bool depth_images;
     Eigen::Affine3d robot_space;
+    Eigen::Matrix4d robot_space_mat;
+    Eigen::Matrix4d icp_matrix;
     unity_msgs::InterfacePOI list_points;
-    unity_msgs::poiPCL list_points_hand;
+    
     double ax;
     double bx;
     double ay;
@@ -85,7 +93,7 @@ class DepthInterface
     
 
   public:
-    DepthInterface(ros::NodeHandle* nh, string name_drgb, string name_d);
+    DepthInterface(ros::NodeHandle* nh, string name_drgb, string name_d, string cam_name);
     //get the camera robot transform
     void initTransformToBase();
     void initTransformToBaseTF();
@@ -97,22 +105,27 @@ class DepthInterface
     void handTrackerCallback(const unity_msgs::poiPCLConstPtr& msg);
 
     //get rgb points from interface and find them in the global depth map
-    void poiCallback(const unity_msgs::InterfacePOIConstPtr& msg);
+    //void poiCallback(const unity_msgs::InterfacePOIConstPtr& msg);
 
    // get the depth value of the interface pixels given their location in the RGB space
-    pcl::PointXYZ getDepthFromRGB(cv::Mat depth_rgb, cv::Mat depth, pcl::PointXYZ p);
+    // pcl::PointXYZ getDepthFromRGB(cv::Mat depth_rgb, cv::Mat depth, pcl::PointXYZ p);
 
     // generate the 3D point(s) of the RGB coordinates we are interested in (hands, interface buttons)
-    pcl::PointXYZ generatePointCloudPOI(cv::Mat depth_image, pcl::PointXYZ pix);
+    //pcl::PointXYZ generatePointCloudPOI(cv::Mat depth_image, pcl::PointXYZ pix);
 
     // fill point cloud with only the point we are interested in, then we apply transform to robot frame.
-    pcl::PointXYZ fillPointCloud(const k4a::image& pointcloud_image, sensor_msgs::PointCloud2Ptr& point_cloud);
+    //pcl::PointXYZ fillPointCloud(const k4a::image& pointcloud_image, sensor_msgs::PointCloud2Ptr& point_cloud);
 
     //Transform PointXYZ from point cloud to the depth map perspective
-    pcl::PointXYZ genPointDepthMap(pcl::PointXYZ point_d);
+    //pcl::PointXYZ genPointDepthMap(pcl::PointXYZ point_d);
+
 
     //get depthmap parameters
     void readParamsFile();
+
+    void alignToRobotBase(const sensor_msgs::PointCloud2ConstPtr& cloud_msg);
+
+    void readICPFromFile();
 
     bool tf_in;
 

@@ -72,12 +72,12 @@ include_directories(
 )
 
 
-add_executable(points_depth src/server_points.cpp)
-target_link_libraries(points_depth 
-                        ${catkin_LIBRARIES} 
-                        ${K4A_LIBS})
+#add_executable(points_depth src/server_points.cpp)
+#target_link_libraries(points_depth 
+#                        ${catkin_LIBRARIES} 
+#                        ${K4A_LIBS})
 
 
-add_executable(points_wrapper src/wrapper.cpp)
-target_link_libraries(points_wrapper 
-                        ${catkin_LIBRARIES})
+#add_executable(points_wrapper src/wrapper.cpp)
+#target_link_libraries(points_wrapper 
+#                        ${catkin_LIBRARIES})
