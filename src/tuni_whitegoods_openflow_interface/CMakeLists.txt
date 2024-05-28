@@ -1,7 +1,9 @@
 cmake_minimum_required(VERSION 3.0.2)
 project(tuni_whitegoods_openflow_interface)
 
-add_compile_options(-std=c++11)
+set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 
 
 find_package(catkin REQUIRED COMPONENTS
@@ -38,7 +40,9 @@ include_directories(
 
 file(GLOB PROJECTOR_INTERFACE_SOURCES "src/projector_interface/*.cpp")
 
+
 add_library(projector_interface ${PROJECTOR_INTERFACE_SOURCES})
+
 
 add_executable(static_border_booking_node src/static_border_booking_node.cpp)
 target_link_libraries(static_border_booking_node 
@@ -55,9 +59,3 @@ target_link_libraries(smart_interface_node
                       )
 add_dependencies(smart_interface_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
-add_executable(robot_motion_node src/robot_motion_node.cpp)
-target_link_libraries(robot_motion_node
-                        projector_interface 
-                        ${catkin_LIBRARIES}
-                      )
-add_dependencies(robot_motion_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})

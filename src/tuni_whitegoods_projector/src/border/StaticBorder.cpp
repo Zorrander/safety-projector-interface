@@ -91,26 +91,35 @@ geometry_msgs::PolygonStamped StaticBorder::getBorderRobotSpace()
    
    return border_robot_space;
 }
+
 //draw a border
-cv::Mat StaticBorder::drawBorder()
+cv::Mat StaticBorder::drawBorder() 
 {
    sf_line_colored = cv::Mat::zeros(1024,1024,CV_8UC3);
-   cv::Point top_l(static_cast<int>(border_camera_space.polygon.points[0].x),static_cast<int>(border_camera_space.polygon.points[0].y));
-   cv::Point bottom_r(static_cast<int>(border_camera_space.polygon.points[1].x),static_cast<int>(border_camera_space.polygon.points[1].y));
+   cv::Point top_l(static_cast<int>(border_camera_space.polygon.points[0].x),
+                   static_cast<int>(border_camera_space.polygon.points[0].y));
+   cv::Point bottom_r(static_cast<int>(border_camera_space.polygon.points[1].x),
+                      static_cast<int>(border_camera_space.polygon.points[1].y));
+
    cv::rectangle(sf_line_colored,top_l,bottom_r,cv::Scalar(border_color.b*255, border_color.g*255, border_color.r*255),thickness,cv::LINE_8);
 
    return sf_line_colored;
 }
+
 //draw the mask of the border. Used for detection
-cv::Mat StaticBorder::drawMask()
+cv::Mat StaticBorder::drawMask() 
 {
    safety_line_mask = cv::Mat::zeros(1024,1024,CV_8UC1);
-   cv::Point top_l(static_cast<int>(border_camera_space.polygon.points[0].x),static_cast<int>(border_camera_space.polygon.points[0].y));
-   cv::Point bottom_r(static_cast<int>(border_camera_space.polygon.points[1].x),static_cast<int>(border_camera_space.polygon.points[1].y));
+   cv::Point top_l(static_cast<int>(border_camera_space.polygon.points[0].x),
+                   static_cast<int>(border_camera_space.polygon.points[0].y));
+   cv::Point bottom_r(static_cast<int>(border_camera_space.polygon.points[1].x),
+                      static_cast<int>(border_camera_space.polygon.points[1].y));
+   
    cv::rectangle(safety_line_mask,top_l,bottom_r,cv::Scalar(255,255,255),3,cv::LINE_8);
 
    return safety_line_mask;
 }
+
 //change the color of the border
 void StaticBorder::changeBorderColor(std_msgs::ColorRGBA& col)
 {
@@ -119,6 +128,7 @@ void StaticBorder::changeBorderColor(std_msgs::ColorRGBA& col)
    border_color.b = col.b;
    border_color.a = col.a;
 }
+
 
 //get the center of the border
 geometry_msgs::Point StaticBorder::getCenter()
@@ -131,7 +141,7 @@ geometry_msgs::Point StaticBorder::getCenter()
 }
 
 //return the zone where the border should be displayed
-std::string StaticBorder::getZone()
+std::string StaticBorder::getZone() const
 {
    return zone;
 }
@@ -160,4 +170,5 @@ std_msgs::ColorRGBA StaticBorder::getColor()
 {
    return border_color;
 }
+
 

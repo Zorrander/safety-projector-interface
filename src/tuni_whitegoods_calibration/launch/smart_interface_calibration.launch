@@ -1,0 +1,11 @@
+<launch>
+    <arg name="calibration_folder" default="$(env HOME)/calibration/depthmap/" />
+	<param name="calibration_folder" value="$(arg calibration_folder)" />
+
+	<include file="$(find tuni_whitegoods_perception)/launch/params.launch" />
+    <include file="$(find tuni_whitegoods_perception)/launch/kinect_simple.launch" />
+
+    <include file="$(find tuni_whitegoods_projector)/launch/projection.launch" />
+    
+    <node name="calibration" pkg="tuni_whitegoods_calibration" type="calibration.py" output="screen"/>
+</launch>

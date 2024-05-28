@@ -1,9 +1,0 @@
-<launch>
-	<rosparam file="$(find tuni_whitegoods_openflow_interface)/config/openflow_interface_params.yaml" />
-
-    <node name="border_booking_node" pkg="tuni_whitegoods_openflow_interface" type="static_border_booking_node" output="screen"/>
-    <node name="smart_interface_node" pkg="tuni_whitegoods_openflow_interface" type="smart_interface_node" output="screen"/>
-    <!--<node name="safety_line" pkg="projector_interface" type="border_node" output="screen"/>-->
-    <node name="move_robot_server" pkg="tuni_whitegoods_openflow_interface" type="robot_motion_node" output="screen"/>
-    
-</launch>

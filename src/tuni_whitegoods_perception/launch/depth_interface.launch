@@ -1,8 +1,5 @@
 <launch>
-    <!--<arg name="node_start_delay" default="2.0" /> 
-    <arg name="node_service_delay" default="3.0" />
-    <include file="$(find transform_pcl)/launch/all_kinect.launch" />-->
-    <!--<include file="$(find transform_pcl)/launch/voxel_and_pcltf.launch" />-->
+    <!--<include file="$(find transform_pcl)/launch/all_kinect.launch" />-->
 
     <node pkg="nodelet" type="nodelet" name="pcl_manager" args="manager" output="screen" />
 
@@ -17,10 +14,11 @@
       </rosparam>
     </node>
 
-	<node pkg="tuni_whitegoods_perception" name="kinect_transformed_master" type="transform_pcl_node" output="screen"/> 
 
-    <node pkg="tuni_whitegoods_perception" name="pcl_fusion"  type="pcl_fusion_node" output="screen"/>
+    <node pkg="tuni_whitegoods_perception" name="points_depthmap" type="depth_interface_node" output="screen"/>
 
-    <node pkg="tuni_whitegoods_perception" name="depth_interface" type="depth_interface_node" output="screen"/>
+	<node pkg="tuni_whitegoods_perception" name="pcl_trans" type="transform_pcl_node" output="screen"/> 
+
+    <node pkg="tuni_whitegoods_perception" name="pcl_fuse"  type="pcl_fusion_node" output="screen"/>
 
 </launch>

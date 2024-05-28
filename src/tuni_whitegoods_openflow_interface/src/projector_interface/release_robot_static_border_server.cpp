@@ -28,6 +28,7 @@
          };
          release_border_robot.push_back(bs);
          sbm->releaseRobotBorder(goal->id, goal->status);
+         sbm->publishBorder();
          release_robot_border = true;
          bool success = true;
          sendFeedbackReleaseRobot(goal->request_id);

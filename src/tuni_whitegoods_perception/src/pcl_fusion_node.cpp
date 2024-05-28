@@ -22,7 +22,7 @@ Package generating the depthmap with the PCL coming from the master (and slave i
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/opencv.hpp>
-#include <scene_calibration/PointsDepthMap.h>
+#include <tuni_whitegoods_msgs/PointsDepthMap.h>
 #include <unity_msgs/InterfacePOI.h>
 #include <unity_msgs/ElementUI.h>
 #include <geometry_msgs/Point.h>
@@ -88,9 +88,11 @@ class FusionPcl
     {
       //getting ros params
       ros::param::get("number_cam", number_cam);
-      ros::param::get("sub_pcl_master", name_sub_master);
-      ros::param::get("sub_pcl_sub", name_sub_sub);
+      ros::param::get("topic_pcl_master", name_sub_master);
+      ros::param::get("topic_pcl_sub", name_sub_sub);
       ros::param::get("calibration_folder", calibration_folder);
+      ROS_INFO("Looking for calibration data at: %s", calibration_folder.c_str());
+
       single_master = nh_.subscribe(name_sub_master, 1, &FusionPcl::callbackFrameMaster,this);
       //if more than one camera, also subscribe to the slave one - this will be where we generate the depthmap
       if(number_cam > 1)
@@ -108,10 +110,10 @@ class FusionPcl
       count_bl = 0;
       cv::namedWindow(OPENCV_WINDOW,cv::WINDOW_NORMAL);
       //get depthmap calibration params if they exist
-      calib = calibrationDepthMap();
+      calib = readCalibrationFile();
       if(calib)
       {
-        readCalibrationFile();
+        ROS_INFO("Found depthmap calibration");
         readParamsDM();
         bl = true;
       }
@@ -125,46 +127,51 @@ class FusionPcl
         crop_max_z = -5000;
       }
     }
+
     ~FusionPcl()
     {
       cv::destroyWindow(OPENCV_WINDOW);
     }
+
+    void performCalibration(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_master) {
+      //get pointcloud boundaries for 250 steps
+      if(count < 250)
+      {
+        getExtremeValues(cloud_master);
+      }
+      if(count == 250)
+      {
+        resizeDepthMap();
+        writeExtremeValues();
+        writeCalibrationParams();
+        std::cout<<"calibration depthmap done \n";
+      }
+      //now acquire the baseline that will be used for detection
+      if(count > 325)
+      {
+        std::string name_bl = calibration_folder + "baseline";
+        writeRawImage(baseline,name_bl);
+        bl = true;
+        calib = true;
+        std::cout<<"baseline done \n";
+      }
+      count++;
+    }
+    
     //subscriber to master camera
     void callbackFrameMaster(const sensor_msgs::PointCloud2ConstPtr& cloud_msg)
     {
-      //wrapper to pcl type
-      pcl_conversions::toPCL(*cloud_msg, pcl_master);
+      // Convert ROS PointCloud2 message to PCL PointCloud
+      pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_master(new pcl::PointCloud<pcl::PointXYZ>);
+      pcl::fromROSMsg(*cloud_msg, *cloud_master);
+
       //if only one camera, check calibration ang generate depthmap
       if(number_cam == 1)
       {
-        pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_master(new pcl::PointCloud<pcl::PointXYZ>);
-        pcl::fromPCLPointCloud2(pcl_master,*cloud_master);
         //if there is no calibration
         if(!calib)
         {
-          std::cout<<"creating depthmap parameters\n";
-          //get pointcloud boundaries for 250 steps
-          if(count < 250)
-          {
-            getExtremeValues(cloud_master);
-          }
-          if(count == 350)
-          {
-            resizeDepthMap();
-            writeExtremeValues();
-            writeCalibrationParams();
-            std::cout<<"calibration depthmap done \n";
-          //}
-          //now acquire the baseline that will be used for detection
-          //if(count > 325)
-          //{
-            std::string name_bl = calibration_folder + "baseline";
-            writeRawImage(baseline,name_bl);
-            bl = true;
-            calib = true;
-            std::cout<<"baseline done \n";
-          }
-          count++;
+          performCalibration(cloud_master);
         }
         //generate and publish depthmap
         genDepthFromPcl(cloud_master);
@@ -220,6 +227,7 @@ class FusionPcl
       cloud_publish.header = cloud_msg->header;
       pub_merged_pcl.publish(cloud_publish);
     }
+
     //get the boundaries of the pointclouds. Since it's a noisy process, we want to get the extremes values to avoid outliers.
     // These paramas will serve for the linear transform that project the 3D points to the 2D depth image.
     //We also get the crop_x, crop_y to resize the depthmap at the end of calibration. By default the depthmap is accurate but there are a lot of black area all around.
@@ -293,6 +301,7 @@ class FusionPcl
         crop_max_z = max_z;
       }
     }
+
     //generate the depthmap
     void genDepthFromPcl(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud)
     {
@@ -341,6 +350,7 @@ class FusionPcl
             }
         }
       }
+
       //if the calibration is not done, this will generate the baseline
       if(!bl && count > 260)
       {
@@ -357,13 +367,16 @@ class FusionPcl
           }
         }
       }
+
       //publish the depthmap
       msg_dm = cv_bridge::CvImage(std_msgs::Header(), sensor_msgs::image_encodings::TYPE_32FC1, cv_image).toImageMsg();
       pub_dm.publish(msg_dm);
+      
       //display the depthmap for debugging
       cv::imshow(OPENCV_WINDOW, cv_image);
       cv::waitKey(1);
     }
+
     //save an depth image at some location. Used to save the baseline.
     bool writeRawImage(const cv::Mat& image, const std::string& filename)
     {
@@ -385,6 +398,7 @@ class FusionPcl
         file.close();
         return true;
     }
+
     //read a saved depth image. It is not used here, it's just for debugging and make sure the baseline is correct.
     //the saved image can't be opened by a classic image viewer but it can be displayed in an opencv window
     bool readRawImage(cv::Mat& image, const std::string& filename)
@@ -453,18 +467,7 @@ class FusionPcl
       ofile << tbz << std::endl;
       ofile.close();
     }
-    //check for existing calibration
-    bool calibrationDepthMap()
-    {
-      bool calib = false;
-      std::string name_file = calibration_folder + "extreme_values.txt";
-      std::ifstream icpfile (name_file);
-      if(icpfile.is_open())
-      {
-        calib = true;
-      }
-      return calib;
-    }
+
     //read the linear transform params
     void readParamsDM()
     {
@@ -489,13 +492,15 @@ class FusionPcl
       }
     }
     //read extreme values
-    void readCalibrationFile()
+    bool readCalibrationFile()
     {
+      bool calib = false;
       std::string line;
       std::string name_file = calibration_folder + "extreme_values.txt";
       std::ifstream icpfile(name_file);
       if(icpfile.is_open())
       {
+        calib = true;
         getline(icpfile,line);
         crop_min_x = std::stof(line);
         getline(icpfile,line);
@@ -510,6 +515,7 @@ class FusionPcl
         crop_max_z = std::stof(line);
         icpfile.close();
       }
+      return calib;
     }
 }; 
 

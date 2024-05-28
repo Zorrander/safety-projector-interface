@@ -1,0 +1,39 @@
+<launch>
+
+    <arg name="calibration_folder" default="$(env HOME)/calibration/depthmap/" />
+	<param name="calibration_folder" value="$(arg calibration_folder)" />
+
+    <arg name="calibration_homography" default="$(env HOME)/calibration/homography_test/" />
+	<param name="calibration_homography" value="$(arg calibration_homography)" />
+
+	<include file="$(find tuni_whitegoods_perception)/launch/params.launch" />
+    <include file="$(find tuni_whitegoods_perception)/launch/kinect_simple.launch" />
+
+
+    <node pkg="nodelet" type="nodelet" name="pcl_manager" args="manager" output="screen" />
+
+    <node pkg="nodelet" type="nodelet" name="voxel_grid_master" args="load pcl/VoxelGrid pcl_manager" output="screen">
+      <remap from="~input" to="/points2" />
+      <rosparam>
+        filter_field_name: z
+        filter_limit_min: 0.0
+        filter_limit_max: 3.5
+        filter_limit_negative: False
+        leaf_size: 0.008
+      </rosparam>
+    </node>
+
+    <node pkg="tuni_whitegoods_perception" name="kinect_transformed_master" type="transform_pcl_node" output="screen"/> 
+
+    <node pkg="tuni_whitegoods_perception" name="pcl_trans" type="transform_pcl_node" output="screen"/> 
+
+    <node pkg="tuni_whitegoods_perception" name="pcl_fusion"  type="pcl_fusion_node" output="screen"/>
+
+
+
+    <node pkg="tuni_whitegoods_calibration" type="points_depth" name="points_depthmap"  output="screen"/>
+
+    <node  pkg="tuni_whitegoods_calibration" type="points_wrapper" name="wrapper_depth"  output="screen"/>
+
+    <node name="calibration_hom_dm" pkg="tuni_whitegoods_calibration" type="get_depth_proj_hom.py" output="screen"/>
+</launch>

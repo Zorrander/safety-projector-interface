@@ -35,6 +35,7 @@ The goal is to align the point cloud to the robot base so the scene is flat*/
 #include <message_filters/subscriber.h>
 #include <sensor_msgs/Image.h>
 #include <ros/header.h>
+#include <geometry_msgs/TransformStamped.h>
 
 
 class Transform
@@ -47,7 +48,8 @@ class Transform
       std::string name_topic_pcl_tf;
       std::string name_topic_tf_poi;
       std::string name_sub;
-      std::string name_tf_robot;
+      std::vector<double>  master_to_base;
+      std::string tf_depth_camera;
       int num_cam;
       bool icp;
       ros::Subscriber sub_cloud;
@@ -57,16 +59,12 @@ class Transform
       typedef image_transport::SubscriberFilter ImageSubscriber;
       ImageSubscriber depth_rgb_sub_;
       ImageSubscriber depth_sub_;
-      std_msgs::Header sub_header;
       ros::Publisher pub;
       ros::Publisher pub_d;
       ros::Publisher pub_poi;
       Eigen::Matrix4d icp_matrix;
       Eigen::Affine3d robot_space;
       bool tf_in;
-      bool tf_rgb_sub;
-      bool tf_rgb_master;
-      bool tf_rgb;
       pcl::console::TicToc tic;
       k4a::playback handle;
       k4a::calibration k4aCalibration;
@@ -88,104 +86,125 @@ class Transform
   public:
     Transform()
     {
-      //params from ROS
-      ros::param::get("robot_base", tf_robot_frame);
-      ros::param::get("topic_pcl_master", name_topic_pcl_tf);
-      ros::param::get("sub_points", name_sub);
-      ros::param::get("name_transform_robot_space", name_tf_robot);
-      ros::param::get("number_cam", num_cam);
+
+
+
+      try {
+
+          if (!nh_.getParam("robot_base", tf_robot_frame)) {
+              ROS_ERROR("Failed to get parameter 'robot_base'");
+          }
+
+          if (!nh_.getParam("depth_camera", tf_depth_frame)) {
+              ROS_ERROR("Failed to get parameter 'depth_camera'");
+          }
+
+          if (!nh_.getParam("topic_pcl_master", name_topic_pcl_tf)) {
+              ROS_ERROR("Failed to get parameter 'topic_pcl_master'");
+          }
+
+          if (!nh_.getParam("master_to_base", master_to_base)) {
+              ROS_ERROR("Failed to get parameter 'master_to_base'");
+          }
+
+          if (!nh_.getParam("sub_points", name_sub)) {
+              ROS_ERROR("Failed to get parameter 'sub_points'");
+          }
+
+          if (!nh_.getParam("number_cam", num_cam)) {
+              ROS_ERROR("Failed to get parameter 'number_cam'");
+          }
+
+      } catch (ros::InvalidNameException& e) {
+        ROS_ERROR("Invalid parameter name: %s", e.what());
+
+      } catch (ros::InvalidParameterException& e) {
+          ROS_ERROR("Invalid parameter: %s", e.what());
+
+      }
+
+      ROS_INFO("Transform successfully retrieved parameters.");
 
       //get ICP params so it can align the pcl from the second camera. For HRC scenario
-      readICPFromFile();
-      initTransformToBase();
-      tf_rgb_sub = false;
-      tf_rgb_master = false;
-      tf_rgb = false;
-      //To subscribe to 2nd camera if there is one
-      if(num_cam > 1)
-      {
-        sub_sub = nh_.subscribe("/voxel_grid_master/output", 1, &Transform::subPclCallback,this);
+      if(num_cam > 1){
+        readICPFromFile();
       }
+      
+      initTransformToBase();
+
       pub = nh_.advertise<sensor_msgs::PointCloud2> (name_topic_pcl_tf, 1, true);
-      //sub_poi = nh_.subscribe("/interface_poi", 1, &Transform::poiCb,this);
       sub_cloud = nh_.subscribe(name_sub, 1, &Transform::alignToRobotBase,this);       
       list_poi.resize(0);
       robot_space = Eigen::Affine3d::Identity();
     }
-    ~Transform()
-    {
+
+    // Function to initialize transformation to base using tf2 static transform
+    void initTransformToBaseTF() {
+        tf2_ros::Buffer tfBuffer;
+        tf2_ros::TransformListener tfListener(tfBuffer);
+
+        // Wait for the static transform to become available
+        geometry_msgs::TransformStamped static_transform;
+        try {
+            static_transform = tfBuffer.lookupTransform(tf_robot_frame, tf_depth_frame, ros::Time(0), ros::Duration(5.0));
+            rgb_to_base = static_transform.transform;
+            ROS_INFO_STREAM(rgb_to_base);
+            Eigen::Isometry3d mat = tf2::transformToEigen(static_transform.transform);
+            robot_frame = mat.matrix();
+            tf_in = true;
+        } catch (tf2::TransformException& ex) {
+            ROS_WARN("%s", ex.what());
+            tf_in = false;
+            return;
+        }
     }
-    //get sub pcl header to synchronize timestamps on the publishers
-    void subPclCallback(const sensor_msgs::PointCloud2ConstPtr& cloud_msg)
-    {
-        sub_header = cloud_msg->header;
-    }
-    //read camera robot calibration. This matrix is the base for aligning the pcl camera to the robot frame 
+
     void initTransformToBase()
     {
-      std::vector<double> tf_list;
-      nh_.getParam(name_tf_robot, tf_list);
-      rgb_to_base.translation.x = tf_list[0];
-      rgb_to_base.translation.y = tf_list[1];
-      rgb_to_base.translation.z = tf_list[2];
-      rgb_to_base.rotation.x = tf_list[3];
-      rgb_to_base.rotation.y = tf_list[4];
-      rgb_to_base.rotation.z = tf_list[5];
-      rgb_to_base.rotation.w = tf_list[6];
+      rgb_to_base.translation.x = master_to_base[0];
+      rgb_to_base.translation.y = master_to_base[1];
+      rgb_to_base.translation.z = master_to_base[2];
+      rgb_to_base.rotation.x = master_to_base[3];
+      rgb_to_base.rotation.y = master_to_base[4];
+      rgb_to_base.rotation.z = master_to_base[5];
+      rgb_to_base.rotation.w = master_to_base[6];
+      ROS_INFO_STREAM(rgb_to_base);
       Eigen::Isometry3d mat = tf2::transformToEigen(rgb_to_base);
       robot_frame = mat.matrix();
       tf_in = true;
     }
 
+    // Align PointCloud to robot base and optionally apply ICP translation for multiple cameras
+    void alignToRobotBase(const sensor_msgs::PointCloud2ConstPtr& cloud_msg) {
+        // Create containers for point clouds
+        pcl::PointCloud<pcl::PointXYZ>::Ptr input_cloud(new pcl::PointCloud<pcl::PointXYZ>);
+        pcl::PointCloud<pcl::PointXYZ>::Ptr transformed_cloud(new pcl::PointCloud<pcl::PointXYZ>);
+        sensor_msgs::PointCloud2 cloud_tf;
 
-    //align PointCloud camera_rgb -> depth_frame (for HRC) then to robot base and depending on the camera, use icp translation to align both pointcloud.
-    void alignToRobotBase(const sensor_msgs::PointCloud2ConstPtr& cloud_msg)
-    {
-      // Create a container for the data.
-      pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_transformed(new pcl::PointCloud<pcl::PointXYZ>);
-      pcl::PointCloud<pcl::PointXYZ>::Ptr temp_cloud(new pcl::PointCloud<pcl::PointXYZ>);
-      pcl::PointCloud<pcl::PointXYZ>::Ptr depth_tf_cloud(new pcl::PointCloud<pcl::PointXYZ>);
-      pcl::PointCloud<pcl::PointXYZ>::Ptr final_cloud(new pcl::PointCloud<pcl::PointXYZ>);
-      pcl::PointCloud<pcl::PointXYZ>::Ptr icp_cloud(new pcl::PointCloud<pcl::PointXYZ>);
-      sensor_msgs::PointCloud2 cloud_tf;
-      pcl::PCLPointCloud2 pcl_pc2;
-      pcl_conversions::toPCL(*cloud_msg, pcl_pc2);
-      pcl::fromPCLPointCloud2(pcl_pc2,*temp_cloud);
-      tic.tic();
-      pcl::transformPointCloud(*temp_cloud,*final_cloud,robot_frame);
-      if(num_cam > 1)
-      {
-        pcl::transformPointCloud(*final_cloud, *icp_cloud, icp_matrix);
-        pcl::toROSMsg(*icp_cloud,cloud_tf);
-      } 
-      else
-      {
-        pcl::toROSMsg(*final_cloud,cloud_tf);
-        cloud_tf.header.stamp = sub_header.stamp;
-      }
-      cloud_tf.header = cloud_msg->header;
-      cloud_tf.header.frame_id = tf_robot_frame;
-      pub.publish(cloud_tf);
-      
+        // Convert ROS message to PCL point cloud
+        pcl::fromROSMsg(*cloud_msg, *input_cloud);
+
+        // Transform point cloud to robot base frame
+        pcl::transformPointCloud(*input_cloud, *transformed_cloud, robot_frame);
+
+        // Optionally apply ICP translation for multiple cameras
+        if (num_cam > 1) {
+            pcl::PointCloud<pcl::PointXYZ>::Ptr icp_cloud(new pcl::PointCloud<pcl::PointXYZ>);
+            pcl::transformPointCloud(*transformed_cloud, *icp_cloud, icp_matrix);
+            pcl::toROSMsg(*icp_cloud, cloud_tf);
+        } else {
+            pcl::toROSMsg(*transformed_cloud, cloud_tf);
+            cloud_tf.header.stamp = cloud_msg->header.stamp;
+        }
+
+        // Set header information for the transformed point cloud
+        cloud_tf.header = cloud_msg->header;
+        cloud_tf.header.frame_id = tf_robot_frame;
+
+        // Publish the transformed point cloud
+        pub.publish(cloud_tf);
     }
 
-    //icp matrix hard coded - deprecated
-    void initMatrixTransform()
-    {
-      icp_matrix = Eigen::Matrix4d::Identity();
-      icp_matrix (0, 0) = 0.995;
-      icp_matrix (0, 1) = -0.019;
-      icp_matrix (0, 2) = 0.096;
-      icp_matrix (1, 0) = 0.002;
-      icp_matrix (1, 1) = 0.986;
-      icp_matrix (1, 2) = 0.167;
-      icp_matrix (2, 0) = -0.097;
-      icp_matrix (2, 1) = -0.166;
-      icp_matrix (2, 2) = 0.981;
-      icp_matrix (0, 3) = -0.340;
-      icp_matrix (1, 3) = -0.493;
-      icp_matrix (2, 3) = 0.293;
-    }
 
     void writeICPAsText(const Eigen::Matrix4d & matrix)
     {
@@ -205,7 +224,10 @@ class Transform
     void readICPFromFile()
     {
       std::string line;
-      std::ifstream icpfile ("/home/altair/odin/src/transform_pcl/config/icp.txt");
+      std::string calibration_folder;
+      ros::param::get("calibration_folder", calibration_folder);
+      std::string name_file = calibration_folder + "../ICP/icp.txt";
+      std::ifstream icpfile (name_file);
       if(icpfile.is_open())
       {
         for(int i = 0; i < 4; i++)
@@ -236,7 +258,9 @@ class Transform
 int main(int argc, char** argv)
 {
   ros::init(argc, argv, "pcl_trans");
+  ROS_INFO("Starting Transform node to align point cloud with robot base...");
   Transform transform_pcl;
+  ROS_INFO("Transform node running.");
   ros::spin();
 
   return 0;

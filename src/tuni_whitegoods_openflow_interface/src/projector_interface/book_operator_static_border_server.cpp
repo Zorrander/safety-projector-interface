@@ -25,6 +25,7 @@
     {
         border_operator_booked.push_back(goal->id);
         sbm->bookBorderOperator(goal->id);
+        sbm->publishBorder();
         book_operator_border = true;
         bool success = true;
         sendFeedbackBookOperator(goal->request_id);
