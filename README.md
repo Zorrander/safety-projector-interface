@@ -170,3 +170,29 @@ The folder config contains ROS params that should be launched at the very beginn
 ## LMS WHITEGOODS
 
 Documentation on how to launch the nodes inside the package whitegoods
+
+# Project status
+
+| Feature | Robolab | Heavy Lab | Whirlpool |
+|:---:|:---:|:---:|:---:|
+| display static smart interface                    | 🟢 | ❌ | ❌ |  
+| display dynamic smart interface                   | ❌ | 🟢 | ❌ |  
+| detect smart interface interaction events         | 🟢 | ❌ | ❌ |  
+| display static border                             | 🟢 | ❌ | ❌ | 
+| display dynamic border                            | ❌ | 🟢 | ❌ |  
+| robot booking static border                       | 🟢 | ❌ | ❌ | 
+| human booking static border                       | 🟢 | ❌ | ❌ |  
+| detect violation static border                    | 🟢 | ❌ | ❌ | 
+| robot releasing static border                     | 🟢 | ❌ | ❌ |  
+| human releasing static border                     | 🟢 | ❌ | ❌ | 
+| display instructions                              | ❌ | ❌ | ❌ | 
+| robot control                                     | 🟢 | ❌ | ❌ | 
+| robot-camera calibration                          | 🟢 | 🟢 | ❌ |  
+| dual projector integration                        | ❌ | ❌ | ❌ |
+| dual camera integration                           | ❌ | 🟢 | ❌ |
+| calibration isolated and integrated               | 🟢 | ❌ | ❌ |
+| configuration allows to enable/disable features   | ❌ | ❌ | ❌ |
+| calibration process reproduceable                 | ❌ | ❌ | ❌ |
+| visualize components (table, shelf, ...)          | ❌ | ❌ | ❌ |
+| visualize projected elements                      | ❌ | ❌ | ❌ |
+| visualize detected elements (hands, objects, ...) | ❌ | ❌ | ❌ |
