@@ -175,24 +175,27 @@ Documentation on how to launch the nodes inside the package whitegoods
 
 | Feature | Robolab | Heavy Lab | Whirlpool |
 |:---:|:---:|:---:|:---:|
-| display static smart interface                    | 🟢 | ❌ | ❌ |  
-| display dynamic smart interface                   | ❌ | 🟢 | ❌ |  
-| detect smart interface interaction events         | 🟢 | ❌ | ❌ |  
-| display static border                             | 🟢 | ❌ | ❌ | 
-| display dynamic border                            | ❌ | 🟢 | ❌ |  
-| robot booking static border                       | 🟢 | ❌ | ❌ | 
-| human booking static border                       | 🟢 | ❌ | ❌ |  
-| detect violation static border                    | 🟢 | ❌ | ❌ | 
-| robot releasing static border                     | 🟢 | ❌ | ❌ |  
-| human releasing static border                     | 🟢 | ❌ | ❌ | 
-| display instructions                              | ❌ | ❌ | ❌ | 
-| robot control                                     | 🟢 | ❌ | ❌ | 
-| robot-camera calibration                          | 🟢 | 🟢 | ❌ |  
-| dual projector integration                        | ❌ | ❌ | ❌ |
+| display static smart interface                    | 🟢 | 🔵 | 🔵 |  
+| display dynamic smart interface                   | 🔵 | 🟢 | 🔵 |  
+| detect smart interface interaction events         | 🟢 | 🔵 | 🔵 |  
+| display static border                             | 🟢 | ❌ | 🔵 | 
+| display dynamic border                            | 🔵 | 🟢 | ❌ |  
+| robot booking static border                       | 🟢 | ❌ | 🔵 | 
+| human booking static border                       | 🟢 | ❌ | 🔵 |  
+| detect violation static border                    | 🟢 | ❌ | 🔵 | 
+| robot releasing static border                     | 🟢 | ❌ | 🔵 |  
+| human releasing static border                     | 🟢 | ❌ | 🔵 | 
+| display instructions                              | ❌ | 🔵 | 🔵 | 
+| robot control                                     | 🟢 | ❌ | 🔵 | 
+| robot-camera calibration                          | 🟢 | 🟢 | 🔵 |  
+| dual projector integration                        | ❌ | 🔵 | ❌ |
 | dual camera integration                           | ❌ | 🟢 | ❌ |
-| calibration isolated and integrated               | 🟢 | ❌ | ❌ |
-| configuration allows to enable/disable features   | ❌ | ❌ | ❌ |
-| calibration process reproduceable                 | ❌ | ❌ | ❌ |
-| visualize components (table, shelf, ...)          | ❌ | ❌ | ❌ |
-| visualize projected elements                      | ❌ | ❌ | ❌ |
-| visualize detected elements (hands, objects, ...) | ❌ | ❌ | ❌ |
+| calibration isolated and integrated               | 🟢 | 🔵 | 🔵 |
+| configuration allows to enable/disable features   | 🔵 | 🔵 | 🔵 |
+| calibration process reproduceable                 | 🔵 | 🔵 | 🔵 |
+| visualize components (table, shelf, ...)          | 🔵 | 🔵 | 🔵 |
+| visualize projected elements                      | 🔵 | 🔵 | 🔵 |
+| visualize detected elements (hands, objects, ...) | 🔵 | 🔵 | 🔵 |
+| calibration of laser scanner position             | ❌ | 🔵 | ❌ |
+| display of laser scanner status/information       | ❌ | 🔵 | ❌ |
+| safety status: static display of polygon          | ❌ | 🔵 | 🔵 |
