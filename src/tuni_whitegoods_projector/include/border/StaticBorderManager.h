@@ -16,9 +16,11 @@
 #include <message_filters/synchronizer.h>
 #include <geometry_msgs/TransformStamped.h>
 #include <geometry_msgs/Point.h>
+#include <geometry_msgs/Pose.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/Point32.h>
 #include <geometry_msgs/PolygonStamped.h>
+#include <visualization_msgs/Marker.h>
 #include <std_msgs/Header.h>
 #include "unity_msgs/BorderProj.h"
 #include <integration/SafetyBorderViolation.h>
@@ -91,19 +93,18 @@ class StaticBorderManager
       ros::Publisher pub_border_violation;
       ros::Publisher pub_pose_violation;
       ros::Publisher pub_border_polygon;
-      ros::Publisher pub_borders_vacancy;
       std::vector<StaticBorder> borders;
       std::vector<Projection> list_proj;
       std::vector<BorderContentStatus> borders_status;
       std::vector<BorderContentStatus> borders_booked;
       std::vector<BorderContentStatus> list_hand_violation;
+      ros::Publisher vis_pub;
+      ros::Publisher vis_hand_pub;
+
       cv::Mat safety_line_mask;
-
-
       cv::Mat baseline_dm;
-      cv::Mat sf_line;
       cv::Mat depth_map;
-      cv::Mat res_dm;
+      float dist_buffer;
       int s_rows;
       int s_cols;
       float safety_factor;
@@ -112,17 +113,20 @@ class StaticBorderManager
       std_msgs::ColorRGBA stat_booked;
       std_msgs::ColorRGBA stat_free;
       std_msgs::ColorRGBA stat_operator;
-      bool first_baseline;
-      bool first_init;
-      float threshold_depth_inf;
-      float highest_depth;
-      std::vector<float> minmax_values;
-      bool crossed;
       string calibration_folder;
       string name_bl;
-      cv::Point loc;
-      bool change_color;
       cv::Mat mask_detect;
 
+      // ros::Publisher pub_borders_vacancy;
+      // cv::Mat res_dm;
+      // cv::Point loc;
+      // bool change_color;
+      // cv::Mat sf_line;
+      // bool first_baseline;
+      // bool first_init;
+      //float threshold_depth_inf;
+      //float highest_depth;
+      //std::vector<float> minmax_values;
+      // bool crossed;
 };
 #endif

@@ -50,7 +50,5 @@ class Border
       cv::Mat baseline_dm;
       geometry_msgs::Pose location_violation;
       Border& operator=(const Border&);
-
-      std::string calibration_folder;
 };
 #endif

@@ -100,9 +100,10 @@ cv::Mat StaticBorder::drawBorder()
                    static_cast<int>(border_camera_space.polygon.points[0].y));
    cv::Point bottom_r(static_cast<int>(border_camera_space.polygon.points[1].x),
                       static_cast<int>(border_camera_space.polygon.points[1].y));
-
+   ROS_INFO("Border x,y coordinates: (%i, %i), (%i, %i)", top_l.x, top_l.y, bottom_r.x, bottom_r.y);
    cv::rectangle(sf_line_colored,top_l,bottom_r,cv::Scalar(border_color.b*255, border_color.g*255, border_color.r*255),thickness,cv::LINE_8);
-
+   // cv::imshow("sb:drawBorder", sf_line_colored);
+   // cv::waitKey(0);
    return sf_line_colored;
 }
 
@@ -129,6 +130,11 @@ void StaticBorder::changeBorderColor(std_msgs::ColorRGBA& col)
    border_color.a = col.a;
 }
 
+//change the thickness of the border
+void StaticBorder::changeThickness(int thic)
+{
+   thickness = thic;
+}
 
 //get the center of the border
 geometry_msgs::Point StaticBorder::getCenter()

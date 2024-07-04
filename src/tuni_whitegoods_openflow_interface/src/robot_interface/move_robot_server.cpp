@@ -20,7 +20,7 @@
       {
          bool success = true;
          ROS_INFO("MoveRobotServer::executeMoveJoints");
-         /*
+         
          control_msgs::FollowJointTrajectoryGoal goal_ur5;
          goal_ur5.trajectory = goal->trajectory;
          std::string cmd = "movej(["+ std::to_string(goal->trajectory.points[0].positions[0])+","+ std::to_string(goal->trajectory.points[0].positions[1])+","+ std::to_string(goal->trajectory.points[0].positions[2])+","+ std::to_string(goal->trajectory.points[0].positions[3])+","+ std::to_string(goal->trajectory.points[0].positions[4])+","+ std::to_string(goal->trajectory.points[0].positions[5])+"], a=0.3, v=0.13)";
@@ -37,7 +37,7 @@
             as_move_joints.setPreempted();
             success = false;
          }
-         */
+         
          if(success)
          {
             // set the action state to succeeded

@@ -155,36 +155,6 @@ class Projector():
                 inst = Instruction(msg.request_id,msg.zone,msg.target_location,msg.title,msg.title_color,msg.description,msg.description_color,msg.lifetime)
                 i.add_instruction(inst)
 
-    #initiate the zones where to display elements by getting the calibration files
-    #the calibrations files are homographies
-    #this method is the previous way of doing it (when the calibration folder was a mess)
-    #
-    def init_zones(self):
-        name = ""
-        with open('/home/altair/odin/src/projector/projector_devices_ur5.json') as f: #data for projectors and the kinect
-            prj_json = json.load(f)
-            for prj_data in prj_json['projectors']:
-                tmp = {}
-                tmp['id'] = prj_data['id']
-                #tmp['directHom'] = np.load(name+prj_data['homDirect']) 
-                #tmp['vertHom'] = np.load(name+prj_data['homFromVert'])#homography for vertical view of RGB image on ground level
-                tmp['vertHomTable'] = np.load(name+prj_data['homTableVert'])#homography for vertical view of RGB image on table level
-                tmp['hom_proj_static'] = np.load(name+prj_data['hom_proj_static'])
-                #print(tmp['hom_proj_static'])
-                #tmp['hom_proj_static'] = np.load("/home/altair/odin/src/whitegoods/calibration/homography/hom_proj_static.npy")
-                #print(tmp['hom_proj_static'])
-                tmp['homDepthProj'] = np.load(name+prj_data['homDepthProj'])#for RGB view to the floor
-                tmp['shiftX'] = prj_data['shiftX']#shifting opencv window to the projector
-                self.projectors.append(tmp)
-            for cam_data in prj_json['cameras']:
-                if cam_data['mainCam'] == 1:
-                    self.mainCamera['vertHomGround'] = np.load(name+cam_data['vertHomGround'])#homography from normal image to vertical view on ground level
-                    self.mainCamera['camRobHom'] = np.load(name+cam_data['camRobHom'])#homography from robot coords to image
-                    self.mainCamera['vertHomTable'] = np.load(name+cam_data['vertTable'])#homography from normal image to vertical view on table level
-                    self.mainCamera['hom_cam_static'] = np.load(name+cam_data['hom_cam_static'])
-                    self.mainCamera['hom_cam_screen_to_proj'] = np.load(name+cam_data['hom_cam_screen_to_proj'])
-                    #self.mainCamera['corners_table'] = np.load(name+cam_data['corners'])
-        self.find_static_ui_transform()
     
     #this method takes the calibration files and initialize the transform with the homographies
     def init_zones_tmp(self):

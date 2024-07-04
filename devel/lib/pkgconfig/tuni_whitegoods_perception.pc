@@ -1,0 +1,8 @@
+prefix=/home/odin3/safety-projector-interface/devel
+
+Name: tuni_whitegoods_perception
+Description: Description of tuni_whitegoods_perception
+Version: 0.0.0
+Cflags: -I/home/odin3/safety-projector-interface/src/tuni_whitegoods_perception/include
+Libs: -L${prefix}/lib -ldepth_interface
+Requires: message_runtime roscpp sensor_msgs std_msgs cv_bridge image_transport unity_msgs message_filters integration pcl_conversions pcl_ros tf2 tf2_msgs tf2_ros tf2_sensor_msgs

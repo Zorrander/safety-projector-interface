@@ -30,9 +30,12 @@ class Projector
   ros::Subscriber transform_sub;
   int shift;
   int id_device;
+  image_transport::ImageTransport it_;
+  image_transport::Publisher pub_proj_img;
 
 public:
-  Projector()
+  Projector():
+  it_(nh_)
   {
     transform_sub = nh_.subscribe("/list_dp", 1, &Projector::transformProject,this);
     //ros param to get id of device (videoprojector) and how much to shift the screen. Since there is one projector by computer, shere is no need for shift anymore for HRC.
@@ -42,6 +45,7 @@ public:
     cout << "Shift value: " << shift << endl;
     cv::moveWindow(OPENCV_WINDOW,shift, 0);
     cv::setWindowProperty(OPENCV_WINDOW, cv::WND_PROP_FULLSCREEN, cv::WINDOW_FULLSCREEN);
+    pub_proj_img = it_.advertise("/odin/visualization/projections", 1);
   }
 
   ~Projector()
@@ -62,6 +66,8 @@ public:
         suc = true;
         try
         {
+          pub_proj_img.publish(msg->list_proj[i].img);
+
           cv_ptr = cv_bridge::toCvCopy(msg->list_proj[i].img, sensor_msgs::image_encodings::BGR8);
           cv::Mat hom = getMatrix(msg->list_proj[i].transform);
           cv::warpPerspective(cv_ptr->image,img_transformed,hom,sum_img.size());
@@ -89,7 +95,7 @@ public:
     {
       sum_img.create(1080,1920,CV_8UC3);
     }
-    
+
     cv::imshow(OPENCV_WINDOW, sum_img);
     cv::waitKey(1);
     

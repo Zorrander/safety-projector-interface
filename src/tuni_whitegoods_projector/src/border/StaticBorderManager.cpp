@@ -26,11 +26,15 @@ stat_operator(status_operator)
    pub_pose_violation = nh.advertise<geometry_msgs::PoseStamped>("/projector_interface/pose_violation",1);
    pub_border_polygon = nh.advertise<geometry_msgs::PolygonStamped>("/border_violated",1);
 
+   vis_pub = nh.advertise<visualization_msgs::Marker>( "visualization_marker", 0 );
+   vis_hand_pub = nh.advertise<geometry_msgs::PoseStamped>("/odin/visualization/hand", 0 );
+
    ros::param::get("calibration_folder", calibration_folder);
    name_bl = calibration_folder + "baseline";
    baseline_dm = cv::Mat(1024, 1024, CV_32FC1,cv::Scalar(std::numeric_limits<float>::min()));
    readRawImage(baseline_dm, name_bl);
 
+   dist_buffer = 1000.0;
    redraw = true;
 
    list_proj.clear();
@@ -89,6 +93,28 @@ void StaticBorderManager::addBorder(StaticBorder sb) {
         np.mask = sb.drawMask().clone();
         list_proj.push_back(np);
     }
+
+   // Create Rviz marker 
+   visualization_msgs::Marker marker;
+   marker.header.frame_id = "base";
+   marker.header.stamp = ros::Time();
+   marker.id = 0;
+   marker.type = visualization_msgs::Marker::SPHERE;
+   marker.action = visualization_msgs::Marker::ADD;
+   marker.pose = sb.transformPtToRobotSpace(tmp.center.x, tmp.center.y);
+   marker.pose.orientation.x = 0.0;
+   marker.pose.orientation.y = 0.0;
+   marker.pose.orientation.z = 0.0;
+   marker.pose.orientation.w = 1.0;
+   marker.scale.x = 0.1;
+   marker.scale.y = 0.1;
+   marker.scale.z = 0.1;
+   marker.color.a = 1.0; // Don't forget to set the alpha!
+   marker.color.r = 0.0;
+   marker.color.g = 1.0;
+   marker.color.b = 0.0;
+   vis_pub.publish( marker );
+
     redraw = true;
 }
 
@@ -314,7 +340,66 @@ void StaticBorderManager::depthMapCallback(const sensor_msgs::ImageConstPtr& msg
 void StaticBorderManager::handTrackingCallback(const unity_msgs::poiPCLConstPtr& msg)
 {
    list_hand_violation.clear();
+   
+   for (auto& border : borders){
+      geometry_msgs::Point ros_border_center = border.getCenter();
+      const cv::Point border_center(static_cast<int>(ros_border_center.x), static_cast<int>(ros_border_center.y));
+      ROS_INFO("Border center x,y coordinates: (%i, %i)", border_center.x, border_center.y);
+      for (const auto& hand_point : msg->pts)
+      {
+         const cv::Point hand_position(static_cast<int>(hand_point.x), static_cast<int>(hand_point.y));
+         ROS_INFO("hand_position x,y coordinates: (%i, %i)", hand_position.x, hand_position.y);
 
+         geometry_msgs::PoseStamped hand_pose;
+         hand_pose.header.frame_id = "base";
+         hand_pose.pose = border.transformPtToRobotSpace(hand_position.x, hand_position.y);
+         vis_hand_pub.publish(hand_pose);
+
+         // Create Rviz marker 
+         visualization_msgs::Marker marker;
+         marker.header.frame_id = "base";
+         marker.header.stamp = ros::Time();
+         marker.id = 1;
+         marker.type = visualization_msgs::Marker::SPHERE;
+         marker.action = visualization_msgs::Marker::ADD;
+         marker.pose = hand_pose.pose;
+         marker.pose.orientation.x = 0.0;
+         marker.pose.orientation.y = 0.0;
+         marker.pose.orientation.z = 0.0;
+         marker.pose.orientation.w = 1.0;
+         marker.scale.x = 0.1;
+         marker.scale.y = 0.1;
+         marker.scale.z = 0.1;
+         marker.color.a = 1.0; // Don't forget to set the alpha!
+         marker.color.r = 0.0;
+         marker.color.g = 0.0;
+         marker.color.b = 1.0;
+         vis_pub.publish( marker );
+
+         const float distance = cv::norm(hand_position - border_center);
+         ROS_INFO("distance: (%f) | prev distance (%f) | difference between the two = (%f)", distance, dist_buffer, dist_buffer-distance);
+         if (distance < border.getBorderDiagonal()*0.75 && std::abs(dist_buffer-distance) < 5)
+         {
+            ROS_INFO("distance: (%f)", distance);
+            ROS_INFO("diagonal: (%f)", border.getBorderDiagonal());
+            ROS_INFO("CHANGING THICKNESS");
+            // Hand violation detected
+            border.changeThickness(2);
+            publishBorder();
+            // No need to check further once a violation is detected
+            break;
+         }
+
+         else if (distance > border.getBorderDiagonal()*0.75){
+            border.changeThickness(1);
+         }
+
+         dist_buffer = distance ; 
+      }
+      
+      publishBorder();
+   }
+   // Would be better to iterate through every border
    for (const auto& booked_border : borders_booked)
    {
       if (booked_border.status == 1)

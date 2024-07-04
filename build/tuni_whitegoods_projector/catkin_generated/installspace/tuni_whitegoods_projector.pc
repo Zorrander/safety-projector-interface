@@ -1,0 +1,8 @@
+prefix=/home/odin3/safety-projector-interface/install
+
+Name: tuni_whitegoods_projector
+Description: Description of tuni_whitegoods_projector
+Version: 0.0.0
+Cflags: -I${prefix}/include
+Libs: -L${prefix}/lib -lborder
+Requires: roscpp sensor_msgs std_msgs cv_bridge image_transport unity_msgs integration

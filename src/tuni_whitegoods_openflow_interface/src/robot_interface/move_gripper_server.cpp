@@ -36,7 +36,7 @@
             }
             sendFeedbackMoveGripper(goal->action_request);           
          }
-         */
+         
 
          if (as_move_gripper.isPreemptRequested() || !ros::ok())
          {
@@ -44,7 +44,7 @@
             // set the action state to preempted
             as_move_gripper.setPreempted();
             success = false;
-         }
+         }*/
 
          if(success)
          {

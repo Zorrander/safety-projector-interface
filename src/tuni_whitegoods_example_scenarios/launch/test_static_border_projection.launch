@@ -1,0 +1,7 @@
+    
+<launch>
+    <include file="$(find tuni_whitegoods_projector)/launch/projection.launch" />
+    <include file="$(find tuni_whitegoods_openflow_interface)/launch/projector_interface.launch" />
+
+    <node name="test_static_border" pkg="tuni_whitegoods_example_scenarios" type="display_static_border.py" output="screen"/>
+</launch>

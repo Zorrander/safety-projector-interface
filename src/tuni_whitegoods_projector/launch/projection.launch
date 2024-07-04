@@ -1,4 +1,6 @@
 <launch>
+    <arg name="calibration_folder" default="$(env HOME)/calibration/depthmap/" />
+	<param name="calibration_folder" value="$(arg calibration_folder)" />
 	<rosparam file="$(find tuni_whitegoods_projector)/config/projector_params.yaml" />
 
     <!--<include file="$(find aruco_detection)/launch/detect.launch" /> -->

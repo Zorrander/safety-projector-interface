@@ -50,6 +50,7 @@ class StaticBorder : public Border
       cv::Mat drawBorder();
       geometry_msgs::Point getCenter();
       void changeBorderColor(std_msgs::ColorRGBA& col);
+      void changeThickness(int thic);
       std_msgs::ColorRGBA getColor();
       
    private:

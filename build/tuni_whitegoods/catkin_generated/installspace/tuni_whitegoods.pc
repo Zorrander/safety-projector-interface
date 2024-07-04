@@ -1,0 +1,8 @@
+prefix=/home/odin3/safety-projector-interface/install
+
+Name: tuni_whitegoods
+Description: Description of tuni_whitegoods
+Version: 0.0.0
+Cflags: 
+Libs: -L${prefix}/lib 
+Requires: 
