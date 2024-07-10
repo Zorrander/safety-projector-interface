@@ -34,7 +34,6 @@
       {
          bool success = true;
 
-
          sbm_ = std::make_shared<StaticBorderManager>(nh_, goal->size_rows, goal->size_cols, goal->safety_factor, goal->book_adjacent, goal->status_booked, goal->status_free, goal->status_operator);
 
          ROS_INFO("BookRobotStaticBorderServer starting");

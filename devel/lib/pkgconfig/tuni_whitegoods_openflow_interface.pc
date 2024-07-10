@@ -1,8 +1,0 @@
-prefix=/home/odin3/safety-projector-interface/devel
-
-Name: tuni_whitegoods_openflow_interface
-Description: Description of tuni_whitegoods_openflow_interface
-Version: 0.0.0
-Cflags: 
-Libs: -L${prefix}/lib 
-Requires: roscpp std_msgs sensor_msgs actionlib actionlib_msgs integration tuni_whitegoods_projector

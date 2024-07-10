@@ -16,8 +16,14 @@ safety_factor(sf_factor),
 adj(adjacent),
 stat_booked(status_booked),
 stat_free(status_free),
+dist_buffers(1000.0, 1000.0),
 stat_operator(status_operator)
 {
+   if (adj){
+      ROS_INFO ("Will book adjacent");
+   } else {
+      ROS_INFO ("Will not book adjacent");
+   }
    service_borders = nh.advertiseService("/execution/projector_interface/integration/services/list_static_border_status", &StaticBorderManager::getBordersService, this);
    dm_sub_ = it_.subscribe("/detection/depth_map", 1,&StaticBorderManager::depthMapCallback, this);  
    sub_hand_detection = nh.subscribe("/hand_tracking/dm/coordinates", 1,&StaticBorderManager::handTrackingCallback, this);
@@ -34,8 +40,8 @@ stat_operator(status_operator)
    baseline_dm = cv::Mat(1024, 1024, CV_32FC1,cv::Scalar(std::numeric_limits<float>::min()));
    readRawImage(baseline_dm, name_bl);
 
-   dist_buffer = 1000.0;
    redraw = true;
+   border_crossed = false;
 
    list_proj.clear();
    borders.clear();
@@ -98,7 +104,7 @@ void StaticBorderManager::addBorder(StaticBorder sb) {
    visualization_msgs::Marker marker;
    marker.header.frame_id = "base";
    marker.header.stamp = ros::Time();
-   marker.id = 0;
+   marker.id = borders.size()+10;
    marker.type = visualization_msgs::Marker::SPHERE;
    marker.action = visualization_msgs::Marker::ADD;
    marker.pose = sb.transformPtToRobotSpace(tmp.center.x, tmp.center.y);
@@ -125,6 +131,7 @@ void StaticBorderManager::bookBorderRobot(std::string id)
    int tmp_col;
    int tmp_row;
    //get position of the booked border in the grid and book it
+   /*
    for(int i = 0; i < borders_booked.size(); i++)
    {
       if(borders_booked[i].id.compare(id) == 0)
@@ -133,12 +140,13 @@ void StaticBorderManager::bookBorderRobot(std::string id)
          tmp_col = borders_booked[i].col;
          tmp_row = borders_booked[i].row;
       }
-   }
+   }*/
    //change color of border booked
    for(int i = 0; i < borders.size(); i++)
    {
       if(borders[i].getId().compare(id) == 0)
       {
+         borders[i].book();
          borders[i].changeBorderColor(stat_booked);
       }
    }
@@ -200,18 +208,20 @@ void StaticBorderManager::releaseRobotBorder(std::string id, int status)
    //release booking and change color
    ROS_INFO("RELEASING BORDER %s -> %i", id.c_str(), status);
    if(status == 0)
-   {
+   {  
+      /*
       for(int i = 0; i < borders_booked.size(); i++)
       {
          if(borders_booked[i].id.compare(id) == 0)
          {
             borders_booked[i].status = 0;
          }
-      }
+      }*/
       for(int i = 0; i < borders.size(); i++)
       {
          if(borders[i].getId().compare(id) == 0)
          {
+            borders[i].release();
             borders[i].changeBorderColor(stat_free);
          }
       }
@@ -226,11 +236,12 @@ void StaticBorderManager::releaseRobotBorder(std::string id, int status)
             {
                if(borders_booked[i].status == 1)
                {
+                  borders[j].release();
                   borders[j].changeBorderColor(stat_free);
-                  if(borders_booked[j].id.compare(id) != 0)
-                  {
-                     borders_booked[j].status = 0;
-                  }
+                  //if(borders_booked[j].id.compare(id) != 0)
+                  //{
+                  //   borders_booked[j].status = 0;
+                  //}
                }
 
             }
@@ -339,65 +350,150 @@ void StaticBorderManager::depthMapCallback(const sensor_msgs::ImageConstPtr& msg
 
 void StaticBorderManager::handTrackingCallback(const unity_msgs::poiPCLConstPtr& msg)
 {
+   border_crossed = false;
    list_hand_violation.clear();
-   
+   std::string handType = msg->header.frame_id;
+   ROS_INFO("handType: (%s)", handType.c_str()); 
    for (auto& border : borders){
       geometry_msgs::Point ros_border_center = border.getCenter();
       const cv::Point border_center(static_cast<int>(ros_border_center.x), static_cast<int>(ros_border_center.y));
       ROS_INFO("Border center x,y coordinates: (%i, %i)", border_center.x, border_center.y);
       for (const auto& hand_point : msg->pts)
       {
-         const cv::Point hand_position(static_cast<int>(hand_point.x), static_cast<int>(hand_point.y));
-         ROS_INFO("hand_position x,y coordinates: (%i, %i)", hand_position.x, hand_position.y);
+         if (handType == "Left") {
+            cv::Point left_hand_position(static_cast<int>(hand_point.x), static_cast<int>(hand_point.y));
+            ROS_INFO("hand_position x,y coordinates: (%i, %i)", left_hand_position.x, left_hand_position.y);
 
-         geometry_msgs::PoseStamped hand_pose;
-         hand_pose.header.frame_id = "base";
-         hand_pose.pose = border.transformPtToRobotSpace(hand_position.x, hand_position.y);
-         vis_hand_pub.publish(hand_pose);
+            float distance = cv::norm(left_hand_position - border_center);
+            geometry_msgs::PoseStamped hand_pose;
+            hand_pose.header.frame_id = "base";
+            hand_pose.pose = border.transformPtToRobotSpace(left_hand_position.x, left_hand_position.y);
+            vis_hand_pub.publish(hand_pose);
 
-         // Create Rviz marker 
-         visualization_msgs::Marker marker;
-         marker.header.frame_id = "base";
-         marker.header.stamp = ros::Time();
-         marker.id = 1;
-         marker.type = visualization_msgs::Marker::SPHERE;
-         marker.action = visualization_msgs::Marker::ADD;
-         marker.pose = hand_pose.pose;
-         marker.pose.orientation.x = 0.0;
-         marker.pose.orientation.y = 0.0;
-         marker.pose.orientation.z = 0.0;
-         marker.pose.orientation.w = 1.0;
-         marker.scale.x = 0.1;
-         marker.scale.y = 0.1;
-         marker.scale.z = 0.1;
-         marker.color.a = 1.0; // Don't forget to set the alpha!
-         marker.color.r = 0.0;
-         marker.color.g = 0.0;
-         marker.color.b = 1.0;
-         vis_pub.publish( marker );
+            // Create Rviz marker 
+            visualization_msgs::Marker marker;
+            marker.header.frame_id = "base";
+            marker.header.stamp = ros::Time();
+            marker.id = 1;
+            marker.type = visualization_msgs::Marker::SPHERE;
+            marker.action = visualization_msgs::Marker::ADD;
+            marker.pose = hand_pose.pose;
+            marker.pose.orientation.x = 0.0;
+            marker.pose.orientation.y = 0.0;
+            marker.pose.orientation.z = 0.0;
+            marker.pose.orientation.w = 1.0;
+            marker.scale.x = 0.1;
+            marker.scale.y = 0.1;
+            marker.scale.z = 0.1;
+            marker.color.a = 1.0; // Don't forget to set the alpha!
+            marker.color.r = 0.0;
+            marker.color.g = 0.0;
+            marker.color.b = 1.0;
+            vis_pub.publish( marker );
 
-         const float distance = cv::norm(hand_position - border_center);
-         ROS_INFO("distance: (%f) | prev distance (%f) | difference between the two = (%f)", distance, dist_buffer, dist_buffer-distance);
-         if (distance < border.getBorderDiagonal()*0.75 && std::abs(dist_buffer-distance) < 5)
-         {
-            ROS_INFO("distance: (%f)", distance);
-            ROS_INFO("diagonal: (%f)", border.getBorderDiagonal());
-            ROS_INFO("CHANGING THICKNESS");
-            // Hand violation detected
-            border.changeThickness(2);
-            publishBorder();
+            ROS_INFO("distance: (%f) | prev distance (%f) | difference between the two = (%f)", distance, dist_buffers[0], dist_buffers[0]-distance);
+            if (distance < border.getBorderDiagonal()*0.75)
+            {
+               ROS_INFO("distance: (%f)", distance);
+               ROS_INFO("diagonal: (%f)", border.getBorderDiagonal());
+               ROS_INFO("CHANGING THICKNESS");
+               // Hand violation detected
+               border_crossed = true;
+               border.left_hand_crossed = true;
+               // No need to check further once a violation is detected
+               break;
+            }
+
+            dist_buffers[0] = distance ; 
+         }
+
+         else if (handType == "Right") {
+            cv::Point right_hand_position(static_cast<int>(hand_point.x), static_cast<int>(hand_point.y));
+            ROS_INFO("hand_position x,y coordinates: (%i, %i)", right_hand_position.x, right_hand_position.y);
+
+            float distance = cv::norm(right_hand_position - border_center);
+
+            geometry_msgs::PoseStamped hand_pose;
+            hand_pose.header.frame_id = "base";
+            hand_pose.pose = border.transformPtToRobotSpace(right_hand_position.x, right_hand_position.y);
+            vis_hand_pub.publish(hand_pose);
+
+            // Create Rviz marker 
+            visualization_msgs::Marker marker;
+            marker.header.frame_id = "base";
+            marker.header.stamp = ros::Time();
+            marker.id = 2;
+            marker.type = visualization_msgs::Marker::SPHERE;
+            marker.action = visualization_msgs::Marker::ADD;
+            marker.pose = hand_pose.pose;
+            marker.pose.orientation.x = 0.0;
+            marker.pose.orientation.y = 0.0;
+            marker.pose.orientation.z = 0.0;
+            marker.pose.orientation.w = 1.0;
+            marker.scale.x = 0.1;
+            marker.scale.y = 0.1;
+            marker.scale.z = 0.1;
+            marker.color.a = 1.0; // Don't forget to set the alpha!
+            marker.color.r = 0.0;
+            marker.color.g = 1.0;
+            marker.color.b = 0.0;
+            vis_pub.publish( marker );
+
+            ROS_INFO("distance: (%f) | prev distance (%f) | difference between the two = (%f)", distance, dist_buffers[1], dist_buffers[1]-distance);
+            if (distance < border.getBorderDiagonal()*0.75 )
+            {
+               ROS_INFO("distance: (%f)", distance);
+               ROS_INFO("diagonal: (%f)", border.getBorderDiagonal());
+               ROS_INFO("CHANGING THICKNESS");
+               // Hand violation detected
+               border_crossed = true;
+               border.right_hand_crossed = true; 
+            }
+
+            dist_buffers[1] = distance ;            
+         }
+
+         if (border_crossed){
             // No need to check further once a violation is detected
             break;
          }
 
-         else if (distance > border.getBorderDiagonal()*0.75){
-            border.changeThickness(1);
-         }
+      }
 
-         dist_buffer = distance ; 
+      if (border_crossed == false){
+         if (handType == "Left"){
+            border.left_hand_crossed = false;
+         }
+         else if (handType == "Right"){
+            border.right_hand_crossed = false;
+         }
       }
       
+      if (border.right_hand_crossed || border.left_hand_crossed == true){
+         if (border.occupied){
+            border.changeBorderColor(stat_operator);
+         }
+         else if (border.booked){
+            cv::Point top_l(0, 0);
+            cv::Point bottom_r(1024,1024);
+            cv::rectangle(safety_line_mask, top_l, bottom_r, cv::Scalar(255,255,255),10,cv::LINE_8);
+            border.changeThickness(-1);
+         } else {
+            border.changeThickness(2);
+         }   
+      }
+
+      else {
+         border.changeThickness(1);
+         if (border.booked){
+            border.changeBorderColor(stat_booked);
+         }
+         else {
+            border.changeBorderColor(stat_free);
+         }
+      }
       publishBorder();
+
    }
    // Would be better to iterate through every border
    for (const auto& booked_border : borders_booked)
@@ -411,7 +507,7 @@ void StaticBorderManager::handTrackingCallback(const unity_msgs::poiPCLConstPtr&
             const cv::Point hand_position(static_cast<int>(hand_point.x), static_cast<int>(hand_point.y));
             const float distance = cv::norm(hand_position - border_center);
 
-            if (distance < booked_border.safety_distance)
+            if (distance < booked_border.safety_distance*0.75)
             {
                // Hand violation detected
                list_hand_violation.push_back(booked_border);
@@ -546,11 +642,16 @@ void StaticBorderManager::updateBorderStatus()
    ROS_INFO("Looking for objects within the borders...");   
 
    // Get the depth information within the borders
+   getMaskDetection(mask_detect);
    cv::Mat depth_within_borders;
    getObjectsDepth(depth_within_borders, mask_detect);
 
+   //cv::imshow("depth", depth_within_borders);
+   //cv::waitKey(0);
    // Enhance the depth information
    cv::Mat enhanced_depth = enhanceDepth(depth_within_borders, 0);
+   //cv::imshow("enhanced depth", enhanced_depth);
+   //cv::waitKey(0);   
 
    // Update border statuses based on enhanced depth information
    for (int i = 0; i < borders.size(); ++i)
@@ -558,6 +659,13 @@ void StaticBorderManager::updateBorderStatus()
       // Check if there is a cluster inside the border
       bool cluster_inside_border = isClusterInsideBorder(enhanced_depth, borders_status[i]);
       
+      if (cluster_inside_border){
+         borders[i].changeThickness(-1);
+         borders[i].occupied = true;
+      }
+      else {
+         borders[i].occupied = false;
+      }
       // Update the status accordingly
       if (cluster_inside_border || borders_booked[i].status == 1)
       {
@@ -680,6 +788,7 @@ bool StaticBorderManager::readRawImage(cv::Mat& image, const std::string& filena
 
 void StaticBorderManager::updateProjection()
 {
+
    // Clear the list of projections
    list_proj.clear();
 
@@ -717,6 +826,7 @@ void StaticBorderManager::updateProjection()
 //publish the border to project them
 void StaticBorderManager::publishBorder()
 {
+   updateBorderStatus();
    updateProjection();
 
    unity_msgs::LBorder msg;

@@ -52,7 +52,12 @@ class StaticBorder : public Border
       void changeBorderColor(std_msgs::ColorRGBA& col);
       void changeThickness(int thic);
       std_msgs::ColorRGBA getColor();
-      
+      bool left_hand_crossed;
+      bool right_hand_crossed;
+      bool booked;
+      bool occupied;
+      void book();
+      void release();
    private:
       geometry_msgs::PolygonStamped border_robot_space;
       geometry_msgs::PolygonStamped border_camera_space;

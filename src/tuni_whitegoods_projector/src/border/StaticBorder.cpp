@@ -35,6 +35,9 @@ StaticBorder::StaticBorder(std::string r_id, std::string z, int pos_row, int pos
    lifetime = life;
    track_violations = track;
    border_mask = cv::Mat::zeros(1024,1024,CV_8U);
+   left_hand_crossed = false;
+   right_hand_crossed = false;
+   booked = false;
 }
 
 StaticBorder::StaticBorder(const StaticBorder &cpctr)
@@ -115,7 +118,7 @@ cv::Mat StaticBorder::drawMask()
                    static_cast<int>(border_camera_space.polygon.points[0].y));
    cv::Point bottom_r(static_cast<int>(border_camera_space.polygon.points[1].x),
                       static_cast<int>(border_camera_space.polygon.points[1].y));
-   
+
    cv::rectangle(safety_line_mask,top_l,bottom_r,cv::Scalar(255,255,255),3,cv::LINE_8);
 
    return safety_line_mask;
@@ -129,6 +132,7 @@ void StaticBorder::changeBorderColor(std_msgs::ColorRGBA& col)
    border_color.b = col.b;
    border_color.a = col.a;
 }
+
 
 //change the thickness of the border
 void StaticBorder::changeThickness(int thic)
@@ -175,6 +179,17 @@ int StaticBorder::getRow()
 std_msgs::ColorRGBA StaticBorder::getColor()
 {
    return border_color;
+}
+
+//get the coloumn location of the border within the virtual layout
+void StaticBorder::book()
+{
+   booked = true;
+}
+//get the row location of the border within the virtual layout
+void StaticBorder::release()
+{
+   booked = false;
 }
 
 

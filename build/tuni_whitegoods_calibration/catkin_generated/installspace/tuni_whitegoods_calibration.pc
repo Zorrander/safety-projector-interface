@@ -1,8 +1,0 @@
-prefix=/home/odin3/safety-projector-interface/install
-
-Name: tuni_whitegoods_calibration
-Description: Description of tuni_whitegoods_calibration
-Version: 0.0.0
-Cflags: 
-Libs: -L${prefix}/lib 
-Requires: message_runtime roscpp sensor_msgs std_msgs cv_bridge image_transport unity_msgs message_filters tuni_whitegoods_perception tuni_whitegoods_msgs integration pcl_conversions pcl_ros tf2 tf2_msgs tf2_ros tf2_sensor_msgs

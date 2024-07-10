@@ -37,6 +37,9 @@ using namespace message_filters;
 using namespace std;
 static const std::string OPENCV_TEST = "Image window";
 
+#define LEFT 0 
+#define RIGHT 1
+
 struct Projection {
    std::string zone;
    cv::Mat img;
@@ -104,7 +107,10 @@ class StaticBorderManager
       cv::Mat safety_line_mask;
       cv::Mat baseline_dm;
       cv::Mat depth_map;
-      float dist_buffer;
+
+      std::vector<float> dist_buffers;
+      bool border_crossed; 
+      
       int s_rows;
       int s_cols;
       float safety_factor;
