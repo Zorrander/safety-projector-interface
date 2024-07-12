@@ -33,6 +33,10 @@
 #include <cmath>
 #include <string>
 
+#include <unity_msgs/InterfacePOI.h>
+#include <unity_msgs/ElementUI.h>
+#include <integration/VirtualButtonEventArray.h>
+
 using namespace message_filters;
 using namespace std;
 static const std::string OPENCV_TEST = "Image window";
@@ -57,6 +61,14 @@ struct BorderContentStatus {
 };
 
 
+struct Button {
+   std::string id;
+   geometry_msgs::Point center;
+   bool left_hand_hover;
+   bool right_hand_hover;
+};
+
+
 class StaticBorderManager
 {
    public:
@@ -78,6 +90,8 @@ class StaticBorderManager
  
       void publishBorder();
 
+      void pointsOfInterestCb(const unity_msgs::InterfacePOIConstPtr& msg);
+
       void getMaskDetection(cv::Mat& image);
       bool isClusterInsideBorder(cv::Mat& image, BorderContentStatus bdr);
       bool getBordersService(integration::ListStaticBordersStatus::Request& req, integration::ListStaticBordersStatus::Response& res);
@@ -92,6 +106,9 @@ class StaticBorderManager
       image_transport::Subscriber dm_sub_;
       ros::ServiceServer service_borders;
       ros::Subscriber sub_hand_detection;
+
+      
+
       ros::Publisher pub_border_projection;
       ros::Publisher pub_border_violation;
       ros::Publisher pub_pose_violation;
@@ -110,6 +127,7 @@ class StaticBorderManager
 
       std::vector<float> dist_buffers;
       bool border_crossed; 
+      bool button_pressed; 
       
       int s_rows;
       int s_cols;
@@ -123,6 +141,10 @@ class StaticBorderManager
       string name_bl;
       cv::Mat mask_detect;
 
+      // tests
+      ros::Publisher pub_event;
+      ros::Subscriber sub_poi;
+      std::vector<Button> buttons;
       // ros::Publisher pub_borders_vacancy;
       // cv::Mat res_dm;
       // cv::Point loc;

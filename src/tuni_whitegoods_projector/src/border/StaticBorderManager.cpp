@@ -31,9 +31,12 @@ stat_operator(status_operator)
    pub_border_violation = nh.advertise<integration::SafetyBorderViolation>("/execution/projector_interface/integration/topics/safety_border_violation",1);
    pub_pose_violation = nh.advertise<geometry_msgs::PoseStamped>("/projector_interface/pose_violation",1);
    pub_border_polygon = nh.advertise<geometry_msgs::PolygonStamped>("/border_violated",1);
-
+   
    vis_pub = nh.advertise<visualization_msgs::Marker>( "visualization_marker", 0 );
    vis_hand_pub = nh.advertise<geometry_msgs::PoseStamped>("/odin/visualization/hand", 0 );
+
+   pub_event = nh.advertise<integration::VirtualButtonEventArray> ("/execution/projector_interface/integration/topics/virtual_button_event_array", 1);
+   sub_poi = nh.subscribe("/depth_interface/poi_depthmap", 1, &StaticBorderManager::pointsOfInterestCb,this);
 
    ros::param::get("calibration_folder", calibration_folder);
    name_bl = calibration_folder + "baseline";
@@ -42,6 +45,7 @@ stat_operator(status_operator)
 
    redraw = true;
    border_crossed = false;
+   button_pressed = false; 
 
    list_proj.clear();
    borders.clear();
@@ -348,6 +352,21 @@ void StaticBorderManager::depthMapCallback(const sensor_msgs::ImageConstPtr& msg
    }
 }
 
+
+void StaticBorderManager::pointsOfInterestCb(const unity_msgs::InterfacePOIConstPtr& msg){
+   buttons.clear();
+   for (unity_msgs::ElementUI btn: msg->poi){
+      Button b;
+      b.id = btn.id;
+      b.center = btn.elem; 
+      buttons.push_back(b);
+   }
+
+   for (const auto b: buttons){
+      ROS_INFO("button (%s) : x: (%f) - y: (%f) - z: (%f)", b.id.c_str(), b.center.x, b.center.y, b.center.z);
+   }
+}
+
 void StaticBorderManager::handTrackingCallback(const unity_msgs::poiPCLConstPtr& msg)
 {
    border_crossed = false;
@@ -365,6 +384,7 @@ void StaticBorderManager::handTrackingCallback(const unity_msgs::poiPCLConstPtr&
             ROS_INFO("hand_position x,y coordinates: (%i, %i)", left_hand_position.x, left_hand_position.y);
 
             float distance = cv::norm(left_hand_position - border_center);
+
             geometry_msgs::PoseStamped hand_pose;
             hand_pose.header.frame_id = "base";
             hand_pose.pose = border.transformPtToRobotSpace(left_hand_position.x, left_hand_position.y);
@@ -495,6 +515,76 @@ void StaticBorderManager::handTrackingCallback(const unity_msgs::poiPCLConstPtr&
       publishBorder();
 
    }
+
+
+   for (auto& btn : buttons){
+      geometry_msgs::Point ros_btn_center = btn.center;
+      const cv::Point btn_center(static_cast<int>(ros_btn_center.x), static_cast<int>(ros_btn_center.y));
+      ROS_INFO("Button center x,y coordinates: (%i, %i)", btn_center.x, btn_center.y);
+      for (const auto& hand_point : msg->pts)
+      {
+         if (handType == "Left") {
+            cv::Point left_hand_position(static_cast<int>(hand_point.x), static_cast<int>(hand_point.y));
+            ROS_INFO("hand_position x,y coordinates: (%i, %i)", left_hand_position.x, left_hand_position.y);
+
+            float distance = cv::norm(left_hand_position - btn_center);
+            if (distance < 70*0.75)
+            {
+               ROS_INFO("distance: (%f)", distance);
+               ROS_INFO("onHover");
+               // Hand violation detected
+               button_pressed = true;
+               btn.left_hand_hover = true;
+               // No need to check further once a violation is detected
+               break;
+            }
+         }
+
+         else if (handType == "Right") {
+            cv::Point right_hand_position(static_cast<int>(hand_point.x), static_cast<int>(hand_point.y));
+            ROS_INFO("hand_position x,y coordinates: (%i, %i)", right_hand_position.x, right_hand_position.y);
+
+            float distance = cv::norm(right_hand_position - btn_center);
+            if (distance < 70*0.75)
+            {
+               ROS_INFO("distance: (%f)", distance);
+               ROS_INFO("onHover");
+               // Hand violation detected
+               button_pressed = true;
+               btn.right_hand_hover = true;
+               // No need to check further once a violation is detected
+               break;
+            }
+
+         }
+
+         if (button_pressed){
+            // No need to check further once a violation is detected
+            break;
+         }
+
+      }
+
+      if (border_crossed == false){
+         if (handType == "Left"){
+
+         }
+         else if (handType == "Right"){
+
+         }
+      }
+      
+      if (btn.right_hand_hover || btn.left_hand_hover == true){
+         ROS_INFO("BUTTON PRESSED");
+      }
+
+      else {
+            ROS_INFO("BUTTON NOT PRESSED");
+         }
+   }
+
+   
+
    // Would be better to iterate through every border
    for (const auto& booked_border : borders_booked)
    {
