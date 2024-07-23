@@ -14,7 +14,6 @@
 
 #include <integration/SetLayoutStaticBordersAction.h>
 
-#include "border/DynamicBorder.h"
 #include "border/StaticBorder.h"
 #include "border/StaticBorderManager.h"
 

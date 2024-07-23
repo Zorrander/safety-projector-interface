@@ -1,6 +1,4 @@
 <launch>
-
     <node pkg="tf2_ros" type="static_transform_publisher" name="rgb_to_base" args="0.501192 -0.271756 1.311792 -0.685276 0.727083 -0.014888 0.039050 base rgb_camera_link"/>     
-
-
+                                                                                                    
 </launch>

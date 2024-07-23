@@ -1,7 +1,6 @@
 #ifndef ReleaseRobotStaticBorderServer_H
 #define ReleaseRobotStaticBorderServer_H
 
-#include "border/DynamicBorder.h"
 #include "border/StaticBorder.h"
 
 #include <ros/ros.h>

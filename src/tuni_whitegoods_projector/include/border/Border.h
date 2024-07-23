@@ -26,7 +26,7 @@ class Border
       geometry_msgs::PolygonStamped transformToDepthMap(geometry_msgs::PolygonStamped border);
       geometry_msgs::Pose transformPtToDepthMap(double x, double y);
       geometry_msgs::Pose transformPtToRobotSpace(int px, int py);
-
+      std::string request_id;
    protected:
       image_transport::Subscriber dm_sub_;
       ros::Publisher pub_border_violation;   
@@ -36,7 +36,7 @@ class Border
       double by;
       double az;
       double bz;
-      std::string request_id;
+
       std::string zone;
       std::string border_topic;
       std_msgs::ColorRGBA border_color;

@@ -1,7 +1,7 @@
 #ifndef BookRobotStaticBorderServer_H
 #define BookRobotStaticBorderServer_H
 
-#include "border/DynamicBorder.h"
+
 #include "border/StaticBorder.h"
 
 

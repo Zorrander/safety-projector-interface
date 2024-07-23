@@ -58,9 +58,14 @@ class StaticBorder : public Border
       bool occupied;
       void book();
       void release();
-   private:
-      geometry_msgs::PolygonStamped border_robot_space;
       geometry_msgs::PolygonStamped border_camera_space;
+      geometry_msgs::PolygonStamped border_robot_space;
+      cv::Point top_left_cam_point;
+      cv::Point bottom_right_cam_point;
+
+   private:
+      
+      
       cv::Mat border_mask;
       int position_row;
       int position_col;

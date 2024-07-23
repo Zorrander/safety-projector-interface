@@ -27,12 +27,14 @@ StaticBorder::StaticBorder(std::string r_id, std::string z, int pos_row, int pos
    for(int i  = 0; i < bord.polygon.points.size(); i++)
    {
       border_robot_space.polygon.points.push_back(bord.polygon.points[i]);
+      ROS_INFO("pt: (%f, %f)", bord.polygon.points[i].x, bord.polygon.points[i].y);
    }
+   ROS_INFO("InitBorder robt x,y coordinates: (%f, %f), (%f, %f)", border_robot_space.polygon.points[0].x, border_robot_space.polygon.points[0].y, border_robot_space.polygon.points[1].x, border_robot_space.polygon.points[1].y);
    border_camera_space = transformToDepthMap(border_robot_space);
    border_color = b_color;
    is_filled = filling;
    thickness = thic;
-   lifetime = life;
+   lifetime = life; 
    track_violations = track;
    border_mask = cv::Mat::zeros(1024,1024,CV_8U);
    left_hand_crossed = false;
@@ -103,10 +105,10 @@ cv::Mat StaticBorder::drawBorder()
                    static_cast<int>(border_camera_space.polygon.points[0].y));
    cv::Point bottom_r(static_cast<int>(border_camera_space.polygon.points[1].x),
                       static_cast<int>(border_camera_space.polygon.points[1].y));
+
    ROS_INFO("Border x,y coordinates: (%i, %i), (%i, %i)", top_l.x, top_l.y, bottom_r.x, bottom_r.y);
    cv::rectangle(sf_line_colored,top_l,bottom_r,cv::Scalar(border_color.b*255, border_color.g*255, border_color.r*255),thickness,cv::LINE_8);
-   // cv::imshow("sb:drawBorder", sf_line_colored);
-   // cv::waitKey(0);
+
    return sf_line_colored;
 }
 

@@ -1,7 +1,7 @@
 #ifndef BookOperatorStaticBorderServer_H
 #define BookOperatorStaticBorderServer_H
 
-#include "border/DynamicBorder.h"
+
 #include "border/StaticBorder.h"
 
 #include <ros/ros.h>

@@ -43,20 +43,20 @@ def main():
     goal.virtual_button.id = "40";
     goal.virtual_button.zone = "table";
     goal.virtual_button.name = "table";
-    goal.virtual_button.description = "button go";
-    goal.virtual_button.text = "GO";
-    goal.virtual_button.button_color.r = 0.0;
-    goal.virtual_button.button_color.g = 0.0;
-    goal.virtual_button.button_color.b = 1.0;
-    goal.virtual_button.button_color.a = 0.0;
-    goal.virtual_button.text_color.r = 1.0;
-    goal.virtual_button.text_color.g = 1.0;
-    goal.virtual_button.text_color.b = 1.0;
-    goal.virtual_button.text_color.a = 1.0;
-    goal.virtual_button.center.position.x = 840.0;
-    goal.virtual_button.center.position.y = 880.0;
-    goal.virtual_button.radius = 70.0;
-    goal.virtual_button.hidden = False;
+    goal.virtual_button.description = "button go"
+    goal.virtual_button.text = "GO"
+    goal.virtual_button.button_color.r = 0.0
+    goal.virtual_button.button_color.g = 0.0
+    goal.virtual_button.button_color.b = 1.0
+    goal.virtual_button.button_color.a = 0.0
+    goal.virtual_button.text_color.r = 1.0
+    goal.virtual_button.text_color.g = 1.0
+    goal.virtual_button.text_color.b = 1.0
+    goal.virtual_button.text_color.a = 1.0
+    goal.virtual_button.center.position.x = 427 # 840.0;
+    goal.virtual_button.center.position.y = 554# 880.0;
+    goal.virtual_button.radius = 10.0
+    goal.virtual_button.hidden = False
 
     # Sends the goal to the action server.
     project_client.send_goal(goal)
@@ -69,17 +69,17 @@ def main():
     color_goal.request_id = "go_button_color"
     color_goal.resource_id = "40" 
     color_goal.button_color = ColorRGBA()
-    color_goal.button_color.r = 0.0;
-    color_goal.button_color.g = 1.0;
-    color_goal.button_color.b = 0.0;
-    color_goal.button_color.a = 0.0;
+    color_goal.button_color.r = 0.0
+    color_goal.button_color.g = 1.0
+    color_goal.button_color.b = 0.0
+    color_goal.button_color.a = 0.0
 
     # Change color
     while not rospy.is_shutdown():
         if interaction:
             print("Hello world!")
-            color_client.send_goal(color_goal)
-            color_client.wait_for_result()
+            #color_client.send_goal(color_goal)
+            #color_client.wait_for_result()
             break
 
 

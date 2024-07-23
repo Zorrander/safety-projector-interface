@@ -20,6 +20,7 @@
     //change button color
     void ButtonColorServer::executeChangeButtonColor(const SetVirtualButtonChangeColorGoalConstPtr& goal)
     {
+        ROS_INFO("Received color change request");
         ros::Rate r(1);
         bool success = true;
         //send button to inteface

@@ -150,8 +150,7 @@ using namespace std;
       cv_bridge::CvImagePtr cv_bridge_depth = cv_bridge::toCvCopy(depth_msg, sensor_msgs::image_encodings::TYPE_16UC1);
       cv_depth_rgb = cv_bridge_depth_rgb->image.clone();
       cv_depth = cv_bridge_depth->image.clone();
-      //cout<<"depth rgb :"<<cv_depth_rgb.size<<"\n";
-      //cout<<"depth :"<<cv_depth.size<<"\n";
+      unsigned short val = cv_depth.at<unsigned short>(517, 557);
       depth_images = true;
 
     }

@@ -6,6 +6,5 @@
     <include file="$(find tuni_whitegoods_perception)/launch/depth_interface.launch"  />
     
     <include file="$(find tuni_whitegoods_perception)/launch/hand_tracking.launch" />
-    <include file="$(find tuni_whitegoods_perception)/launch/interaction.launch" />
-   
+
 </launch>

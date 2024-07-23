@@ -14,6 +14,8 @@ find_package(catkin REQUIRED COMPONENTS
   image_transport
   unity_msgs
   integration
+  tf2_ros
+  tf2_geometry_msgs
 )
 
 
@@ -28,6 +30,8 @@ catkin_package(
                  image_transport
                  unity_msgs
                  integration
+                 tf2_ros
+                 tf2_geometry_msgs
   LIBRARIES border
 )
 
@@ -42,16 +46,10 @@ include_directories(
 
 add_library(border
   src/border/Border.cpp
-  src/border/DynamicBorder.cpp
   src/border/StaticBorder.cpp
   src/border/StaticBorderManager.cpp
 )
 
-add_executable(border_node src/safety_depthmap.cpp)
-target_link_libraries(border_node
-  ${catkin_LIBRARIES}
-  ${OpenCV_LIBRARIES}
-)
 
 add_executable(projector_opt_node src/projector_opt.cpp)
 target_link_libraries(projector_opt_node

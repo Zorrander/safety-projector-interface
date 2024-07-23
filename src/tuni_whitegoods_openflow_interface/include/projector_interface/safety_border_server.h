@@ -10,7 +10,6 @@
 
 #include <integration/SetSafetyBorderProjectionAction.h>
 
-#include "border/DynamicBorder.h"
 #include "border/StaticBorder.h"
 
 #include <std_msgs/Bool.h>
@@ -53,8 +52,6 @@ class SafetyBorderServer
       //monitor active buttons and publish them
       std::vector<std::string> displayed_request_ids;
       std::vector<std::string> displayed_ids_borders;
-
-      void threadCreateDynamicBorder(ros::NodeHandle nh_, std::string r_id, std::string z, std::string b_topic, std_msgs::ColorRGBA b_color, bool filling, int thic, ros::Duration life, bool track);
 
 };
 #endif

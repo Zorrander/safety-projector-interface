@@ -31,12 +31,19 @@
 #include <integration/ListStaticBordersStatus.h>
 #include <unity_msgs/poiPCL.h>
 #include <cmath>
+
+#include <tf2_ros/transform_listener.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+
 #include <string>
+
+#include <actionlib/client/simple_action_client.h>
 
 #include <unity_msgs/InterfacePOI.h>
 #include <unity_msgs/ElementUI.h>
 #include <integration/VirtualButtonEventArray.h>
-
+#include <integration/SetVirtualButtonChangeColorAction.h>
+#include <integration/SetVirtualButtonChangeColorGoal.h>
 using namespace message_filters;
 using namespace std;
 static const std::string OPENCV_TEST = "Image window";
@@ -66,6 +73,9 @@ struct Button {
    geometry_msgs::Point center;
    bool left_hand_hover;
    bool right_hand_hover;
+   bool operator==(const unity_msgs::ElementUI &other) const {
+      return id == other.id;
+   }
 };
 
 
@@ -78,7 +88,7 @@ class StaticBorderManager
       void handTrackingCallback(const unity_msgs::poiPCLConstPtr& msg);
       void raiseBorderViolation(std::vector<cv::KeyPoint>& keypoints, std_msgs::Header& header);
       std::vector<cv::KeyPoint> detectBorderCrossing(cv::Mat& mask);
-      void addBorder(StaticBorder sb);
+      void addBorder(std::shared_ptr<StaticBorder> sb);
       void bookBorderRobot(std::string id);
       void bookBorderOperator(std::string id);
       void releaseRobotBorder(std::string id, int status);
@@ -100,6 +110,7 @@ class StaticBorderManager
       cv::Mat enhanceDepth(cv::Mat img, float thr);
 
 
+
    private:
       ros::NodeHandle nh;
       image_transport::ImageTransport it_;
@@ -112,8 +123,8 @@ class StaticBorderManager
       ros::Publisher pub_border_projection;
       ros::Publisher pub_border_violation;
       ros::Publisher pub_pose_violation;
-      ros::Publisher pub_border_polygon;
-      std::vector<StaticBorder> borders;
+      
+      std::vector<std::shared_ptr<StaticBorder>> borders;
       std::vector<Projection> list_proj;
       std::vector<BorderContentStatus> borders_status;
       std::vector<BorderContentStatus> borders_booked;
@@ -145,6 +156,19 @@ class StaticBorderManager
       ros::Publisher pub_event;
       ros::Subscriber sub_poi;
       std::vector<Button> buttons;
+      actionlib::SimpleActionClient<integration::SetVirtualButtonChangeColorAction> client_button_color;
+      ros::Subscriber depth_sub;
+      cv::Mat cv_depth;
+      void depthImageCallback(const sensor_msgs::ImageConstPtr& depth_msg);
+
+      std::vector<ros::Publisher> pubs_border_polygon;
+
+      tf2_ros::Buffer tfBuffer;
+      tf2_ros::TransformListener* tfListener;
+
+      image_transport::Publisher object_detection_pub;
+      tf2::Transform tf2_transform;
+      cv::Rect roi_rect;
       // ros::Publisher pub_borders_vacancy;
       // cv::Mat res_dm;
       // cv::Point loc;

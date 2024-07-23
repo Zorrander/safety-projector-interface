@@ -129,6 +129,11 @@ class Projector():
             add_success = True
 
     def callback_button_color(self, msg):
+        print("CHANGING COLOR")
+        print("""
+
+
+            """)
         for i in self._list_interface:
             if not i.get_hidden():
                 i.modify_button_color(msg)
@@ -170,6 +175,7 @@ class Projector():
                tmp['hom_proj_moving'] = np.load(proj['hom_proj_moving'])
                tmp['hom_proj_static'] = np.load(proj['hom_proj_static'])
                tmp['homDepthProj'] = np.load(proj['homDepthProj'])
+               print(tmp['hom_proj_static'])
                self.projectors.append(tmp)
             #print(tmp)
             for cam in data['cam']:
@@ -178,6 +184,7 @@ class Projector():
                tmp['zone'] = proj['zone']
                tmp['hom_cam_screen_to_proj'] = np.load(cam['hom_cam_screen_to_proj'])
                tmp['hom_cam_static'] = np.load(cam['hom_cam_static'])
+
                self.mainCamera = tmp
                #cameras.append(tmp)
             #print(camera)
@@ -261,14 +268,6 @@ class Projector():
         self.matrix_projected = self.mainCamera['hom_cam_screen_to_proj']
         #print("self matrix",self.matrix)
         #print("matrix projected",self.matrix_projected)
-
-    #get buttons position in the RGB camera frame.
-    def get_rgb_button_position(self,b,mat):
-        px = (mat[0][0]*b[0] + mat[0][1]*b[1] + mat[0][2]) / ((mat[2][0]*b[0] + mat[2][1]*b[1] + mat[2][2]))
-        py = (mat[1][0]*b[0] + mat[1][1]*b[1] + mat[1][2]) / ((mat[2][0]*b[0] + mat[2][1]*b[1] + mat[2][2]))
-        button = (int(px), int(py))
-        
-        return button
     
     #display only active interface
     def get_active_interface_image(self):
@@ -280,38 +279,6 @@ class Projector():
                 found = True
         return interface, found
 
-    #fill message that send the buttons positions in the RGb camera space
-    def fillLayoutMessage(self,l_poi):
-        interface = None
-        for i in self._list_interface:
-            if not i.get_hidden():
-                interface = i
-        if interface != None:
-            poi = interface.get_list_buttons()
-            if len(poi) > 0:
-                #M = self.mainCamera['hom_cam_static']
-                #inv = np.linalg.inv(M)
-                #inv = np.linalg.inv(self.matrix)
-                l_pts = []
-                for i in poi:
-                    t = i.get_center()
-                    #print("t",t)
-                    tmp_pt_proj = self.get_rgb_button_position(t,self.matrix_projected)
-                    tmp_i = [tmp_pt_proj[0],tmp_pt_proj[1]]
-                    tmp_pt_table = self.get_rgb_button_position(tmp_i,self.matrix)
-                    tmp_j = [tmp_pt_table[0],tmp_pt_table[1]]
-                    #print("tmp_t",tmp_i)
-                    l_pts.append(tmp_j)
-                #second loop to fill info and send them
-                k = 0
-                for j in poi:
-                    tmp_elem = ElementUI()
-                    tmp_elem.id = j._id
-                    tmp_elem.elem.x = int(l_pts[k][0])
-                    tmp_elem.elem.y = int(l_pts[k][1])
-                    k += 1
-                    l_poi.poi.append(tmp_elem)
-                self.pub_poi.publish(l_poi)
     #run in loop
     def run(self):
         while not rospy.is_shutdown():
@@ -322,9 +289,6 @@ class Projector():
             #if the table is moving
             if self.is_moving:
                 self.find_dynamic_ui_transform()
-            l_poi = InterfacePOI()
-            if exist:
-                self.fillLayoutMessage(l_poi)
 
             #M = self.mainCamera['vertHomTable']
             #self._table_homography_pub.publish(M.flatten())
@@ -339,7 +303,7 @@ class Projector():
                         dp_interface.id = proj['id']
                         #tmp = np.matmul(proj['vertHomTable'], self.UI_transform)
                         #tmp = np.matmul(proj['static_table_proj'], self.UI_transform)
-                        tmp = proj['hom_proj_static']
+                        tmp = proj['homDepthProj']
                         dp_interface.transform = tmp.flatten()
                         dp_interface.img = self.bridge_interface.cv2_to_imgmsg(interface_tmp, "bgr8")
                         dp_list.list_proj.append(dp_interface)

@@ -74,27 +74,6 @@ target_link_libraries(depth_interface_node
   ${K4A_LIBS}
 )
 
-add_executable(interaction_detection_node src/detect_interaction.cpp)
-target_link_libraries(interaction_detection_node
-  ${catkin_LIBRARIES} 
-  ${OpenCV_LIBS}
-  ${K4A_LIBS}
-)
-
-add_executable(pcl_fusion_node src/pcl_fusion_node.cpp)
-target_link_libraries(pcl_fusion_node
-   ${catkin_LIBRARIES} 
-   ${OpenCV_LIBS}
-   ${K4A_LIBS}
-)
-
-add_executable(transform_pcl_node src/transform.cpp)
-target_link_libraries(transform_pcl_node
-  ${catkin_LIBRARIES} 
-  ${OpenCV_LIBS} 
-  ${K4A_LIBS}
-)
-
 install(TARGETS depth_interface
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
