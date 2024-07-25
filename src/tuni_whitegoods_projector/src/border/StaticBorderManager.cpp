@@ -29,14 +29,13 @@ tfListener(new tf2_ros::TransformListener(tfBuffer))  // Initialize tfListener w
    pub_pose_violation = nh.advertise<geometry_msgs::PoseStamped>("/projector_interface/pose_violation",1);
    
    vis_pub = nh.advertise<visualization_msgs::Marker>( "visualization_marker", 0 );
-   vis_hand_pub = nh.advertise<geometry_msgs::PoseStamped>("/odin/visualization/hand", 0 );
 
    pub_event = nh.advertise<integration::VirtualButtonEventArray> ("/execution/projector_interface/integration/topics/virtual_button_event_array", 1);
    
    client_button_color.waitForServer();
    sub_poi = nh.subscribe("/depth_interface/poi_depthmap", 1, &StaticBorderManager::pointsOfInterestCb,this);
 
-   depth_sub = nh_->subscribe("/depth/image_raw", 1, &StaticBorderManager::depthImageCallback,this);
+   depth_sub = nh_->subscribe("/depth_to_rgb/image_raw", 1, &StaticBorderManager::depthImageCallback,this);
    object_detection_pub = it_.advertise("odin/visualization/object_detection", 1);
 
    cv_depth = cv::Mat(1024, 1024, CV_32FC1,cv::Scalar(std::numeric_limits<float>::min()));
@@ -48,7 +47,6 @@ tfListener(new tf2_ros::TransformListener(tfBuffer))  // Initialize tfListener w
    tfBuffer.setUsingDedicatedThread(true);
 
    geometry_msgs::TransformStamped transformStamped;
-
 
    // Try for a limited number of times
    for (int i = 0; i < 10; ++i) {
@@ -84,22 +82,9 @@ void StaticBorderManager::depthImageCallback(const sensor_msgs::ImageConstPtr& d
       
    for(const auto& sb : borders)
    {  
-      ROS_INFO("BORDER (%s)", sb->request_id.c_str());
-      // Extract the region of interest from the depthmap
-      std::ostringstream oss;
-      oss << "cv::Point: (" << sb->top_left_cam_point.x << ", " << sb->top_left_cam_point.y << ")";
-      ROS_INFO("%s", oss.str().c_str());
-      oss << "cv::Point: (" << sb->bottom_right_cam_point.x << ", " << sb->bottom_right_cam_point.y << ")";
-
       roi_rect = cv::Rect(sb->top_left_cam_point, sb->bottom_right_cam_point);
-      ROS_INFO("Rectangle valid"); 
-      
-      // Print ROI rectangle dimensions for debugging
-      std::cout << "ROI Rectangle: x=" << roi_rect.x << ", y=" << roi_rect.y
-                << ", width=" << roi_rect.width << ", height=" << roi_rect.height << std::endl; 
 
       cv::Mat roi_depthmap = cv_depth(roi_rect);
-      ROS_INFO("Depth crop valid");
       // Apply the depth range threshold
       cv::Mat mask;
       cv::Scalar min_depth = cv::Scalar(1250); // TO BE ADJUSTED
@@ -120,11 +105,9 @@ void StaticBorderManager::depthImageCallback(const sensor_msgs::ImageConstPtr& d
       // Check if any contour is found
       if (contours.size() > 0){
          sb->changeThickness(-1);
-         sb->occupied = true;
-         ROS_INFO("OBJECT DETECTED");         
+         sb->occupied = true;       
       } else {
          sb->occupied = false;
-         ROS_INFO("/ NO OBJECT /");
       }
    }
 
@@ -175,7 +158,6 @@ void StaticBorderManager::addBorder(std::shared_ptr<StaticBorder> sb) {
    geometry_msgs::Point topLeftCornerPt;
    topLeftCornerPt.x = sb->border_robot_space.polygon.points[0].x; 
    topLeftCornerPt.y = sb->border_robot_space.polygon.points[0].y;
-   std::cout << "topLeftCornerPt: x=" << topLeftCornerPt.x << ", y=" << topLeftCornerPt.y << std::endl; 
 
    geometry_msgs::Point topRightCornerPt;
    topRightCornerPt.x = sb->border_robot_space.polygon.points[0].x; 
@@ -184,7 +166,6 @@ void StaticBorderManager::addBorder(std::shared_ptr<StaticBorder> sb) {
    geometry_msgs::Point bottomRightCornerPt;
    bottomRightCornerPt.x = sb->border_robot_space.polygon.points[1].x; 
    bottomRightCornerPt.y = sb->border_robot_space.polygon.points[1].y;
-   std::cout << "bottomRightCornerPt: x=" << bottomRightCornerPt.x << ", y=" << bottomRightCornerPt.y << std::endl; 
 
    geometry_msgs::Point bottomLeftCornerPt;
    bottomLeftCornerPt.x = sb->border_robot_space.polygon.points[1].x; 
@@ -194,7 +175,6 @@ void StaticBorderManager::addBorder(std::shared_ptr<StaticBorder> sb) {
    visualization_msgs::Marker marker;
    marker.header.frame_id = "base";
    marker.header.stamp = ros::Time::now();
-   marker.ns = "polygons";
    marker.id = borders.size()+10;;
    marker.type = visualization_msgs::Marker::LINE_STRIP;
    marker.action = visualization_msgs::Marker::ADD;
@@ -221,22 +201,12 @@ void StaticBorderManager::addBorder(std::shared_ptr<StaticBorder> sb) {
 
    try {
          out_point_stamped = tfBuffer.transform(in_point_stamped, "rgb_camera_link");
-         ROS_INFO("Got transform: translation (%.3f, %.3f, %.3f), rotation (%.2f, %.2f, %.2f, %.2f)",
-                  out_point_stamped.pose.position.x,
-                  out_point_stamped.pose.position.y,
-                  out_point_stamped.pose.position.z,
-                  out_point_stamped.pose.orientation.x,
-                  out_point_stamped.pose.orientation.y,
-                  out_point_stamped.pose.orientation.z,
-                  out_point_stamped.pose.orientation.w);
          // Project to 2D image coordinates 
-         sb->top_left_cam_point.x = 503.6534118652344 * (out_point_stamped.pose.position.x / 1.311792) + 513.4310913085938 ; // focal_length_x * (x_camera / z_camera) + principal_point_x;
-         sb->top_left_cam_point.y = 503.7967529296875 * (out_point_stamped.pose.position.y / 1.311792) + 510.3641357421875 ; // focal_length_y * (y_camera / z_camera) + principal_point_y;
-         std::cout << " FINAL COORDINATE " << sb->top_left_cam_point.x << sb->top_left_cam_point.y;
+         sb->top_left_cam_point.x = 607.4446411132812 * (out_point_stamped.pose.position.x / 1.311792) + 640.501220703125 ; // focal_length_x * (x_camera / z_camera) + principal_point_x;
+         sb->top_left_cam_point.y = 607.5540771484375 * (out_point_stamped.pose.position.y / 1.311792) + 362.7770080566406 ; // focal_length_y * (y_camera / z_camera) + principal_point_y;
       } catch (tf2::TransformException &ex) {
          ROS_WARN("TF2 Transform Exception: %s", ex.what());    
    }
-
 
    in_point_stamped.header.frame_id = "base";
    in_point_stamped.header.stamp = ros::Time(0);
@@ -245,16 +215,8 @@ void StaticBorderManager::addBorder(std::shared_ptr<StaticBorder> sb) {
 
    try {
          out_point_stamped = tfBuffer.transform(in_point_stamped, "rgb_camera_link");
-         ROS_INFO("Got transform: translation (%.3f, %.3f, %.3f), rotation (%.2f, %.2f, %.2f, %.2f)",
-                  out_point_stamped.pose.position.x,
-                  out_point_stamped.pose.position.y,
-                  out_point_stamped.pose.position.z,
-                  out_point_stamped.pose.orientation.x,
-                  out_point_stamped.pose.orientation.y,
-                  out_point_stamped.pose.orientation.z,
-                  out_point_stamped.pose.orientation.w);
-         sb->bottom_right_cam_point.x = 503.6534118652344 * (out_point_stamped.pose.position.x / out_point_stamped.pose.position.z) + 513.4310913085938 ; // focal_length_x * (x_camera / z_camera) + principal_point_x;
-         sb->bottom_right_cam_point.y = 503.7967529296875 * (out_point_stamped.pose.position.y / out_point_stamped.pose.position.z) + 510.3641357421875 ; // focal_length_y * (y_camera / z_camera) + principal_point_y;
+         sb->bottom_right_cam_point.x = 607.4446411132812 * (out_point_stamped.pose.position.x / 1.311792) + 640.501220703125 ; // focal_length_x * (x_camera / z_camera) + principal_point_x;
+         sb->bottom_right_cam_point.y = 607.5540771484375 * (out_point_stamped.pose.position.y / 1.311792) + 362.7770080566406; // focal_length_y * (y_camera / z_camera) + principal_point_y;
       } catch (tf2::TransformException &ex) {
          ROS_WARN("TF2 Transform Exception: %s", ex.what());    
    }
@@ -484,16 +446,15 @@ void StaticBorderManager::handTrackingCallback(const unity_msgs::poiPCLConstPtr&
       ROS_INFO("Border center x,y coordinates: (%i, %i)", border_center.x, border_center.y);
       for (const auto& hand_point : msg->pts)
       {
+          geometry_msgs::PoseStamped hand_pose;
+          hand_pose.pose.position.x = hand_point.x;
+          hand_pose.pose.position.y = hand_point.y;
+
          if (handType == "Left") {
             cv::Point left_hand_position(static_cast<int>(hand_point.x), static_cast<int>(hand_point.y));
             ROS_INFO("hand_position x,y coordinates: (%i, %i)", left_hand_position.x, left_hand_position.y);
 
             float distance = cv::norm(left_hand_position - border_center);
-
-            geometry_msgs::PoseStamped hand_pose;
-            hand_pose.header.frame_id = "base";
-            hand_pose.pose = border->transformPtToRobotSpace(left_hand_position.x, left_hand_position.y);
-            vis_hand_pub.publish(hand_pose);
 
             // Create Rviz marker 
             visualization_msgs::Marker marker;
@@ -537,12 +498,6 @@ void StaticBorderManager::handTrackingCallback(const unity_msgs::poiPCLConstPtr&
             ROS_INFO("hand_position x,y coordinates: (%i, %i)", right_hand_position.x, right_hand_position.y);
 
             float distance = cv::norm(right_hand_position - border_center);
-
-            geometry_msgs::PoseStamped hand_pose;
-            hand_pose.header.frame_id = "base";
-            hand_pose.pose = border->transformPtToRobotSpace(right_hand_position.x, right_hand_position.y);
-            vis_hand_pub.publish(hand_pose);
-
             // Create Rviz marker 
             visualization_msgs::Marker marker;
             marker.header.frame_id = "base";

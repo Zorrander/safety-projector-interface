@@ -10,7 +10,7 @@ class Button():
         self._text = text
         self._button_color = (b_color.b*255, b_color.g*255, b_color.r*255)
         self._text_color = (t_color.b*255, t_color.g*255, t_color.r*255)
-        self._center = (int(center.position.x),int(center.position.y))
+        self._center = (center[0], center[1])
         self._radius = int(radius)
         self._hidden = hidden
 
@@ -35,7 +35,7 @@ class Button():
     
     def get_text_attributes(self):
         TEXT_FACE = cv2.FONT_HERSHEY_DUPLEX
-        TEXT_SCALE = 0.5
+        TEXT_SCALE = 0.1
         TEXT_THICKNESS = 2
         right_size = False
         text_size, _ = cv2.getTextSize(self._text, TEXT_FACE, TEXT_SCALE, TEXT_THICKNESS)

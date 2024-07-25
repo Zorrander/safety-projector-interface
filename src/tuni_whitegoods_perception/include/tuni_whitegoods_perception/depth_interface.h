@@ -5,6 +5,7 @@
 #include <ros/ros.h>
 #include <tf2_ros/buffer.h>
 #include <tf2/transform_datatypes.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <tf2_sensor_msgs/tf2_sensor_msgs.h>
 #include <tf2_ros/transform_listener.h>
 #include <tf2/convert.h>
@@ -55,7 +56,7 @@ class DepthInterface
 
     ImageSubscriber depth_rgb_sub_;
     ImageSubscriber depth_sub_;
-
+    ros::Subscriber sub_scene;
     ros::Subscriber sub_hand_poi;
     ros::Subscriber sub_poi;
     ros::Publisher pub_poi;
@@ -83,6 +84,13 @@ class DepthInterface
     double az;
     double bz;
     
+    tf2_ros::Buffer tfBuffer;
+    tf2_ros::TransformListener* tfListener;
+
+    cv::Mat cv_viz_depth;
+    image_transport::Publisher pub_full_scene;
+    void depthSceneCallback(const sensor_msgs::ImageConstPtr& depth_msg);
+
 
   public:
     DepthInterface(ros::NodeHandle* nh, string name_drgb, string name_d);

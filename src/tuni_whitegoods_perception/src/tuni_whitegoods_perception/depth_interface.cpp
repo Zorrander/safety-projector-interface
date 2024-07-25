@@ -51,7 +51,9 @@ using namespace std;
     it_(*nh),
     depth_rgb_sub_( it_, name_drgb, 1),
     depth_sub_( it_, name_d, 1),
-    sync( MySyncPolicy(10), depth_rgb_sub_, depth_sub_)
+    sync( MySyncPolicy(10), depth_rgb_sub_, depth_sub_),
+    tfBuffer(),  // Initialize tfBuffer
+    tfListener(new tf2_ros::TransformListener(tfBuffer))
     {
       ROS_INFO("Fetching parameters for DepthInterface.");
 
@@ -86,9 +88,10 @@ using namespace std;
 
       sync.registerCallback( boost::bind( &DepthInterface::callbackRGBDepth, this, _1, _2) );
       sub_hand_poi = nh_->subscribe("/hand_tracking/rgb/coordinates", 1, &DepthInterface::handTrackerCallback,this);
-      sub_poi = nh_->subscribe("/interface_poi/buttons", 1, &DepthInterface::poiCallback,this);
-      pub_poi = nh_->advertise<unity_msgs::InterfacePOI> ("/depth_interface/poi_depthmap", 1);
-      pub_poi_pcl = nh_->advertise<sensor_msgs::PointCloud2> ("/depth_interface/poi_pcl", 1);
+
+      sub_scene = nh_->subscribe("odin/visualization/scene_detection", 1, &DepthInterface::depthSceneCallback, this);
+      pub_full_scene = it_.advertise("odin/visualization/full_scene_detection", 1);
+
       pub_hand_tracker_dm = nh_->advertise<unity_msgs::poiPCL> ("/hand_tracking/dm/coordinates", 1);
       robot_space = Eigen::Affine3d::Identity();
       tf_in = false;
@@ -143,6 +146,11 @@ using namespace std;
       tf_in = true;
     }
 
+    void DepthInterface::depthSceneCallback(const sensor_msgs::ImageConstPtr& depth_msg){
+        cv_bridge::CvImagePtr cv_viz_depth_ptr = cv_bridge::toCvCopy(depth_msg, sensor_msgs::image_encodings::BGR8);
+        cv_viz_depth = cv_viz_depth_ptr->image.clone();
+    }
+
     //get the rgb_to_depth and depth images
     void DepthInterface::callbackRGBDepth(const sensor_msgs::ImageConstPtr& rgbdepth_msg, const sensor_msgs::ImageConstPtr& depth_msg)
     {
@@ -150,11 +158,10 @@ using namespace std;
       cv_bridge::CvImagePtr cv_bridge_depth = cv_bridge::toCvCopy(depth_msg, sensor_msgs::image_encodings::TYPE_16UC1);
       cv_depth_rgb = cv_bridge_depth_rgb->image.clone();
       cv_depth = cv_bridge_depth->image.clone();
-      unsigned short val = cv_depth.at<unsigned short>(517, 557);
-      depth_images = true;
-
     }
     //callback that transform RGB point of the hands to their coordinates in the depthmap
+
+    /*
     void DepthInterface::handTrackerCallback(const unity_msgs::poiPCLConstPtr& msg)
     {
       pcl::PointCloud<pcl::PointXYZ>::Ptr final_cloud(new pcl::PointCloud<pcl::PointXYZ>);
@@ -190,47 +197,63 @@ using namespace std;
         pub_hand_tracker_dm.publish(list_points_hand);
       }
     }
+    */
 
-    //get rgb points from interface and find them in the global depth map
-    void DepthInterface::poiCallback(const unity_msgs::InterfacePOIConstPtr& msg)
+    void DepthInterface::handTrackerCallback(const unity_msgs::poiPCLConstPtr& msg)
     {
       pcl::PointCloud<pcl::PointXYZ>::Ptr final_cloud(new pcl::PointCloud<pcl::PointXYZ>);
-      list_points.poi.resize(0);
-      if(!tf_in)
-      {
-        initTransformToBase();
-      }
-      else
-      {
-        for(int i = 0; i < msg->poi.size(); i++)
+      list_points_hand.pts.clear();
+
+        cv::Mat cv_viz_depth_hands = cv_viz_depth.clone();
+        for(int i = 0; i < msg->pts.size(); i++)
         {
-          unity_msgs::ElementUI current_elem;
+
+          cv::circle(cv_viz_depth_hands, cv::Point(msg->pts[i].x, msg->pts[i].y), 10, cv::Scalar(255, 0, 0), 2);
+
+          geometry_msgs::Point current_elem;
           pcl::PointXYZ p;
-          p.x = static_cast<float>(msg->poi[i].elem.x);
-          p.y = static_cast<float>(msg->poi[i].elem.y);
-          p.z = static_cast<float>(msg->poi[i].elem.z);
-          current_elem.id = msg->poi[i].id;
-          if(depth_images)
-          {
-            pcl::PointXYZ pixel_res = getDepthFromRGB(cv_depth_rgb,cv_depth,p);
-            pcl::PointXYZ pt_depth = generatePointCloudPOI(cv_depth, pixel_res);
-            final_cloud->push_back(pt_depth);
-            pcl::PointXYZ final_pt = genPointDepthMap(pt_depth);
-            current_elem.elem.x = static_cast<double>(final_pt.x);
-            current_elem.elem.y = static_cast<double>(final_pt.y);
-            current_elem.elem.z = static_cast<double>(final_pt.z);
-            list_points.poi.push_back(current_elem);
-          }
+
+          // Get the depth value at the RGB point
+          uint16_t depth_value = cv_depth_rgb.at<uint16_t>(msg->pts[i].x, msg->pts[i].y);
+
+          // Assuming depth image is in millimeters, convert to meters
+          float depth_in_meters = depth_value / 1000.0;
+
+          p.x = (msg->pts[i].x - 640.501220703125) * 1.311792 / 607.4446411132812;
+          p.y = (msg->pts[i].y - 362.7770080566406) * 1.311792 / 607.5540771484375;
+          p.z =  1.311792;
+          
+          ROS_INFO("3D Point in RGB camera coordinate system: X = %.3f, Y = %.3f, Z = %.3f", p.x , p.y , p.z);
+
+          // Transform to robot coordinates frame
+
+           geometry_msgs::PoseStamped in_point_stamped, out_point_stamped;
+
+           in_point_stamped.header.frame_id = "rgb_camera_link";
+           in_point_stamped.header.stamp = ros::Time(0);
+           in_point_stamped.pose.position.x = p.x;
+           in_point_stamped.pose.position.y = p.y;
+           in_point_stamped.pose.position.z = p.z; 
+
+           try {
+                 out_point_stamped = tfBuffer.transform(in_point_stamped, "base");
+                 current_elem.x = out_point_stamped.pose.position.x;
+                 current_elem.y = out_point_stamped.pose.position.y;
+                 current_elem.z = out_point_stamped.pose.position.z;
+                 ROS_INFO("3D Point in robot coordinate system: X = %.3f, Y = %.3f, Z = %.3f", current_elem.x , current_elem.y, current_elem.z);
+                list_points_hand.pts.push_back(current_elem);
+              } catch (tf2::TransformException &ex) {
+                 ROS_WARN("TF2 Transform Exception: %s", ex.what());    
+            }         
         }
-        list_points.header = msg->header;
-        pub_poi.publish(list_points);
-      }
-      //publish the points, only for demo so it can be removed later
-      sensor_msgs::PointCloud2 cloud_publish;
-      pcl::toROSMsg(*final_cloud,cloud_publish);
-      cloud_publish.header = msg->header;
-      cloud_publish.header.frame_id = tf_robot_frame; //changed here
-      pub_poi_pcl.publish(cloud_publish);
+
+        list_points_hand.header = msg->header;
+        //publish hand coordinates in the depthmap
+        pub_hand_tracker_dm.publish(list_points_hand);
+
+        sensor_msgs::ImagePtr viz_msg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", cv_viz_depth_hands).toImageMsg();
+        pub_full_scene.publish(viz_msg);
+
     }
 
    // get the depth value of the interface pixels given their location in the RGB space

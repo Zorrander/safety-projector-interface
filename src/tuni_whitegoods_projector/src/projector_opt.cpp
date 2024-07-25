@@ -47,7 +47,6 @@ public:
     cout << "Shift value: " << shift << endl;
     cv::moveWindow(OPENCV_WINDOW,shift, 0);
     cv::setWindowProperty(OPENCV_WINDOW, cv::WND_PROP_FULLSCREEN, cv::WINDOW_FULLSCREEN);
-    pub_proj_img = it_.advertise("/odin/visualization/projections", 1);
     cv_depth = cv::Mat(1024, 1024, CV_32FC1, cv::Scalar(std::numeric_limits<float>::min()));
     transform_sub = nh_.subscribe("/list_dp", 1, &Projector::transformProject,this);
     depth_sub = nh_.subscribe("/depth/image_raw", 1, &Projector::depthImageCallback,this);
@@ -65,13 +64,6 @@ public:
 
   void transformProject(const unity_msgs::ListDataProj::ConstPtr& msg)
   {
-
-    // Normalize the depth map to the range 0-255 for better visualization
-    cv::Mat depth_normalized;
-    cv::normalize(cv_depth, depth_normalized, 0, 255, cv::NORM_MINMAX, CV_8U);
-    // Apply a color map
-    cv::Mat depth_colormap;
-    cv::applyColorMap(depth_normalized, depth_colormap, cv::COLORMAP_JET);
 
     cv::Mat sum_img(1080,1920,CV_8UC3,cv::Scalar(0,0,0));
     cv::Mat img_transformed(1080,1920,CV_8UC3,cv::Scalar(0,0,0));
@@ -91,7 +83,6 @@ public:
 
           cv_ptr = cv_bridge::toCvCopy(msg->list_proj[i].img, sensor_msgs::image_encodings::BGR8);
           cv::Mat hom = getMatrix(msg->list_proj[i].transform);
-          std:cout << "HOMOGRAPHY: " << hom ;
           cv::warpPerspective(cv_ptr->image, img_transformed,hom, sum_img.size());
           sum_img = sum_img.clone() + img_transformed.clone();    
         }
@@ -108,9 +99,6 @@ public:
     {
       sum_img.create(1080,1920,CV_8UC3);
     } 
-
-    sensor_msgs::ImagePtr border_msg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", depth_colormap).toImageMsg();
-    pub_proj_img.publish(border_msg);
     
     cv::imshow(OPENCV_WINDOW, sum_img);
     cv::waitKey(1);

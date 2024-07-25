@@ -106,8 +106,8 @@ cv::Mat StaticBorder::drawBorder()
    cv::Point bottom_r(static_cast<int>(border_camera_space.polygon.points[1].x),
                       static_cast<int>(border_camera_space.polygon.points[1].y));
 
-   ROS_INFO("Border x,y coordinates: (%i, %i), (%i, %i)", top_l.x, top_l.y, bottom_r.x, bottom_r.y);
-   cv::rectangle(sf_line_colored,top_l,bottom_r,cv::Scalar(border_color.b*255, border_color.g*255, border_color.r*255),thickness,cv::LINE_8);
+   ROS_INFO("Border x,y coordinates: (%i, %i), (%i, %i)", top_left_cam_point.x, top_left_cam_point.y, bottom_right_cam_point.x, bottom_r.y);
+   cv::rectangle(sf_line_colored, top_left_cam_point, bottom_right_cam_point, cv::Scalar(border_color.b*255, border_color.g*255, border_color.r*255), thickness,cv::LINE_8);
 
    return sf_line_colored;
 }

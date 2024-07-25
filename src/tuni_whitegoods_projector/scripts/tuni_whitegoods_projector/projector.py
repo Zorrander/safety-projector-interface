@@ -3,9 +3,18 @@ import uuid
 import yaml
 import json
 import rospy
+import tf2_ros
+import geometry_msgs.msg
+import tf2_geometry_msgs.tf2_geometry_msgs
+
+from visualization_msgs.msg import Marker
+
+from geometry_msgs.msg import PoseStamped
 import numpy as np
 from pathlib import Path
 from cv_bridge import CvBridge, CvBridgeError
+
+from sensor_msgs.msg import Image
 
 from unity_msgs.msg import DataProj
 from unity_msgs.msg import ListDataProj
@@ -57,9 +66,18 @@ class Projector():
         self.s_marker = 0
         self.received = False
         self.aruco_changed = False
-    
+
+        self.object_detection_sub = rospy.Subscriber("odin/visualization/object_detection", Image, self.viz_callback);
+        self.object_detection_pub = rospy.Publisher('odin/visualization/scene_detection', Image, queue_size=10)
+
         self.dp_list_pub = rospy.Publisher("/list_dp", ListDataProj, queue_size=1)
-        self.pub_poi = rospy.Publisher("/interface_poi/buttons", InterfacePOI, queue_size=1)
+
+        self.vis_pub = rospy.Publisher('visualization_marker', Marker, queue_size=10)
+         # Initialize the TF2 buffer and listener
+        self.tfBuffer = tf2_ros.Buffer()
+        self.tfListener = tf2_ros.TransformListener(self.tfBuffer)
+
+        self.bridge = CvBridge()
 
         self.init_zones_tmp()
         rospy.loginfo("Projector interface initialized!")
@@ -105,8 +123,70 @@ class Projector():
 
     #get a button if the openflow server sends any. But we usually create interface and not just button
     #it was mainly to test openflow
+
+    def viz_callback(self, msg):
+        self.cv_image = self.bridge.imgmsg_to_cv2(msg, "passthrough")
+        # Convert read-only image to writable image if necessary
+        if not self.cv_image.flags['WRITEABLE']:
+            self.cv_image = np.copy(self.cv_image)
+
     def callback_button(self, msg):
-        b = Button(msg.id,msg.zone,msg.name,msg.description,msg.text,msg.button_color,msg.text_color,msg.center,msg.radius,msg.hidden)
+        # Create Rviz marker 
+        marker = Marker()
+        marker.header.frame_id = "base"
+        marker.header.stamp = rospy.Time.now()
+        marker.id = int(msg.id)
+        marker.type = Marker.CYLINDER
+        marker.action = Marker.ADD
+        marker.pose.position.x = msg.center.position.x
+        marker.pose.position.y = msg.center.position.y
+        # Set the dimensions of the cylinder
+        marker.scale.x = msg.radius / 500  # Diameter in the x-axis
+        marker.scale.y = msg.radius / 500  # Diameter in the y-axis
+        marker.scale.z = 0.01  # Height of the cylinder
+
+        # Set the color of the cylinder
+        marker.color.r = msg.button_color.r;
+        marker.color.g = msg.button_color.g;
+        marker.color.b = msg.button_color.b;
+        marker.color.a = 1.0;
+        self.vis_pub.publish( marker );
+
+        # Create the input pose stamped message
+        in_point_stamped = PoseStamped()
+        in_point_stamped.header.frame_id = "base"
+        in_point_stamped.header.stamp = rospy.Time(0)
+        in_point_stamped.pose.position.x = msg.center.position.x
+        in_point_stamped.pose.position.y = msg.center.position.y
+
+        try:
+            # Perform the transformation
+            out_point_stamped = self.tfBuffer.transform(in_point_stamped, "rgb_camera_link")
+            rospy.loginfo("Got transform: translation (%.3f, %.3f, %.3f), rotation (%.2f, %.2f, %.2f, %.2f)",
+                          out_point_stamped.pose.position.x,
+                          out_point_stamped.pose.position.y,
+                          out_point_stamped.pose.position.z,
+                          out_point_stamped.pose.orientation.x,
+                          out_point_stamped.pose.orientation.y,
+                          out_point_stamped.pose.orientation.z,
+                          out_point_stamped.pose.orientation.w)
+
+            # Project to 2D image coordinates
+            focal_length_x = 607.4446411132812
+            focal_length_y = 607.5540771484375 
+            principal_point_x = 640.501220703125
+            principal_point_y = 362.7770080566406 
+            z_camera = 1.311792
+            
+            center_cam_point_x = int(focal_length_x * (out_point_stamped.pose.position.x / z_camera) + principal_point_x)
+            center_cam_point_y = int(focal_length_y * (out_point_stamped.pose.position.y / z_camera) + principal_point_y)
+            cv2.circle(self.cv_image, (center_cam_point_x, center_cam_point_y), int(msg.radius), (255, 255, 255), 2)
+            print("FINAL COORDINATE", center_cam_point_x, center_cam_point_y)
+            
+        except tf2_ros.TransformException as ex:
+            rospy.logwarn("TF2 Transform Exception: %s", ex)
+
+        b = Button(msg.id,msg.zone,msg.name,msg.description,msg.text,msg.button_color,msg.text_color, (center_cam_point_x, center_cam_point_y),msg.radius,msg.hidden)
         add_success = False
         if len(self._list_interface) == 0:
             tmp = []
@@ -127,6 +207,8 @@ class Projector():
             ui = InterfaceUI(str(uuid.uuid4()),msg.zone,"default_interface","interface by default",True,tmp)
             self._list_interface.append(ui)
             add_success = True
+
+        self.object_detection_pub.publish(self.bridge.cv2_to_imgmsg(self.cv_image, "bgr8"))
 
     def callback_button_color(self, msg):
         print("CHANGING COLOR")
@@ -190,12 +272,6 @@ class Projector():
             #print(camera)
          except yaml.YAMLError as exception:
             print(exception)
-    
-        if not self.is_moving:
-            self.find_static_ui_transform()
-        else:
-            #self.matrix = self.mainCamera['hom_cam_static']
-            self.matrix_projected = self.mainCamera['hom_cam_screen_to_proj']
 
     #method called when the display is dynamic like on a moving table.
     #it has to update the transform so it always fit on the table
@@ -262,13 +338,6 @@ class Projector():
 
         return
     
-    #same as previous method but with a static zone
-    def find_static_ui_transform(self): #find transform from screen to table in the camera
-        self.matrix = self.mainCamera['hom_cam_static']
-        self.matrix_projected = self.mainCamera['hom_cam_screen_to_proj']
-        #print("self matrix",self.matrix)
-        #print("matrix projected",self.matrix_projected)
-    
     #display only active interface
     def get_active_interface_image(self):
         interface = None
@@ -303,7 +372,7 @@ class Projector():
                         dp_interface.id = proj['id']
                         #tmp = np.matmul(proj['vertHomTable'], self.UI_transform)
                         #tmp = np.matmul(proj['static_table_proj'], self.UI_transform)
-                        tmp = proj['homDepthProj']
+                        tmp = proj['hom_proj_static']
                         dp_interface.transform = tmp.flatten()
                         dp_interface.img = self.bridge_interface.cv2_to_imgmsg(interface_tmp, "bgr8")
                         dp_list.list_proj.append(dp_interface)
@@ -320,7 +389,7 @@ class Projector():
                     for i in self.static_border:
                         dp_safety = DataProj()
                         dp_safety.id = proj['id']
-                        dp_safety.transform = proj['homDepthProj'].flatten()
+                        dp_safety.transform = proj['hom_proj_static'].flatten()
                         #print(dp_safety.transform)
                         dp_safety.img = self.bridge_interface.cv2_to_imgmsg(i.img, "bgr8")#self.sl_dm
                         dp_list.list_proj.append(dp_safety)

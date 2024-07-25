@@ -53,9 +53,9 @@ def main():
     goal.virtual_button.text_color.g = 1.0
     goal.virtual_button.text_color.b = 1.0
     goal.virtual_button.text_color.a = 1.0
-    goal.virtual_button.center.position.x = 427 # 840.0;
-    goal.virtual_button.center.position.y = 554# 880.0;
-    goal.virtual_button.radius = 10.0
+    goal.virtual_button.center.position.x = 0.9
+    goal.virtual_button.center.position.y = -0.4
+    goal.virtual_button.radius = 70.0
     goal.virtual_button.hidden = False
 
     # Sends the goal to the action server.
