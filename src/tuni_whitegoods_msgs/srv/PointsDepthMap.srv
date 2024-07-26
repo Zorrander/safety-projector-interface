@@ -1,3 +1,0 @@
-geometry_msgs/Point[] poi_rgb
----
-geometry_msgs/Point[] poi_depth_map

@@ -28,16 +28,6 @@ find_package(catkin REQUIRED COMPONENTS
   tf2_sensor_msgs
 )
 
-## System dependencies are found with CMake's conventions
-# find_package(Boost REQUIRED COMPONENTS system)
-find_package(OpenCV 4 REQUIRED)
-find_package(Eigen3 REQUIRED)
-find_package( k4a REQUIRED)
-find_package( k4arecord REQUIRED)
-find_package( k4abt REQUIRED )
-set(K4A_LIBS k4a::k4a k4a::k4arecord)
-
-
 catkin_package(
     INCLUDE_DIRS
     CATKIN_DEPENDS message_runtime
@@ -59,25 +49,11 @@ catkin_package(
                    tf2_sensor_msgs
   )
 
-###########
-## Build ##
-###########
 
-## Specify additional locations of header files
-## Your package locations should be listed before other locations
 include_directories(
   ${catkin_INCLUDE_DIRS}
   ${OpenCV_INCLUDE_DIRS}
-  ${K4A_LIBS}
 )
 
 
-add_executable(points_depth src/server_points.cpp)
-target_link_libraries(points_depth 
-                        ${catkin_LIBRARIES} 
-                        ${K4A_LIBS})
 
-
-add_executable(points_wrapper src/wrapper.cpp)
-target_link_libraries(points_wrapper 
-                        ${catkin_LIBRARIES})

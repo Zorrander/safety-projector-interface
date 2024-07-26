@@ -1,4 +1,0 @@
-rosrun projector projector_interface.py
-roslaunch abb_rws_state_publisher rws_state_publisher.launch robot_ip:=192.168.125.1
-roslaunch azure_kinect_ros_driver kinect_rgbd.launch
-roslaunch abb_robot_bringup_examples ex1_rws_only.launch robot_ip:=192.168.125.1

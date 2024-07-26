@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 3.0.2)
 project(tuni_whitegoods_perception)
 
-set(CMAKE_CXX_STANDARD 14)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
+## Compile as C++11, supported in ROS Kinetic and newer
+add_compile_options(-std=c++11)
 
 
 find_package(catkin REQUIRED COMPONENTS
@@ -26,11 +26,6 @@ find_package(catkin REQUIRED COMPONENTS
 )
 
 find_package(OpenCV 4 REQUIRED)
-find_package(k4a REQUIRED)
-find_package(k4arecord REQUIRED)
-find_package(k4abt REQUIRED )
-set(K4A_LIBS k4a::k4a k4a::k4arecord)
-
 
 catkin_package(
     INCLUDE_DIRS include
@@ -63,7 +58,6 @@ add_library(depth_interface src/tuni_whitegoods_perception/depth_interface.cpp)
 target_link_libraries(depth_interface
   ${catkin_LIBRARIES} 
   ${OpenCV_LIBS}
-  ${K4A_LIBS}
 )
 
 add_executable(depth_interface_node src/depth_interface_node.cpp)
@@ -71,16 +65,5 @@ target_link_libraries(depth_interface_node
   depth_interface
   ${catkin_LIBRARIES} 
   ${OpenCV_LIBS} 
-  ${K4A_LIBS}
 )
 
-install(TARGETS depth_interface
-  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
-
-install(DIRECTORY include/${PROJECT_NAME}/
-    DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-    FILES_MATCHING PATTERN "*.h"
-)

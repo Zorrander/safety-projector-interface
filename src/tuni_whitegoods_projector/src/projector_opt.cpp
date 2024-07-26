@@ -76,11 +76,6 @@ public:
         suc = true;
         try
         {
-
-          /*[0.73144335, 9.2972155, -4794.291;
-           9.4671183, -0.29069841, -3514.0232;
-           0.00055143185, -1.3236022e-05, 1]*/
-
           cv_ptr = cv_bridge::toCvCopy(msg->list_proj[i].img, sensor_msgs::image_encodings::BGR8);
           cv::Mat hom = getMatrix(msg->list_proj[i].transform);
           cv::warpPerspective(cv_ptr->image, img_transformed,hom, sum_img.size());
