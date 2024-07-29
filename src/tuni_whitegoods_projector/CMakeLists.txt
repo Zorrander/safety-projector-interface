@@ -16,6 +16,8 @@ find_package(catkin REQUIRED COMPONENTS
   integration
   tf2_ros
   tf2_geometry_msgs
+  tuni_whitegoods_msgs
+
 )
 
 
@@ -32,6 +34,7 @@ catkin_package(
                  integration
                  tf2_ros
                  tf2_geometry_msgs
+                 tuni_whitegoods_msgs
   LIBRARIES border
 )
 
@@ -45,7 +48,6 @@ include_directories(
 )
 
 add_library(border
-  src/border/Border.cpp
   src/border/StaticBorder.cpp
   src/border/StaticBorderManager.cpp
 )

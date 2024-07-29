@@ -7,4 +7,7 @@
     
     <include file="$(find tuni_whitegoods_perception)/launch/hand_tracking.launch" />
 
+    <include file="$(find tuni_whitegoods_transformations)/launch/transformation_servers.launch" />
+
+
 </launch>

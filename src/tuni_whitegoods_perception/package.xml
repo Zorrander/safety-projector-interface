@@ -77,6 +77,8 @@
   <exec_depend>tf2_ros</exec_depend>
   <exec_depend>tf2_sensor_msgs</exec_depend>
 
+  <depend>tuni_whitegoods_msgs</depend>
+
   <!-- The export tag contains other, unspecified, tags -->
   <export>
     <cpp cflags="-I${prefix}/include" lflags="-L${prefix}/lib -lborder"/>

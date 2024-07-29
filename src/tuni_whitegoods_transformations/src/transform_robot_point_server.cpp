@@ -10,12 +10,12 @@
 class TransformRobotPointServer
 {
 public:
-    TransformRobotPointServer(ros::NodeHandle& nh)
+    TransformRobotPointServer(ros::NodeHandle* nh)
         : nh_(nh), 
           tfBuffer(),  // Initialize tfBuffer
           tfListener(new tf2_ros::TransformListener(tfBuffer))  // Initialize tfListener with tfBuffer
     {
-        world_coordinates_service_ = nh_.advertiseService("transform_world_coordinates_frame", &TransformRobotPointServer::transformWorldPointCallback, this);
+        world_coordinates_service_ = nh_->advertiseService("transform_world_coordinates_frame", &TransformRobotPointServer::transformWorldPointCallback, this);
 
         try {
             geometry_msgs::TransformStamped transformStamped = tfBuffer.lookupTransform("base", "rgb_camera_link", ros::Time(0));
@@ -45,7 +45,7 @@ private:
         return true;
     }
 
-    ros::NodeHandle nh_;
+    ros::NodeHandle* nh_;
     ros::ServiceServer world_coordinates_service_;
     tf2_ros::Buffer tfBuffer;
     tf2_ros::TransformListener* tfListener;
@@ -56,7 +56,7 @@ int main(int argc, char** argv)
 {
     ros::init(argc, argv, "transform_robot_server");
     ros::NodeHandle nh;
-    TransformRobotPointServer server(nh);
+    TransformRobotPointServer server(&nh);
 
     ros::spin();
 

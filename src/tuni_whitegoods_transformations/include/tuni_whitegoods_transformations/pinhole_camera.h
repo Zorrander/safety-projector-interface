@@ -2,7 +2,6 @@
 #define PinholeCamera_H
 
 
-#include <ros/ros.h>
 #include <opencv2/core/mat.hpp>
 
 
@@ -12,7 +11,7 @@ class PinholeCamera
     cv::Matx33d K_;
 
   public:
-    PinholeCamera(ros::NodeHandle* nh);
+    PinholeCamera();
     double cx() const;
     double cy() const;
     double fx() const;

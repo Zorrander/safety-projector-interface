@@ -3,7 +3,8 @@ Class that manage static borders. It display and monitors them.
 */
 #include "border/StaticBorderManager.h"
 
-
+#include "tuni_whitegoods_msgs/TransformRobotCameraCoordinates.h"
+#include "tuni_whitegoods_msgs/Transform3DToPixel.h"
 // Params are almost the same as in StaticBorder
 //adjacent : if true then adjacent borders must be booked too
 //sf_factor : safety_factor for the hand detection.
@@ -22,6 +23,9 @@ client_button_color("execution/projector_interface/integration/actions/set_virtu
 tfBuffer(),  // Initialize tfBuffer
 tfListener(new tf2_ros::TransformListener(tfBuffer))  // Initialize tfListener with tfBuffer
 {
+   client = nh_->serviceClient<tuni_whitegoods_msgs::TransformRobotCameraCoordinates>("transform_world_coordinates_frame");
+   client_3D_to_pixel = nh_->serviceClient<tuni_whitegoods_msgs::Transform3DToPixel>("transform_3D_to_pixel");
+
    service_borders = nh.advertiseService("/execution/projector_interface/integration/services/list_static_border_status", &StaticBorderManager::getBordersService, this); 
    sub_hand_detection = nh.subscribe("/hand_tracking/dm/coordinates", 1,&StaticBorderManager::handTrackingCallback, this);
    pub_border_projection = nh.advertise<unity_msgs::LBorder>("/projector_interface/display_static_border",1);
@@ -37,8 +41,6 @@ tfListener(new tf2_ros::TransformListener(tfBuffer))  // Initialize tfListener w
 
    depth_sub = nh_->subscribe("/depth_to_rgb/image_raw", 1, &StaticBorderManager::depthImageCallback,this);
    object_detection_pub = it_.advertise("odin/visualization/object_detection", 1);
-
-   cv_depth = cv::Mat(1024, 1024, CV_32FC1,cv::Scalar(std::numeric_limits<float>::min()));
 
    border_crossed = false;
    button_pressed = false; 
@@ -73,6 +75,7 @@ tfListener(new tf2_ros::TransformListener(tfBuffer))  // Initialize tfListener w
 void StaticBorderManager::depthImageCallback(const sensor_msgs::ImageConstPtr& depth_msg){
    cv_bridge::CvImagePtr cv_bridge_depth = cv_bridge::toCvCopy(depth_msg, sensor_msgs::image_encodings::TYPE_16UC1);
    cv_depth = cv_bridge_depth->image.clone();
+
    // Normalize the depth map to the range 0-255 for better visualization
    cv::Mat depth_normalized;
    cv::normalize(cv_depth, depth_normalized, 0, 255, cv::NORM_MINMAX, CV_8U);
@@ -133,27 +136,6 @@ void StaticBorderManager::addBorder(std::shared_ptr<StaticBorder> sb) {
     // Add BorderContentStatus to both status and booked lists
     borders_status.push_back(tmp);
     borders_booked.push_back(tmp);
-
-    // Update list_proj for display
-    // Check if the zone of the new border already exists in list_proj
-    bool zoneExists = false;
-    for (auto& p : list_proj) {
-        if (p.zone == sb->getZone()) {
-            p.img += sb->drawBorder().clone();
-            p.mask += sb->drawMask().clone();
-            zoneExists = true;
-            break;
-        }
-    }
-
-    // If the zone doesn't exist, create a new Projection object
-    if (!zoneExists) {
-        Projection np;
-        np.zone = sb->getZone();
-        np.img = sb->drawBorder().clone();
-        np.mask = sb->drawMask().clone();
-        list_proj.push_back(np);
-    }
    
    geometry_msgs::Point topLeftCornerPt;
    topLeftCornerPt.x = sb->border_robot_space.polygon.points[0].x; 
@@ -192,35 +174,64 @@ void StaticBorderManager::addBorder(std::shared_ptr<StaticBorder> sb) {
 
    vis_pub.publish( marker );
 
-   geometry_msgs::PoseStamped in_point_stamped, out_point_stamped;
+    geometry_msgs::PoseStamped in_point_stamped;
+    tuni_whitegoods_msgs::TransformRobotCameraCoordinates srv;
+    tuni_whitegoods_msgs::Transform3DToPixel srv_3D_to_pixel;
 
-   in_point_stamped.header.frame_id = "base";
-   in_point_stamped.header.stamp = ros::Time(0);
-   in_point_stamped.pose.position.x = topLeftCornerPt.x;
-   in_point_stamped.pose.position.y = topLeftCornerPt.y;
+    in_point_stamped.header.frame_id = "base";
+    in_point_stamped.header.stamp = ros::Time(0);
+    in_point_stamped.pose.position.x = topLeftCornerPt.x;
+    in_point_stamped.pose.position.y = topLeftCornerPt.y;
+   
+    srv.request.in_point_stamped = in_point_stamped;
+    srv.request.target_frame = "rgb_camera_link";
+    client.call(srv);
+       
+    // Project to 2D image coordinates 
+    srv_3D_to_pixel.request.x = srv.response.out_point_stamped.pose.position.x;
+    srv_3D_to_pixel.request.y = srv.response.out_point_stamped.pose.position.y;
+    srv_3D_to_pixel.request.z = 1.311792;
+    client_3D_to_pixel.call(srv_3D_to_pixel);
+    
+    sb->top_left_cam_point.x = srv_3D_to_pixel.response.u;
+    sb->top_left_cam_point.y = srv_3D_to_pixel.response.v;
 
-   try {
-         out_point_stamped = tfBuffer.transform(in_point_stamped, "rgb_camera_link");
-         // Project to 2D image coordinates 
-         sb->top_left_cam_point.x = 607.4446411132812 * (out_point_stamped.pose.position.x / 1.311792) + 640.501220703125 ; // focal_length_x * (x_camera / z_camera) + principal_point_x;
-         sb->top_left_cam_point.y = 607.5540771484375 * (out_point_stamped.pose.position.y / 1.311792) + 362.7770080566406 ; // focal_length_y * (y_camera / z_camera) + principal_point_y;
-      } catch (tf2::TransformException &ex) {
-         ROS_WARN("TF2 Transform Exception: %s", ex.what());    
-   }
 
    in_point_stamped.header.frame_id = "base";
    in_point_stamped.header.stamp = ros::Time(0);
    in_point_stamped.pose.position.x = bottomRightCornerPt.x;
    in_point_stamped.pose.position.y = bottomRightCornerPt.y;
 
-   try {
-         out_point_stamped = tfBuffer.transform(in_point_stamped, "rgb_camera_link");
-         sb->bottom_right_cam_point.x = 607.4446411132812 * (out_point_stamped.pose.position.x / 1.311792) + 640.501220703125 ; // focal_length_x * (x_camera / z_camera) + principal_point_x;
-         sb->bottom_right_cam_point.y = 607.5540771484375 * (out_point_stamped.pose.position.y / 1.311792) + 362.7770080566406; // focal_length_y * (y_camera / z_camera) + principal_point_y;
-      } catch (tf2::TransformException &ex) {
-         ROS_WARN("TF2 Transform Exception: %s", ex.what());    
-   }
+   srv.request.in_point_stamped = in_point_stamped;
+   srv.request.target_frame = "rgb_camera_link";
+   client.call(srv);
+   // Project to 2D image coordinates 
+   srv_3D_to_pixel.request.x = srv.response.out_point_stamped.pose.position.x;
+   srv_3D_to_pixel.request.y = srv.response.out_point_stamped.pose.position.y;
+   srv_3D_to_pixel.request.z = 1.311792;
+   client_3D_to_pixel.call(srv_3D_to_pixel);
+   sb->bottom_right_cam_point.x = srv_3D_to_pixel.response.u;
+   sb->bottom_right_cam_point.y = srv_3D_to_pixel.response.v;
 
+
+    // Update list_proj for display
+    // Check if the zone of the new border already exists in list_proj
+    bool zoneExists = false;
+    for (auto& p : list_proj) {
+        if (p.zone == sb->getZone()) {
+            p.img += sb->drawBorder().clone();
+            zoneExists = true;
+            break;
+        }
+    }
+
+    // If the zone doesn't exist, create a new Projection object
+    if (!zoneExists) {
+        Projection np;
+        np.zone = sb->getZone();
+        np.img = sb->drawBorder().clone();
+        list_proj.push_back(np);
+    }
 
    // Add border to the list of borders
    borders.push_back(sb);
@@ -232,18 +243,7 @@ void StaticBorderManager::bookBorderRobot(std::string id)
    ROS_INFO("BOOKING BORDER %s", id.c_str());
    int tmp_col;
    int tmp_row;
-   //get position of the booked border in the grid and book it
-   /*
-   for(int i = 0; i < borders_booked.size(); i++)
-   {
-      if(borders_booked[i].id.compare(id) == 0)
-      {
-         borders_booked[i].status = 1;
-         tmp_col = borders_booked[i].col;
-         tmp_row = borders_booked[i].row;
-      }
-   }*/
-   //change color of border booked
+
    for(int i = 0; i < borders.size(); i++)
    {
       if(borders[i]->getId().compare(id) == 0)
@@ -311,14 +311,6 @@ void StaticBorderManager::releaseRobotBorder(std::string id, int status)
    ROS_INFO("RELEASING BORDER %s -> %i", id.c_str(), status);
    if(status == 0)
    {  
-      /*
-      for(int i = 0; i < borders_booked.size(); i++)
-      {
-         if(borders_booked[i].id.compare(id) == 0)
-         {
-            borders_booked[i].status = 0;
-         }
-      }*/
       for(int i = 0; i < borders.size(); i++)
       {
          if(borders[i]->getId().compare(id) == 0)
@@ -340,10 +332,6 @@ void StaticBorderManager::releaseRobotBorder(std::string id, int status)
                {
                   borders[j]->release();
                   borders[j]->changeBorderColor(stat_free);
-                  //if(borders_booked[j].id.compare(id) != 0)
-                  //{
-                  //   borders_booked[j].status = 0;
-                  //}
                }
 
             }
@@ -427,10 +415,6 @@ void StaticBorderManager::pointsOfInterestCb(const unity_msgs::InterfacePOIConst
          buttons.push_back(b);
       } 
    }
-
-   //for (const auto b: buttons){
-   //   ROS_INFO("button (%s) : x: (%f) - y: (%f) - z: (%f)", b.id.c_str(), b.center.x, b.center.y, b.center.z);
-   //}
 }
 
 void StaticBorderManager::handTrackingCallback(const unity_msgs::poiPCLConstPtr& msg)
@@ -439,9 +423,8 @@ void StaticBorderManager::handTrackingCallback(const unity_msgs::poiPCLConstPtr&
    button_pressed = false;
    list_hand_violation.clear();
    std::string handType = msg->header.frame_id;
-   ROS_INFO("handType: (%s)", handType.c_str()); 
    for (auto& border : borders){
-      geometry_msgs::Point ros_border_center = border->getCenter();
+      geometry_msgs::Point border_center = border->getCenter();
       const cv::Point border_center(static_cast<int>(ros_border_center.x), static_cast<int>(ros_border_center.y));
       ROS_INFO("Border center x,y coordinates: (%i, %i)", border_center.x, border_center.y);
       for (const auto& hand_point : msg->pts)
@@ -456,33 +439,9 @@ void StaticBorderManager::handTrackingCallback(const unity_msgs::poiPCLConstPtr&
 
             float distance = cv::norm(left_hand_position - border_center);
 
-            // Create Rviz marker 
-            visualization_msgs::Marker marker;
-            marker.header.frame_id = "base";
-            marker.header.stamp = ros::Time();
-            marker.id = 1;
-            marker.type = visualization_msgs::Marker::SPHERE;
-            marker.action = visualization_msgs::Marker::ADD;
-            marker.pose = hand_pose.pose;
-            marker.pose.orientation.x = 0.0;
-            marker.pose.orientation.y = 0.0;
-            marker.pose.orientation.z = 0.0;
-            marker.pose.orientation.w = 1.0;
-            marker.scale.x = 0.1;
-            marker.scale.y = 0.1;
-            marker.scale.z = 0.1;
-            marker.color.a = 1.0; // Don't forget to set the alpha!
-            marker.color.r = 0.0;
-            marker.color.g = 0.0;
-            marker.color.b = 1.0;
-            vis_pub.publish( marker );
-
-            ROS_INFO("distance: (%f) | prev distance (%f) | difference between the two = (%f)", distance, dist_buffers[0], dist_buffers[0]-distance);
-            if (distance < border->getBorderDiagonal()*0.75)
+            ROS_INFO("distance: (%f) | prev distance (%f) | difference between the two = (%f) vs diagonal (%f)", distance, dist_buffers[0], dist_buffers[0]-distance, border->getBorderDiagonal());
+            if (distance < border->getBorderDiagonal())
             {
-               ROS_INFO("distance: (%f)", distance);
-               ROS_INFO("diagonal: (%f)", border->getBorderDiagonal());
-               ROS_INFO("CHANGING THICKNESS");
                // Hand violation detected
                border_crossed = true;
                border->left_hand_crossed = true;
@@ -498,33 +457,10 @@ void StaticBorderManager::handTrackingCallback(const unity_msgs::poiPCLConstPtr&
             ROS_INFO("hand_position x,y coordinates: (%i, %i)", right_hand_position.x, right_hand_position.y);
 
             float distance = cv::norm(right_hand_position - border_center);
-            // Create Rviz marker 
-            visualization_msgs::Marker marker;
-            marker.header.frame_id = "base";
-            marker.header.stamp = ros::Time();
-            marker.id = 2;
-            marker.type = visualization_msgs::Marker::SPHERE;
-            marker.action = visualization_msgs::Marker::ADD;
-            marker.pose = hand_pose.pose;
-            marker.pose.orientation.x = 0.0;
-            marker.pose.orientation.y = 0.0;
-            marker.pose.orientation.z = 0.0;
-            marker.pose.orientation.w = 1.0;
-            marker.scale.x = 0.1;
-            marker.scale.y = 0.1;
-            marker.scale.z = 0.1;
-            marker.color.a = 1.0; // Don't forget to set the alpha!
-            marker.color.r = 0.0;
-            marker.color.g = 1.0;
-            marker.color.b = 0.0;
-            vis_pub.publish( marker );
 
-            ROS_INFO("distance: (%f) | prev distance (%f) | difference between the two = (%f)", distance, dist_buffers[1], dist_buffers[1]-distance);
-            if (distance < border->getBorderDiagonal()*0.75 )
+            ROS_INFO("distance: (%f) | prev distance (%f) | difference between the two = (%f) vs diagonal (%f)", distance, dist_buffers[1], dist_buffers[1]-distance, border->getBorderDiagonal());
+            if (distance < border->getBorderDiagonal())
             {
-               ROS_INFO("distance: (%f)", distance);
-               ROS_INFO("diagonal: (%f)", border->getBorderDiagonal());
-               ROS_INFO("CHANGING THICKNESS");
                // Hand violation detected
                border_crossed = true;
                border->right_hand_crossed = true; 
@@ -730,61 +666,6 @@ void StaticBorderManager::updateBorderStatus()
 
 }
 
-//draw a mask (circle) inside the border that is used to monitor is there are objects there
-/*
-void StaticBorderManager::getMaskDetection(cv::Mat& image)
-{
-   for(StaticBorder& sb : borders)
-   {
-      cv::Point top_left_cam_point, bottom_right_cam_point;
-      // Extract the region of interest from the depthmap
-      
-      roi_rect = cv::Rect(top_left_cam_point, bottom_right_cam_point);
-
-      ROS_INFO("Rectangle valid"); 
-      std::cout << "ROI Rectangle: x=" << roi_rect.x << ", y=" << roi_rect.y
-                << ", width=" << roi_rect.width << ", height=" << roi_rect.height << std::endl; 
-
-      cv::Mat roi_depthmap = cv_depth(roi_rect);
-      ROS_INFO("Depth crop valid");
-      // Apply the depth range threshold
-      cv::Mat mask;
-      cv::Scalar min_depth = cv::Scalar(1250); // TO BE ADJUSTED
-      cv::Scalar max_depth = cv::Scalar(1300); // TO BE ADJUSTED
-      cv::inRange(roi_depthmap, min_depth, max_depth, mask);
-
-      // Find contours in the mask
-      std::vector<std::vector<cv::Point>> contours;
-      cv::findContours(mask, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
-
-      // Normalize the depth map to the range 0-255 for better visualization
-      cv::Mat depth_normalized;
-      cv::normalize(cv_depth, depth_normalized, 0, 255, cv::NORM_MINMAX, CV_8U);
-
-      // Apply a color map
-      cv::Mat depth_colormap;
-      cv::applyColorMap(depth_normalized, depth_colormap, cv::COLORMAP_JET);
-
-      // Draw contours 
-      cv::Scalar color(255, 255, 255); // Green color for contours
-      cv::drawContours(depth_colormap, contours, -1, color, 2);
-      // Draw ROI
-      cv::rectangle(depth_colormap, roi_rect, cv::Scalar(255,255,255), 3, cv::LINE_8);
-
-      sensor_msgs::ImagePtr msg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", depth_colormap).toImageMsg();
-      object_detection_pub.publish(msg);
-
-      // Check if any contour is found
-      if (contours.size() > 0){
-         sb->changeThickness(-1);
-         sb->occupied = true;
-         ROS_INFO("OBJECT DETECTED");         
-      } else {
-         sb->occupied = false;
-         ROS_INFO("/ NO OBJECT /");
-      }
-   }
-}*/
 
 void StaticBorderManager::updateProjection()
 {
@@ -804,7 +685,6 @@ void StaticBorderManager::updateProjection()
          {
             // Update the projection with the border's border and mask
             p.img += sb->drawBorder().clone();
-            p.mask += sb->drawMask().clone();
             found = true;
             break;
          }
@@ -816,7 +696,6 @@ void StaticBorderManager::updateProjection()
          Projection p;
          p.zone = sb->getZone();
          p.img = sb->drawBorder().clone();
-         p.mask = sb->drawMask().clone();
          list_proj.push_back(p);
       }
    }

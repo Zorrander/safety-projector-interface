@@ -166,6 +166,9 @@ class StaticBorderManager
       tf2_ros::Buffer tfBuffer;
       tf2_ros::TransformListener* tfListener;
 
+      ros::ServiceClient client;
+      ros::ServiceClient client_3D_to_pixel;
+
       image_transport::Publisher object_detection_pub;
       tf2::Transform tf2_transform;
       cv::Rect roi_rect;

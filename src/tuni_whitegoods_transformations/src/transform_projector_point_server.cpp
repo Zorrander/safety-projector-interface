@@ -1,15 +1,17 @@
 #include <ros/ros.h>
+
 #include <opencv2/opencv.hpp>
+
 #include "tuni_whitegoods_msgs/TransformPixelToProjection.h"
 
 
 class TransformProjectorPointServer
 {
 public:
-    TransformProjectorPointServer(ros::NodeHandle& nh)
+    TransformProjectorPointServer(ros::NodeHandle* nh)
         : nh_(nh)
     {
-        projector_point_transform_service_ = nh_.advertiseService("transform_point_to_project", &TransformProjectorPointServer::transformProjectorPointCallback, this);
+        projector_point_transform_service_ = nh_->advertiseService("transform_point_to_project", &TransformProjectorPointServer::transformProjectorPointCallback, this);
         homography = cv::Mat(3, 3, CV_32FC1);
     }
 
@@ -29,7 +31,7 @@ private:
     }
 
 
-    ros::NodeHandle nh_;
+    ros::NodeHandle* nh_;
     ros::ServiceServer projector_point_transform_service_;
     cv::Mat homography;
 };
@@ -37,9 +39,9 @@ private:
 
 int main(int argc, char** argv)
 {
-    ros::init(argc, argv, "transform_camera_point_server");
+    ros::init(argc, argv, "transform_projector_server");
     ros::NodeHandle nh;
-    TransformProjectorPointServer server(nh);
+    TransformProjectorPointServer server(&nh);
 
     ros::spin();
 

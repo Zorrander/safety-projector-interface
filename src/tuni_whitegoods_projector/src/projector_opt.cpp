@@ -33,7 +33,6 @@ class Projector
   int id_device;
   image_transport::ImageTransport it_;
   image_transport::Publisher pub_proj_img;
-  cv::Mat cv_depth;
   ros::Subscriber depth_sub;
 
 public:
@@ -47,9 +46,9 @@ public:
     cout << "Shift value: " << shift << endl;
     cv::moveWindow(OPENCV_WINDOW,shift, 0);
     cv::setWindowProperty(OPENCV_WINDOW, cv::WND_PROP_FULLSCREEN, cv::WINDOW_FULLSCREEN);
-    cv_depth = cv::Mat(1024, 1024, CV_32FC1, cv::Scalar(std::numeric_limits<float>::min()));
+
     transform_sub = nh_.subscribe("/list_dp", 1, &Projector::transformProject,this);
-    depth_sub = nh_.subscribe("/depth/image_raw", 1, &Projector::depthImageCallback,this);
+
   }
 
   ~Projector()
@@ -57,10 +56,6 @@ public:
     cv::destroyWindow(OPENCV_WINDOW);
   }
 
-  void depthImageCallback(const sensor_msgs::ImageConstPtr& depth_msg){
-   cv_bridge::CvImagePtr cv_bridge_depth = cv_bridge::toCvCopy(depth_msg, sensor_msgs::image_encodings::TYPE_16UC1);
-   cv_depth = cv_bridge_depth->image;
-  } 
 
   void transformProject(const unity_msgs::ListDataProj::ConstPtr& msg)
   {
@@ -77,9 +72,9 @@ public:
         try
         {
           cv_ptr = cv_bridge::toCvCopy(msg->list_proj[i].img, sensor_msgs::image_encodings::BGR8);
-          cv::Mat hom = getMatrix(msg->list_proj[i].transform);
-          cv::warpPerspective(cv_ptr->image, img_transformed,hom, sum_img.size());
-          sum_img = sum_img.clone() + img_transformed.clone();    
+          //cv::Mat hom = getMatrix(msg->list_proj[i].transform);
+          //cv::warpPerspective(cv_ptr->image, img_transformed, hom, sum_img.size());
+          sum_img = sum_img.clone() + cv_ptr->image.clone();    
         }
         catch (cv_bridge::Exception& e)
         {

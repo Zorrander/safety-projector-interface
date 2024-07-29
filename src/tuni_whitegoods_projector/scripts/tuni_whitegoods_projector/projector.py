@@ -38,9 +38,7 @@ class Projector():
         self.name_folder = self.name_f.parent / "homography" 
         self.is_moving = rospy.get_param("is_moving")
         self.is_init = False
-        self.depthIm = None
-        self.rgb_img = None
-        self.depth2rgb = None
+
         self.table_space_transform = None
         self.UI_transform = None
         self.static_border = []
@@ -69,6 +67,7 @@ class Projector():
 
         self.object_detection_sub = rospy.Subscriber("odin/visualization/object_detection", Image, self.viz_callback);
         self.object_detection_pub = rospy.Publisher('odin/visualization/scene_detection', Image, queue_size=10)
+        self.test = rospy.Publisher('odin/visualization/test', Image, queue_size=10)
 
         self.dp_list_pub = rospy.Publisher("/list_dp", ListDataProj, queue_size=1)
 
@@ -90,12 +89,6 @@ class Projector():
     #check if aruco marker changed location
     def callback_aruco_change(self,msg):
         self.aruco_changed = msg.data
-
-    def img_cb_once(self, rgb_data, depth_data,depth2RGB_data,subscribers):
-        self.depthIm = CvBridge().imgmsg_to_cv2(depth2RGB_data, "passthrough")
-        self.rgb_img = CvBridge().imgmsg_to_cv2(rgb_data, "bgr8")
-        self.depth2rgb = CvBridge().imgmsg_to_cv2(depth2RGB_data, "passthrough")
-	#[sub.sub.unregister() for sub in subscribers]
 
     #get safety line if any
     def callback_safety_line(self,msg):
@@ -389,9 +382,10 @@ class Projector():
                     for i in self.static_border:
                         dp_safety = DataProj()
                         dp_safety.id = proj['id']
-                        dp_safety.transform = proj['hom_proj_static'].flatten()
+                        dp_safety.transform = proj['homDepthProj'].flatten()
                         #print(dp_safety.transform)
-                        dp_safety.img = self.bridge_interface.cv2_to_imgmsg(i.img, "bgr8")#self.sl_dm
+                        dp_safety.img = self.bridge_interface.cv2_to_imgmsg(i.img, "bgr8")
+                        self.test.publish(dp_safety.img)
                         dp_list.list_proj.append(dp_safety)
                 
             self.dp_list_pub.publish(dp_list)

@@ -1,0 +1,5 @@
+<launch> 
+   <node name="transform_camera_point_server" pkg="tuni_whitegoods_transformations" type="transform_camera_point_server" output="screen"/> 
+   <node name="transform_robot_server"        pkg="tuni_whitegoods_transformations" type="transform_robot_point_server" output="screen"/> 
+   <node name="transform_projector_server"    pkg="tuni_whitegoods_transformations" type="transform_projector_point_server" output="screen"/> 
+</launch> 

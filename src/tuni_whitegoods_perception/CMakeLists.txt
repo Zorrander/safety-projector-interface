@@ -23,6 +23,7 @@ find_package(catkin REQUIRED COMPONENTS
   tf2_msgs
   tf2_ros
   tf2_sensor_msgs
+  tuni_whitegoods_msgs
 )
 
 find_package(OpenCV 4 REQUIRED)
@@ -44,6 +45,7 @@ catkin_package(
                    tf2_msgs
                    tf2_ros
                    tf2_sensor_msgs
+                   tuni_whitegoods_msgs
     LIBRARIES depth_interface
   )
 
@@ -67,3 +69,13 @@ target_link_libraries(depth_interface_node
   ${OpenCV_LIBS} 
 )
 
+install(TARGETS depth_interface
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
+install(DIRECTORY include/${PROJECT_NAME}/
+    DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+    FILES_MATCHING PATTERN "*.h"
+)

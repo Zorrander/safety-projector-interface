@@ -37,13 +37,6 @@ def main():
     sub_unset_proj = rospy.Subscriber("/interfaceUI/openflow/unset_projection", Bool, proj.callback_unset)
     sub_instruction = rospy.Subscriber("/interfaceUI/openflow/set_instruction", Instructions, proj.callback_instruction)
 
-    rgb_sub = message_filters.Subscriber("/master/rgb/image_raw", Image)
-    depth_sub = message_filters.Subscriber("/master/depth/image_raw", Image)
-    depth2RGB_sub = message_filters.Subscriber("/master/depth_to_rgb/image_raw", Image)
-    im_subs = [rgb_sub, depth_sub, depth2RGB_sub]
-    ts = message_filters.ApproximateTimeSynchronizer([rgb_sub, depth_sub, depth2RGB_sub], 1, 2)
-    ts.registerCallback(proj.img_cb_once, im_subs)
-  
     proj.run()
 
 

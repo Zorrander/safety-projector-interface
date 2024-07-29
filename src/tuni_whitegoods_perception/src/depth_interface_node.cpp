@@ -6,13 +6,8 @@ int main(int argc, char **argv)
 {
   ros::init(argc, argv, "points_depthmap");
 
-  string d;
-  string drgb;
-
-  ros::param::get("topic_depth", d);
-  ros::param::get("topic_depth_to_rgb", drgb);
   ros::NodeHandle nh;
-  DepthInterface depthInterface(&nh, drgb, d);
+  DepthInterface depthInterface(&nh);
   ROS_INFO("Depth Interface running.");
   ros::spin();
 

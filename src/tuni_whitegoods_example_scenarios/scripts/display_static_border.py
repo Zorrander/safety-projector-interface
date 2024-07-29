@@ -56,11 +56,11 @@ def main():
     border_projection_goal.border.header.stamp = rospy.Time.now()
     p = Point32()
     p2 = Point32()
-    p.x = 0.5
+    p.x = 0.3
     p.y = -0.4
     p.z = 0.0
     border_projection_goal.border.polygon.points.append(p);
-    p2.x = 0.7
+    p2.x = 0.5
     p2.y = -0.6 
     p2.z = 0.0
     border_projection_goal.border.polygon.points.append(p2)
@@ -87,11 +87,11 @@ def main():
     border_projection_goal.border.header.stamp = rospy.Time.now()
     p = Point32()
     p2 = Point32()
-    p.x = 0.5
+    p.x = 0.3
     p.y = 0.0
     p.z = 0.0
     border_projection_goal.border.polygon.points.append(p);
-    p2.x = 0.7
+    p2.x = 0.5
     p2.y = -0.2
     p2.z = 0.0
     border_projection_goal.border.polygon.points.append(p2)

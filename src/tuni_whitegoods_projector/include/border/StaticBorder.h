@@ -2,7 +2,6 @@
 #define STATIC_BORDER_H
 
 #include <ros/ros.h>
-#include "border/Border.h"
 #include <std_msgs/Int64.h>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
@@ -23,6 +22,7 @@
 #include <integration/SafetyBorderViolation.h>
 #include <cmath>
 #include <string>
+#include <std_msgs/ColorRGBA.h>
 
 using namespace message_filters;
 using namespace std;
@@ -33,14 +33,13 @@ struct BorderStatus{
    int status;
 }  ;
 
-class StaticBorder : public Border
+class StaticBorder
 {
    public:
       StaticBorder(std::string r_id, std::string z, int pos_row, int pos_col, geometry_msgs::PolygonStamped bord, std::string b_topic, std_msgs::ColorRGBA b_color, bool filling, int thic, ros::Duration life, bool track);
-      StaticBorder(const StaticBorder &cpctr);
+
       float getBorderDiagonal();
-      geometry_msgs::PolygonStamped getBorderCameraSpace();
-      geometry_msgs::PolygonStamped getBorderRobotSpace();
+
       cv::Mat drawMask();
       std::string getZone() const; 
       std::string getId();
@@ -58,7 +57,6 @@ class StaticBorder : public Border
       bool occupied;
       void book();
       void release();
-      geometry_msgs::PolygonStamped border_camera_space;
       geometry_msgs::PolygonStamped border_robot_space;
       cv::Point top_left_cam_point;
       cv::Point bottom_right_cam_point;
@@ -70,6 +68,14 @@ class StaticBorder : public Border
       int position_row;
       int position_col;
 
+      std_msgs::ColorRGBA border_color;
+      bool is_filled;
+      int thickness;
+      ros::Duration lifetime;
+      bool track_violations;
+      std::string request_id;
+      std::string zone;
+      cv::Mat sf_line_colored;
 
 };
 #endif
