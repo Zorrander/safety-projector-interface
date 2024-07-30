@@ -73,8 +73,12 @@ public:
         {
           cv_ptr = cv_bridge::toCvCopy(msg->list_proj[i].img, sensor_msgs::image_encodings::BGR8);
           //cv::Mat hom = getMatrix(msg->list_proj[i].transform);
-          //cv::warpPerspective(cv_ptr->image, img_transformed, hom, sum_img.size());
-          sum_img = sum_img.clone() + cv_ptr->image.clone();    
+          cv::Matx33d hom = cv::Matx33d(-2.15507712e+00,  1.91967042e-01,  2.86695078e+03, 
+                                         5.92436261e-03, -2.16676604e+00,  1.75534894e+03, 
+                                         1.69314309e-05,  2.45548501e-04,  1.00000000e+00);
+
+          cv::warpPerspective(cv_ptr->image, img_transformed, hom, sum_img.size());
+          sum_img = sum_img.clone() + img_transformed.clone();    
         }
         catch (cv_bridge::Exception& e)
         {

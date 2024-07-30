@@ -47,7 +47,7 @@ class StaticBorder
       int getRow();
       bool getTracking();
       cv::Mat drawBorder();
-      geometry_msgs::Point getCenter();
+      cv::Point getCenter();
       void changeBorderColor(std_msgs::ColorRGBA& col);
       void changeThickness(int thic);
       std_msgs::ColorRGBA getColor();

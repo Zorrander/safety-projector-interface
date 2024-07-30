@@ -30,7 +30,6 @@ class Button():
             TEXT_SCALE, text_size, TEXT_THICKNESS = self.get_text_attributes()
             text_origin = (self._center[0] - text_size[0] // 2, self._center[1] + text_size[1] // 2)
             cv2.putText(img, self._text, text_origin, TEXT_FACE, TEXT_SCALE, self._text_color, TEXT_THICKNESS, cv2.LINE_AA)
-
         return img
     
     def get_text_attributes(self):

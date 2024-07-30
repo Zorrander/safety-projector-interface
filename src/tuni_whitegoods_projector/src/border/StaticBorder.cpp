@@ -42,10 +42,8 @@ StaticBorder::StaticBorder(std::string r_id, std::string z, int pos_row, int pos
 cv::Mat StaticBorder::drawBorder() 
 {
    sf_line_colored = cv::Mat::zeros(1080, 1920,CV_8UC3);
-
    ROS_INFO("Border x,y coordinates: (%i, %i), (%i, %i)", top_left_cam_point.x, top_left_cam_point.y, bottom_right_cam_point.x, bottom_right_cam_point.y);
    cv::rectangle(sf_line_colored, top_left_cam_point, bottom_right_cam_point, cv::Scalar(border_color.b*255, border_color.g*255, border_color.r*255), thickness,cv::LINE_8);
-
    return sf_line_colored;
 }
 
@@ -80,21 +78,16 @@ void StaticBorder::release()
 //get the diagonal of the border. Used for hand detection if a hand's location is less than diagonal*factor then it throws a violation
 float StaticBorder::getBorderDiagonal()
 {
-   float x_term;
-   float y_term;
-   x_term = static_cast<float>(bottom_right_cam_point.x - top_left_cam_point.x);
-   y_term = static_cast<float>(bottom_right_cam_point.y - top_left_cam_point.y);
-   float dist = sqrt(pow(x_term,2) + pow(y_term,2));
-
+   float dist = sqrt(pow((bottom_right_cam_point.x - top_left_cam_point.x),2) + pow((bottom_right_cam_point.y - top_left_cam_point.y),2));
    return dist;
 }
 
 //get the center of the border
-geometry_msgs::Point StaticBorder::getCenter()
+cv::Point StaticBorder::getCenter()
 {
-   geometry_msgs::Point p;
-   p.x = static_cast<double>((top_left_cam_point.x + bottom_right_cam_point.x)/2);
-   p.y = static_cast<int>((top_left_cam_point.y + bottom_right_cam_point.y)/2);
+   cv::Point p;
+   p.x = (top_left_cam_point.x + bottom_right_cam_point.x)/2;
+   p.y = (top_left_cam_point.y + bottom_right_cam_point.y)/2;
 
    return p;
 }

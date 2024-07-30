@@ -62,7 +62,7 @@ struct BorderContentStatus {
    int status;
    int col;
    int row;
-   geometry_msgs::Point center;
+   cv::Point center;
    float safety_distance;
    float side_distance;
 };

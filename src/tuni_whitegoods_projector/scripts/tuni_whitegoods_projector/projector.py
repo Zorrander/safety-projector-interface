@@ -28,6 +28,9 @@ from tuni_whitegoods_projector.button import Button
 from tuni_whitegoods_projector.instruction import Instruction
 from tuni_whitegoods_projector.ui import InterfaceUI
 
+from tuni_whitegoods_msgs.srv import TransformRobotCameraCoordinates
+from tuni_whitegoods_msgs.srv import Transform3DToPixel
+
 
 #class for visualizing with projector
 class Projector():
@@ -64,6 +67,9 @@ class Projector():
         self.s_marker = 0
         self.received = False
         self.aruco_changed = False
+
+        self.transform_world_coordinates = rospy.ServiceProxy('transform_world_coordinates_frame', TransformRobotCameraCoordinates)
+        self.project_3D_to_pixel = rospy.ServiceProxy('transform_3D_to_pixel', Transform3DToPixel)
 
         self.object_detection_sub = rospy.Subscriber("odin/visualization/object_detection", Image, self.viz_callback);
         self.object_detection_pub = rospy.Publisher('odin/visualization/scene_detection', Image, queue_size=10)
@@ -154,25 +160,20 @@ class Projector():
 
         try:
             # Perform the transformation
-            out_point_stamped = self.tfBuffer.transform(in_point_stamped, "rgb_camera_link")
+            cam_coordinates = self.transform_world_coordinates(in_point_stamped, "rgb_camera_link")
             rospy.loginfo("Got transform: translation (%.3f, %.3f, %.3f), rotation (%.2f, %.2f, %.2f, %.2f)",
-                          out_point_stamped.pose.position.x,
-                          out_point_stamped.pose.position.y,
-                          out_point_stamped.pose.position.z,
-                          out_point_stamped.pose.orientation.x,
-                          out_point_stamped.pose.orientation.y,
-                          out_point_stamped.pose.orientation.z,
-                          out_point_stamped.pose.orientation.w)
+                          cam_coordinates.out_point_stamped.pose.position.x,
+                          cam_coordinates.out_point_stamped.pose.position.y,
+                          cam_coordinates.out_point_stamped.pose.position.z,
+                          cam_coordinates.out_point_stamped.pose.orientation.x,
+                          cam_coordinates.out_point_stamped.pose.orientation.y,
+                          cam_coordinates.out_point_stamped.pose.orientation.z,
+                          cam_coordinates.out_point_stamped.pose.orientation.w)
 
             # Project to 2D image coordinates
-            focal_length_x = 607.4446411132812
-            focal_length_y = 607.5540771484375 
-            principal_point_x = 640.501220703125
-            principal_point_y = 362.7770080566406 
-            z_camera = 1.311792
-            
-            center_cam_point_x = int(focal_length_x * (out_point_stamped.pose.position.x / z_camera) + principal_point_x)
-            center_cam_point_y = int(focal_length_y * (out_point_stamped.pose.position.y / z_camera) + principal_point_y)
+            pixel_coordinates = self.project_3D_to_pixel(cam_coordinates.out_point_stamped.pose.position.x, cam_coordinates.out_point_stamped.pose.position.y, cam_coordinates.out_point_stamped.pose.position.z)
+            center_cam_point_x = pixel_coordinates.u
+            center_cam_point_y = pixel_coordinates.v
             cv2.circle(self.cv_image, (center_cam_point_x, center_cam_point_y), int(msg.radius), (255, 255, 255), 2)
             print("FINAL COORDINATE", center_cam_point_x, center_cam_point_y)
             
@@ -226,6 +227,7 @@ class Projector():
     def callback_unset(self,msg):
         if msg.data:
             self._list_interface = []
+            
     #get some instructions
     def callback_instruction(self,msg):
         print("got instruction")

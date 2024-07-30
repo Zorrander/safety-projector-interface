@@ -59,8 +59,8 @@ using namespace std;
           geometry_msgs::Point current_elem;
           current_elem.x = msg->pts[i].x;
           current_elem.y = msg->pts[i].y;
-
           list_points_hand.pts.push_back(current_elem);
+
           cv::circle(cv_viz_depth_hands, cv::Point(msg->pts[i].x, msg->pts[i].y), 10, cv::Scalar(255, 0, 0), 2);
           sensor_msgs::ImagePtr viz_msg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", cv_viz_depth_hands).toImageMsg();
           pub_full_scene.publish(viz_msg);

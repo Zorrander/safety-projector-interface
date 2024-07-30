@@ -99,9 +99,9 @@ void StaticBorderManager::depthImageCallback(const sensor_msgs::ImageConstPtr& d
       cv::findContours(mask, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
 
       // Draw contours 
-      cv::Scalar color(255, 255, 255); 
+      cv::Scalar color(255, 0, 255); 
       cv::drawContours(depth_colormap, contours, -1, color, 2);
-      
+      cv::circle(depth_colormap, cv::Point(sb->getCenter().x, sb->getCenter().y), 10, cv::Scalar(255, 0, 0), 2);
       // Draw ROI
       cv::rectangle(depth_colormap, roi_rect, cv::Scalar(255,255,255), 3, cv::LINE_8);
 
@@ -113,6 +113,7 @@ void StaticBorderManager::depthImageCallback(const sensor_msgs::ImageConstPtr& d
          sb->occupied = false;
       }
    }
+   publishBorder();
 
    sensor_msgs::ImagePtr msg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", depth_colormap).toImageMsg();
    object_detection_pub.publish(msg);
@@ -424,8 +425,7 @@ void StaticBorderManager::handTrackingCallback(const unity_msgs::poiPCLConstPtr&
    list_hand_violation.clear();
    std::string handType = msg->header.frame_id;
    for (auto& border : borders){
-      geometry_msgs::Point border_center = border->getCenter();
-      const cv::Point border_center(static_cast<int>(ros_border_center.x), static_cast<int>(ros_border_center.y));
+      const cv::Point border_center = border->getCenter();
       ROS_INFO("Border center x,y coordinates: (%i, %i)", border_center.x, border_center.y);
       for (const auto& hand_point : msg->pts)
       {
@@ -440,7 +440,7 @@ void StaticBorderManager::handTrackingCallback(const unity_msgs::poiPCLConstPtr&
             float distance = cv::norm(left_hand_position - border_center);
 
             ROS_INFO("distance: (%f) | prev distance (%f) | difference between the two = (%f) vs diagonal (%f)", distance, dist_buffers[0], dist_buffers[0]-distance, border->getBorderDiagonal());
-            if (distance < border->getBorderDiagonal())
+            if (distance < border->getBorderDiagonal()*0.75)
             {
                // Hand violation detected
                border_crossed = true;
@@ -459,7 +459,7 @@ void StaticBorderManager::handTrackingCallback(const unity_msgs::poiPCLConstPtr&
             float distance = cv::norm(right_hand_position - border_center);
 
             ROS_INFO("distance: (%f) | prev distance (%f) | difference between the two = (%f) vs diagonal (%f)", distance, dist_buffers[1], dist_buffers[1]-distance, border->getBorderDiagonal());
-            if (distance < border->getBorderDiagonal())
+            if (distance < border->getBorderDiagonal()*0.75)
             {
                // Hand violation detected
                border_crossed = true;
@@ -486,6 +486,8 @@ void StaticBorderManager::handTrackingCallback(const unity_msgs::poiPCLConstPtr&
       }
       
       if (border->right_hand_crossed || border->left_hand_crossed == true){
+        border->changeThickness(-1);
+        /*
          if (border->occupied){
             border->changeBorderColor(stat_operator);
          }
@@ -497,7 +499,7 @@ void StaticBorderManager::handTrackingCallback(const unity_msgs::poiPCLConstPtr&
             //pub_pose_violation.publish(pose_location);
          } else {
             border->changeThickness(2);
-         }   
+         } */  
       }
 
       else {

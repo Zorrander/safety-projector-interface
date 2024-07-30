@@ -25,6 +25,11 @@ if __name__ == "__main__":
 
 	for y in range(300,800,200):
 		for x in range(300,1500,225):
+			print(x, y)
+
+	"""		
+	for y in range(300,800,200):
+		for x in range(300,1500,225):
 			tag = np.zeros((size, size, 1), dtype="uint8")
 			cv2.aruco.generateImageMarker(aruco_dict, aruc_id, size, tag, 1)
 			testim[y:y+size, x:x+size] = tag
@@ -32,3 +37,4 @@ if __name__ == "__main__":
 
 	cv2.imshow("window", testim)
 	cv2.waitKey(0) 
+	"""
