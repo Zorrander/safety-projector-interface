@@ -26,24 +26,19 @@ static const std::string OPENCV_WINDOW = "Image window";
 class Projector
 {
   ros::NodeHandle nh_;
-  //image_transport::ImageTransport it_;
   cv_bridge::CvImagePtr cv_ptr;
   ros::Subscriber transform_sub;
   int shift;
   int id_device;
-  image_transport::ImageTransport it_;
-  image_transport::Publisher pub_proj_img;
   ros::Subscriber depth_sub;
 
 public:
-  Projector():
-  it_(nh_)
+  Projector()
   {
     //ros param to get id of device (videoprojector) and how much to shift the screen. Since there is one projector by computer, shere is no need for shift anymore for HRC.
     ros::param::get("shiftX", shift);
     ros::param::get("id", id_device);
     cv::namedWindow(OPENCV_WINDOW,cv::WINDOW_NORMAL);
-    cout << "Shift value: " << shift << endl;
     cv::moveWindow(OPENCV_WINDOW,shift, 0);
     cv::setWindowProperty(OPENCV_WINDOW, cv::WND_PROP_FULLSCREEN, cv::WINDOW_FULLSCREEN);
 
@@ -72,7 +67,7 @@ public:
         try
         {
           cv_ptr = cv_bridge::toCvCopy(msg->list_proj[i].img, sensor_msgs::image_encodings::BGR8);
-          //cv::Mat hom = getMatrix(msg->list_proj[i].transform);
+
           cv::Matx33d hom = cv::Matx33d(-2.15507712e+00,  1.91967042e-01,  2.86695078e+03, 
                                          5.92436261e-03, -2.16676604e+00,  1.75534894e+03, 
                                          1.69314309e-05,  2.45548501e-04,  1.00000000e+00);
@@ -99,23 +94,6 @@ public:
     
   }
 
-  cv::Mat getMatrix(const std::vector<double> mat)
-  {
-    double transform[3][3];
-    cv::Mat cv_transform = cv::Mat(3,3,CV_32FC1);
-    int k = 0;
-    for(int i = 0; i < 3; i++)
-    {
-      for(int j = 0; j < 3; j++)
-      {
-        transform[i][j] = mat[k];
-        cv_transform.at<float>(i,j) = mat[k];
-        k++;
-      }
-    }
-    
-    return cv_transform;
-  }
 };
 
 int main(int argc, char** argv)

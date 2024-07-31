@@ -68,6 +68,45 @@ tfListener(new tf2_ros::TransformListener(tfBuffer))  // Initialize tfListener w
         }
         ros::Duration(1.0).sleep(); // Wait a bit before checking again
    }
+
+
+   geometry_msgs::Point tableTopLeftCornerPt;
+   tableTopLeftCornerPt.x = 1.0487210514766203; 
+   tableTopLeftCornerPt.y = 0.4651205344735724;
+
+   geometry_msgs::Point tableTopRightCornerPt;
+   tableTopRightCornerPt.x = 0.9794720649924923; 
+   tableTopRightCornerPt.y = -0.7313395459246643;
+
+   geometry_msgs::Point tableBottomRightCornerPt;
+   tableBottomRightCornerPt.x = 0.12127247533236307; 
+   tableBottomRightCornerPt.y = -0.6793050608740877;
+
+   geometry_msgs::Point tableBottomLeftCornerPt;
+   tableBottomLeftCornerPt.x = 0.1905214618164912; 
+   tableBottomLeftCornerPt.y = 0.5171550195241489;
+
+   // Create Rviz marker 
+   visualization_msgs::Marker marker;
+   marker.header.frame_id = "base";
+   marker.header.stamp = ros::Time::now();
+   marker.id = 150;
+   marker.type = visualization_msgs::Marker::LINE_STRIP;
+   marker.action = visualization_msgs::Marker::ADD;
+   marker.scale.x = 0.01;  // Line width
+   marker.color.r = 1.0;
+   marker.color.g = 1.0;
+   marker.color.b = 1.0;
+   marker.color.a = 1.0;
+
+   marker.points.push_back(tableTopLeftCornerPt);
+   marker.points.push_back(tableTopRightCornerPt);
+   marker.points.push_back(tableBottomRightCornerPt);
+   marker.points.push_back(tableBottomLeftCornerPt);
+   marker.points.push_back(tableTopLeftCornerPt);
+
+   vis_pub.publish( marker );
+
    ros::Duration(5.0).sleep(); 
    ROS_INFO("StaticBorderManager running");
 }
@@ -158,7 +197,7 @@ void StaticBorderManager::addBorder(std::shared_ptr<StaticBorder> sb) {
    visualization_msgs::Marker marker;
    marker.header.frame_id = "base";
    marker.header.stamp = ros::Time::now();
-   marker.id = borders.size()+10;;
+   marker.id = borders.size()+10;
    marker.type = visualization_msgs::Marker::LINE_STRIP;
    marker.action = visualization_msgs::Marker::ADD;
    marker.scale.x = 0.01;  // Line width
