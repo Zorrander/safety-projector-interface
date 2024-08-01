@@ -168,7 +168,8 @@ class StaticBorderManager
 
       ros::ServiceClient client;
       ros::ServiceClient client_3D_to_pixel;
-
+      ros::ServiceClient client_pixel_to_3D;
+      ros::ServiceClient client_reverse_projector_point;
       image_transport::Publisher object_detection_pub;
       tf2::Transform tf2_transform;
       cv::Rect roi_rect;

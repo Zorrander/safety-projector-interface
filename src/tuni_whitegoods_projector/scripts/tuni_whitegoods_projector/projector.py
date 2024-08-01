@@ -30,12 +30,24 @@ from tuni_whitegoods_projector.ui import InterfaceUI
 
 from tuni_whitegoods_msgs.srv import TransformRobotCameraCoordinates
 from tuni_whitegoods_msgs.srv import Transform3DToPixel
+from tuni_whitegoods_msgs.msg import DynamicArea
 
+
+class DynamicZone():
+    def __init__(self):
+        print("Creating dynamic zone")
+
+    def set_area(self, tl, tr, br, bl):
+        self.tl = tl
+        self.tr = tr 
+        self.br = br 
+        self.bl = bl
 
 #class for visualizing with projector
 class Projector():
     def __init__(self):
         self.is_moving = rospy.get_param("is_moving")
+        self.moving_table = DynamicZone()
 
         self.static_border = []
         self._list_interface = [] #InterfaceUI(0,"main","main interface",buttons=None)
@@ -49,6 +61,8 @@ class Projector():
         self.object_detection_sub = rospy.Subscriber("odin/visualization/object_detection", Image, self.viz_callback);
         self.object_detection_pub = rospy.Publisher('odin/visualization/scene_detection', Image, queue_size=10)
         self.test = rospy.Publisher('odin/visualization/test', Image, queue_size=10)
+
+        self.zone_sub = rospy.Subscriber("/odin/projector_interface/moving_table", DynamicArea, self.moving_table_callback)
 
         self.dp_list_pub = rospy.Publisher("/list_dp", ListDataProj, queue_size=1)
 
@@ -67,7 +81,6 @@ class Projector():
             tmp.zone = i.zone
             self.static_border.append(tmp)
         self.received = True
-        print("received static border to display !")
         #cv2.imshow("interface", self.static_border[0].img)
         #cv2.waitKey(1)
 
@@ -77,7 +90,23 @@ class Projector():
         if not self.cv_image.flags['WRITEABLE']:
             self.cv_image = np.copy(self.cv_image)
 
+    def moving_table_callback(self, msg):
+        self.moving_table.set_area(msg.top_left, msg.top_right, msg.bottom_right, msg.bottom_left)
+
     def callback_button(self, msg):
+        print("msg.zone ")
+        print(msg.zone)
+        if not msg.zone:
+            self.process_button(msg.center.position.x, msg.center.position.y, msg)
+        elif msg.zone == "moving_table":
+            world_center_x = (self.moving_table.tl[0] + self.moving_table.bl[0])* msg.center.position.x
+            world_center_y = (self.moving_table.tl[1] + self.moving_table.tr[1])* msg.center.position.y
+            self.process_button(world_center_x, world_center_y, msg)
+        self.object_detection_pub.publish(self.bridge_interface.cv2_to_imgmsg(self.cv_image, "bgr8"))
+
+
+    def process_button(self, center_x, center_y, msg):
+        print("process_button ", center_x, center_y)
         # Create Rviz marker 
         marker = Marker()
         marker.header.frame_id = "base"
@@ -85,8 +114,8 @@ class Projector():
         marker.id = int(msg.id)
         marker.type = Marker.CYLINDER
         marker.action = Marker.ADD
-        marker.pose.position.x = msg.center.position.x
-        marker.pose.position.y = msg.center.position.y
+        marker.pose.position.x = center_x
+        marker.pose.position.y = center_y
         # Set the dimensions of the cylinder
         marker.scale.x = msg.radius / 500 
         marker.scale.y = msg.radius / 500
@@ -102,8 +131,8 @@ class Projector():
         in_point_stamped = PoseStamped()
         in_point_stamped.header.frame_id = "base"
         in_point_stamped.header.stamp = rospy.Time(0)
-        in_point_stamped.pose.position.x = msg.center.position.x
-        in_point_stamped.pose.position.y = msg.center.position.y
+        in_point_stamped.pose.position.x = center_x
+        in_point_stamped.pose.position.y = center_y
 
         # Perform the transformation
         cam_coordinates = self.transform_world_coordinates(in_point_stamped, "rgb_camera_link")
@@ -113,39 +142,30 @@ class Projector():
         center_cam_point_x = pixel_coordinates.u
         center_cam_point_y = pixel_coordinates.v
         cv2.circle(self.cv_image, (center_cam_point_x, center_cam_point_y), int(msg.radius), (255, 255, 255), 2)
-        print("FINAL COORDINATE", center_cam_point_x, center_cam_point_y)
-            
 
         b = Button(msg.id,msg.zone,msg.name,msg.description,msg.text,msg.button_color,msg.text_color, (center_cam_point_x, center_cam_point_y),msg.radius,msg.hidden)
         add_success = False
         if len(self._list_interface) == 0:
             tmp = []
             tmp.append(b)
-            print("create default interface")
             ui = InterfaceUI("default",msg.zone,"default_interface","interface by default",tmp)
             self._list_interface.append(ui)
             add_success = True
         else:
             for i in self._list_interface:
+                print(i.get_zone())
+                print(b.get_zone())
                 if i.get_zone() == b.get_zone():
                     i.add_button(b)
                     add_success = True
         if not add_success:
             tmp = []
             tmp.append(b)
-            print("create new hidden interface")
             ui = InterfaceUI(str(uuid.uuid4()),msg.zone,"default_interface","interface by default",True,tmp)
             self._list_interface.append(ui)
             add_success = True
 
-        self.object_detection_pub.publish(self.bridge_interface.cv2_to_imgmsg(self.cv_image, "bgr8"))
-
     def callback_button_color(self, msg):
-        print("CHANGING COLOR")
-        print("""
-
-
-            """)
         for i in self._list_interface:
             if not i.get_hidden():
                 i.modify_button_color(msg)
@@ -166,10 +186,8 @@ class Projector():
             
     #get some instructions
     def callback_instruction(self,msg):
-        print("got instruction")
         for i in self._list_interface:
             if not i.get_hidden() and msg.zone == i.get_zone():
-                print("add instruction")
                 inst = Instruction(msg.request_id,msg.zone,msg.target_location,msg.title,msg.title_color,msg.description,msg.description_color,msg.lifetime)
                 i.add_instruction(inst)
 

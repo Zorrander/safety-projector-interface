@@ -8,6 +8,7 @@ For a system with only one camera and projector, it only need to run once.
 #include <ros/ros.h>
 #include <iostream>
 #include <opencv2/opencv.hpp>
+
 #include <image_transport/image_transport.h>
 #include <cv_bridge/cv_bridge.h>
 #include <sensor_msgs/image_encodings.h>
@@ -29,20 +30,22 @@ class Projector
   cv_bridge::CvImagePtr cv_ptr;
   ros::Subscriber transform_sub;
   int shift;
-  int id_device;
-  ros::Subscriber depth_sub;
+  cv::Matx33d hom;
 
 public:
   Projector()
   {
     //ros param to get id of device (videoprojector) and how much to shift the screen. Since there is one projector by computer, shere is no need for shift anymore for HRC.
     ros::param::get("shiftX", shift);
-    ros::param::get("id", id_device);
     cv::namedWindow(OPENCV_WINDOW,cv::WINDOW_NORMAL);
     cv::moveWindow(OPENCV_WINDOW,shift, 0);
     cv::setWindowProperty(OPENCV_WINDOW, cv::WND_PROP_FULLSCREEN, cv::WINDOW_FULLSCREEN);
 
     transform_sub = nh_.subscribe("/list_dp", 1, &Projector::transformProject,this);
+
+    hom = cv::Matx33d(-2.15507712e+00,  1.91967042e-01,  2.86695078e+03, 
+                      5.92436261e-03, -2.16676604e+00,  1.75534894e+03, 
+                      1.69314309e-05,  2.45548501e-04,  1.00000000e+00);
 
   }
 
@@ -61,17 +64,10 @@ public:
     bool suc = false;
     for(int i = 0; i < msg->list_proj.size(); i++)
     {
-      if(msg->list_proj[i].id == id_device)
-      {
         suc = true;
         try
         {
           cv_ptr = cv_bridge::toCvCopy(msg->list_proj[i].img, sensor_msgs::image_encodings::BGR8);
-
-          cv::Matx33d hom = cv::Matx33d(-2.15507712e+00,  1.91967042e-01,  2.86695078e+03, 
-                                         5.92436261e-03, -2.16676604e+00,  1.75534894e+03, 
-                                         1.69314309e-05,  2.45548501e-04,  1.00000000e+00);
-
           cv::warpPerspective(cv_ptr->image, img_transformed, hom, sum_img.size());
           sum_img = sum_img.clone() + img_transformed.clone();    
         }
@@ -80,7 +76,6 @@ public:
           ROS_ERROR("cv_bridge exception: %s", e.what());
           return;
         }
-      }
     }
     
     // Update GUI Window

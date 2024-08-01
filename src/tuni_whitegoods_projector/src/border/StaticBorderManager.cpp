@@ -5,6 +5,9 @@ Class that manage static borders. It display and monitors them.
 
 #include "tuni_whitegoods_msgs/TransformRobotCameraCoordinates.h"
 #include "tuni_whitegoods_msgs/Transform3DToPixel.h"
+#include "tuni_whitegoods_msgs/TransformPixelTo3D.h"
+#include "tuni_whitegoods_msgs/TransformPixelToProjection.h"
+
 // Params are almost the same as in StaticBorder
 //adjacent : if true then adjacent borders must be booked too
 //sf_factor : safety_factor for the hand detection.
@@ -25,6 +28,8 @@ tfListener(new tf2_ros::TransformListener(tfBuffer))  // Initialize tfListener w
 {
    client = nh_->serviceClient<tuni_whitegoods_msgs::TransformRobotCameraCoordinates>("transform_world_coordinates_frame");
    client_3D_to_pixel = nh_->serviceClient<tuni_whitegoods_msgs::Transform3DToPixel>("transform_3D_to_pixel");
+   client_pixel_to_3D = nh_->serviceClient<tuni_whitegoods_msgs::TransformPixelTo3D>("transform_pixel_to_3D");
+   client_reverse_projector_point = nh_->serviceClient<tuni_whitegoods_msgs::TransformPixelToProjection>("reverse_transform_point_to_project");
 
    service_borders = nh.advertiseService("/execution/projector_interface/integration/services/list_static_border_status", &StaticBorderManager::getBordersService, this); 
    sub_hand_detection = nh.subscribe("/hand_tracking/dm/coordinates", 1,&StaticBorderManager::handTrackingCallback, this);
@@ -106,6 +111,127 @@ tfListener(new tf2_ros::TransformListener(tfBuffer))  // Initialize tfListener w
    marker.points.push_back(tableTopLeftCornerPt);
 
    vis_pub.publish( marker );
+
+   visualization_msgs::Marker marker2;
+   marker2.header.frame_id = "base";
+   marker2.header.stamp = ros::Time::now();
+   marker2.id = 77;
+   marker2.type = visualization_msgs::Marker::LINE_STRIP;
+   marker2.action = visualization_msgs::Marker::ADD;
+   marker2.scale.x = 0.01;  // Line width
+   marker2.color.r = 0.0;
+   marker2.color.g = 1.0;
+   marker2.color.b = 0.0;
+   marker2.color.a = 1.0;
+
+   cv::Matx33d hom = cv::Matx33d(-2.15507712e+00,  1.91967042e-01,  2.86695078e+03, 
+                      5.92436261e-03, -2.16676604e+00,  1.75534894e+03, 
+                      1.69314309e-05,  2.45548501e-04,  1.00000000e+00);
+
+   std::vector<cv::Point2f> cameraPoint, projectorPoint;
+   cv::Point2f input_point1(0, 0);
+   cv::Point2f input_point2(1920, 0);
+   cv::Point2f input_point3(1920, 1080);
+   cv::Point2f input_point4(0, 1080);
+   projectorPoint.push_back(input_point1);
+   projectorPoint.push_back(input_point2);
+   projectorPoint.push_back(input_point3);
+   projectorPoint.push_back(input_point4);
+   cv::perspectiveTransform(projectorPoint, cameraPoint, hom.inv());
+
+   tuni_whitegoods_msgs::TransformRobotCameraCoordinates srv;
+   tuni_whitegoods_msgs::TransformPixelTo3D srv_pixel_to_3D;
+  
+   
+    ROS_INFO("2D Point in RGB camera coordinate system: U = %.3f, V = %.3f", cameraPoint[0].x , cameraPoint[0].y );
+    ROS_INFO("2D Point in RGB camera coordinate system: U = %.3f, V = %.3f", cameraPoint[1].x , cameraPoint[1].y );
+    ROS_INFO("2D Point in RGB camera coordinate system: U = %.3f, V = %.3f", cameraPoint[2].x , cameraPoint[2].y );
+    ROS_INFO("2D Point in RGB camera coordinate system: U = %.3f, V = %.3f", cameraPoint[3].x , cameraPoint[3].y );
+
+    srv_pixel_to_3D.request.u = cameraPoint[0].x;
+    srv_pixel_to_3D.request.v = cameraPoint[0].y;
+    client_pixel_to_3D.call(srv_pixel_to_3D);
+    
+    ROS_INFO("3D Point in RGB camera coordinate system: X = %.3f, Y = %.3f, Z = %.3f", srv_pixel_to_3D.response.x , srv_pixel_to_3D.response.y , srv_pixel_to_3D.response.z);
+
+
+    geometry_msgs::PoseStamped in_point_stamped;
+    in_point_stamped.header.frame_id = "rgb_camera_link";
+    in_point_stamped.header.stamp = ros::Time(0);
+    in_point_stamped.pose.position.x = srv_pixel_to_3D.response.x;
+    in_point_stamped.pose.position.y = srv_pixel_to_3D.response.y;
+    in_point_stamped.pose.position.z = srv_pixel_to_3D.response.z; 
+
+    srv.request.in_point_stamped = in_point_stamped;
+    srv.request.target_frame = "base";
+    client.call(srv);
+
+    ROS_INFO("3D Point in robot coordinate system: X = %.3f, Y = %.3f, Z = %.3f", srv.response.out_point_stamped.pose.position.x , srv.response.out_point_stamped.pose.position.y , srv.response.out_point_stamped.pose.position.z);
+
+
+    marker2.points.push_back(srv.response.out_point_stamped.pose.position);
+    geometry_msgs::Point buffer = srv.response.out_point_stamped.pose.position;
+
+    srv_pixel_to_3D.request.u = cameraPoint[1].x;
+    srv_pixel_to_3D.request.v = cameraPoint[1].y;
+    client_pixel_to_3D.call(srv_pixel_to_3D);
+  
+    ROS_INFO("3D Point in RGB camera coordinate system: X = %.3f, Y = %.3f, Z = %.3f", srv_pixel_to_3D.response.x , srv_pixel_to_3D.response.y , srv_pixel_to_3D.response.z);
+
+    in_point_stamped.header.stamp = ros::Time(0);
+    in_point_stamped.pose.position.x = srv_pixel_to_3D.response.x;
+    in_point_stamped.pose.position.y = srv_pixel_to_3D.response.y;
+    in_point_stamped.pose.position.z = srv_pixel_to_3D.response.z; 
+
+    srv.request.in_point_stamped = in_point_stamped;
+    srv.request.target_frame = "base";
+    client.call(srv);
+
+    ROS_INFO("3D Point in robot coordinate system: X = %.3f, Y = %.3f, Z = %.3f", srv.response.out_point_stamped.pose.position.x , srv.response.out_point_stamped.pose.position.y , srv.response.out_point_stamped.pose.position.z);
+
+    marker2.points.push_back(srv.response.out_point_stamped.pose.position);
+
+    srv_pixel_to_3D.request.u = cameraPoint[2].x;
+    srv_pixel_to_3D.request.v = cameraPoint[2].y;
+    client_pixel_to_3D.call(srv_pixel_to_3D);
+
+    ROS_INFO("3D Point in RGB camera coordinate system: X = %.3f, Y = %.3f, Z = %.3f", srv_pixel_to_3D.response.x , srv_pixel_to_3D.response.y , srv_pixel_to_3D.response.z);
+ 
+    in_point_stamped.header.stamp = ros::Time(0);
+    in_point_stamped.pose.position.x = srv_pixel_to_3D.response.x;
+    in_point_stamped.pose.position.y = srv_pixel_to_3D.response.y;
+    in_point_stamped.pose.position.z = srv_pixel_to_3D.response.z; 
+
+    srv.request.in_point_stamped = in_point_stamped;
+    srv.request.target_frame = "base";
+    client.call(srv);
+
+    ROS_INFO("3D Point in robot coordinate system: X = %.3f, Y = %.3f, Z = %.3f", srv.response.out_point_stamped.pose.position.x , srv.response.out_point_stamped.pose.position.y , srv.response.out_point_stamped.pose.position.z);
+
+    marker2.points.push_back(srv.response.out_point_stamped.pose.position);
+
+    srv_pixel_to_3D.request.u = cameraPoint[3].x;
+    srv_pixel_to_3D.request.v = cameraPoint[3].y;
+    client_pixel_to_3D.call(srv_pixel_to_3D);
+
+    ROS_INFO("3D Point in RGB camera coordinate system: X = %.3f, Y = %.3f, Z = %.3f", srv_pixel_to_3D.response.x , srv_pixel_to_3D.response.y , srv_pixel_to_3D.response.z);
+ 
+    in_point_stamped.header.stamp = ros::Time(0);
+    in_point_stamped.pose.position.x = srv_pixel_to_3D.response.x;
+    in_point_stamped.pose.position.y = srv_pixel_to_3D.response.y;
+    in_point_stamped.pose.position.z = srv_pixel_to_3D.response.z; 
+
+    srv.request.in_point_stamped = in_point_stamped;
+    srv.request.target_frame = "base";
+    client.call(srv);
+
+    ROS_INFO("3D Point in robot coordinate system: X = %.3f, Y = %.3f, Z = %.3f", srv.response.out_point_stamped.pose.position.x , srv.response.out_point_stamped.pose.position.y , srv.response.out_point_stamped.pose.position.z);
+
+    marker2.points.push_back(srv.response.out_point_stamped.pose.position);
+
+    marker2.points.push_back(buffer);
+
+   vis_pub.publish( marker2 );
 
    ros::Duration(5.0).sleep(); 
    ROS_INFO("StaticBorderManager running");
@@ -465,7 +591,7 @@ void StaticBorderManager::handTrackingCallback(const unity_msgs::poiPCLConstPtr&
    std::string handType = msg->header.frame_id;
    for (auto& border : borders){
       const cv::Point border_center = border->getCenter();
-      ROS_INFO("Border center x,y coordinates: (%i, %i)", border_center.x, border_center.y);
+
       for (const auto& hand_point : msg->pts)
       {
           geometry_msgs::PoseStamped hand_pose;
@@ -474,11 +600,9 @@ void StaticBorderManager::handTrackingCallback(const unity_msgs::poiPCLConstPtr&
 
          if (handType == "Left") {
             cv::Point left_hand_position(static_cast<int>(hand_point.x), static_cast<int>(hand_point.y));
-            ROS_INFO("hand_position x,y coordinates: (%i, %i)", left_hand_position.x, left_hand_position.y);
 
             float distance = cv::norm(left_hand_position - border_center);
 
-            ROS_INFO("distance: (%f) | prev distance (%f) | difference between the two = (%f) vs diagonal (%f)", distance, dist_buffers[0], dist_buffers[0]-distance, border->getBorderDiagonal());
             if (distance < border->getBorderDiagonal()*0.75)
             {
                // Hand violation detected
@@ -493,11 +617,9 @@ void StaticBorderManager::handTrackingCallback(const unity_msgs::poiPCLConstPtr&
 
          else if (handType == "Right") {
             cv::Point right_hand_position(static_cast<int>(hand_point.x), static_cast<int>(hand_point.y));
-            ROS_INFO("hand_position x,y coordinates: (%i, %i)", right_hand_position.x, right_hand_position.y);
 
             float distance = cv::norm(right_hand_position - border_center);
 
-            ROS_INFO("distance: (%f) | prev distance (%f) | difference between the two = (%f) vs diagonal (%f)", distance, dist_buffers[1], dist_buffers[1]-distance, border->getBorderDiagonal());
             if (distance < border->getBorderDiagonal()*0.75)
             {
                // Hand violation detected
@@ -563,7 +685,6 @@ void StaticBorderManager::handTrackingCallback(const unity_msgs::poiPCLConstPtr&
       {
          if (handType == "Left") {
             cv::Point left_hand_position(static_cast<int>(hand_point.x), static_cast<int>(hand_point.y));
-            ROS_INFO("hand_position x,y coordinates: (%i, %i)", left_hand_position.x, left_hand_position.y);
 
             float distance = cv::norm(left_hand_position - btn_center);
             if (distance < 10)
@@ -580,7 +701,6 @@ void StaticBorderManager::handTrackingCallback(const unity_msgs::poiPCLConstPtr&
 
          else if (handType == "Right") {
             cv::Point right_hand_position(static_cast<int>(hand_point.x), static_cast<int>(hand_point.y));
-            ROS_INFO("hand_position x,y coordinates: (%i, %i)", right_hand_position.x, right_hand_position.y);
 
             float distance = cv::norm(right_hand_position - btn_center);
             if (distance < 10)
@@ -613,7 +733,6 @@ void StaticBorderManager::handTrackingCallback(const unity_msgs::poiPCLConstPtr&
       }
       
       if (btn.right_hand_hover || btn.left_hand_hover == true){
-         ROS_INFO("BUTTON PRESSED");
 
          integration::SetVirtualButtonChangeColorGoal color_goal;
          color_goal.request_id = "go_button_color";
@@ -637,7 +756,7 @@ void StaticBorderManager::handTrackingCallback(const unity_msgs::poiPCLConstPtr&
       }
 
       else {
-            ROS_INFO("BUTTON NOT PRESSED");
+
             integration::SetVirtualButtonChangeColorGoal color_goal;
             color_goal.request_id = "go_button_color";
             color_goal.resource_id = "40";

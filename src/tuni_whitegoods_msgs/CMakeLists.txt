@@ -7,6 +7,11 @@ find_package(catkin REQUIRED
     geometry_msgs
 )
 
+add_message_files(
+  FILES
+  DynamicArea.msg
+)
+
 
 add_service_files(
   FILES

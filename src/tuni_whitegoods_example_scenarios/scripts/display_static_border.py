@@ -48,7 +48,7 @@ def main():
     border_projection_goal = SetSafetyBorderProjectionGoal()
 
     border_projection_goal.request_id = "2"
-    border_projection_goal.zone = "table"
+    border_projection_goal.zone = ""
     border_projection_goal.position_row = 0
     border_projection_goal.position_col = 1
     border_projection_goal.border.polygon.points = []
@@ -79,7 +79,7 @@ def main():
     border_client.wait_for_result()
 
     border_projection_goal.request_id = "1"
-    border_projection_goal.zone = "table"
+    border_projection_goal.zone = ""
     border_projection_goal.position_row = 0
     border_projection_goal.position_col = 2
     border_projection_goal.border.polygon.points = []

@@ -1,16 +1,4 @@
-robot_base: base
-depth_camera: rgb_camera_link
+camera_resolution: [1920, 1080]
 
-sub_points: /voxel_grid_master/output
-topic_pcl_master: /kinect_master/cloud_robot_frame
-topic_pcl_sub: /kinect_sub/cloud_robot_frame 
-
-topic_depth: /depth/image_raw
-topic_depth_to_rgb: /depth_to_rgb/image_raw
-
-number_cam: 1
-
-hand_tracking_rgb_coordinates: /hand_tracking/rgb/coordinates
-hand_tracking_dm_coordinates: /hand_tracking/dm/coordinates
-
-master_to_base: [0.501192, -0.271756, 1.311792, -0.685276, 0.727083, -0.014888, 0.039050]
+robot_frame: base
+camera_frame: rgb_camera_link
