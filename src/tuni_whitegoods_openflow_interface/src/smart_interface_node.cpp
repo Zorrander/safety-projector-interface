@@ -3,50 +3,60 @@
 #include "projector_interface/instruction_projection_server.h"
 #include "projector_interface/user_interface_server.h"
 #include "projector_interface/unset_projection_server.h"
+#include "projector_interface/static_border_server.h"
+
+#include "tuni_whitegoods_controller/projector_interface_controller.h"
 
 #include <ros/ros.h>
-#include <ros/spinner.h>
-#include <ros/callback_queue.h>
-
 
 
 int main(int argc, char** argv)
 {
    ros::init(argc, argv, "smart_interface_node");
-   boost::shared_ptr<ros::AsyncSpinner> g_spinner;
-   ros::CallbackQueue queue;
+
    ros::NodeHandle nh;
-   //ros::NodeHandle nh_border;
-   nh.setCallbackQueue(&queue);
-   g_spinner.reset(new ros::AsyncSpinner(0, &queue));
    
    std::string button_projection_server_name,
                button_color_server_name,
                user_interface_server_name,
                unset_projection_server_name,
-               instruction_projection_server_name;
+               instruction_projection_server_name,
+               static_border_server_name;
 
    ros::param::get("button_projection_server_name", button_projection_server_name);
    ros::param::get("button_color_server_name", button_color_server_name);
    ros::param::get("user_interface_server_name", user_interface_server_name);
    ros::param::get("unset_projection_server_name", unset_projection_server_name);
    ros::param::get("instruction_projection_server_name", instruction_projection_server_name);
+   static_border_server_name = "execution/projector_interface/integration/actions/set_layout_static_borders";
+
+   ros::param::get("book_robot_static_border_server", book_robot_static_border_server_name);
+   ros::param::get("release_robot_static_border_server", release_robot_static_border_server_name);
+   ros::param::get("book_operator_static_border_server", book_operator_static_border_server_name);
+   ros::param::get("release_operator_static_border_server", release_operator_static_border_server_name);
+   ros::param::get("safety_border_server", safety_border_server_name);
+
+   // Instantiate th core of the software
+   std::shared_ptr<ProjectorInterfaceController> controller = std::make_shared<ProjectorInterfaceController>(); 
 
    // Create an action server object and spin ROS
-   ButtonProjectionServer srv2(&nh, button_projection_server_name);
-   ButtonColorServer srv3(&nh, button_color_server_name);
-   UserInterfaceServer srv4(&nh, user_interface_server_name);
-   UnsetProjectionServer srv5(&nh, unset_projection_server_name);
-   InstructionProjectionServer srv6(&nh, instruction_projection_server_name);
-   
-   g_spinner->start();
+   UserInterfaceServer srv4(&nh, user_interface_server_name, controller);
 
-   while (ros::ok()) {
-      queue.callAvailable();
-   }
+   ButtonProjectionServer srv2(&nh, button_projection_server_name, controller);
+   ButtonColorServer srv3(&nh, button_color_server_name, controller);
+
+   UnsetProjectionServer srv5(&nh, unset_projection_server_name, controller);
+   InstructionProjectionServer srv6(&nh, instruction_projection_server_name, controller);
    
+   BookRobotStaticBorderServer book_robot_static_border_server(nh_, book_robot_static_border_server_name, controller);
+   ReleaseRobotStaticBorderServer release_robot_static_border_server(nh_, release_robot_static_border_server_name, controller);
+   BookOperatorStaticBorderServer book_operator_static_border_server(nh_, book_operator_static_border_server_name, controller);
+   ReleaseOperatorStaticBorderServer release_operator_static_border_server(nh_, release_operator_static_border_server_name, controller);
+
+   StaticBorderServer static_border_server(&nh, static_border_server_name, controller);
+   SafetyBorderServer safety_border_server(nh_, safety_border_server_name, controller);
+
    ros::waitForShutdown();
    
-
    return 0;
 }

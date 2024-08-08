@@ -1,13 +1,14 @@
 #include "projector_interface/unset_projection_server.h"
-
+#include "projector_interface_controller.h"
 #include <ros/ros.h>
 #include <actionlib/server/simple_action_server.h>
 #include <integration/UnsetProjectionAction.h>
 
 
-      UnsetProjectionServer::UnsetProjectionServer(ros::NodeHandle *nh_, std::string name_un) :
+      UnsetProjectionServer::UnsetProjectionServer(ros::NodeHandle *nh_, std::string name_un, std::shared_ptr<ProjectorInterfaceController> projector_interface_controller) :
       as_unset(*nh_, name_un, boost::bind(&UnsetProjectionServer::executeUnsetUI, this, _1), false),
-      action_name_unset(name_un)
+      action_name_unset(name_un),
+      controller(projector_interface_controller)
       {
          //Start prerequisites
          displayed_request_ids.clear();
@@ -19,16 +20,7 @@
       //unset the smart interface
       void UnsetProjectionServer::executeUnsetUI(const UnsetProjectionGoalConstPtr &goal)
       {
-         ros::Rate r(1);
          bool success = true;
-         displayed_request_ids.push_back(goal->request_id);
-         //unset border
-         activate_dynamic_border = false;
-         activate_static_border_manager = false;
-         //unset projection
-         std_msgs::Bool msg;
-         msg.data = true;
-         pub_unset.publish(msg);
          sendFeedBackUnset();
          if (as_unset.isPreemptRequested() || !ros::ok())
          {

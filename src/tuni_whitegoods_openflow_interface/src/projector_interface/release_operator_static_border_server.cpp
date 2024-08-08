@@ -1,20 +1,19 @@
 #include "projector_interface/release_operator_static_border_server.h"
-#include "border/StaticBorderManager.h"
 
+#include "projector_interface_controller.h"
 #include <ros/ros.h>
 #include <actionlib/server/simple_action_server.h>
 #include <integration/ReleaseOperatorStaticBorderAction.h>
 
 
-      ReleaseOperatorStaticBorderServer::ReleaseOperatorStaticBorderServer(ros::NodeHandle *nh_, std::string name_release_operator, std::shared_ptr<StaticBorderManager> sbm) :
+      ReleaseOperatorStaticBorderServer::ReleaseOperatorStaticBorderServer(ros::NodeHandle *nh_, std::string name_release_operator, std::shared_ptr<ProjectorInterfaceController> projector_interface_controller) :
       // Bind the callback to the action server. False is for thread spinning
       as_release_operator(*nh_, name_release_operator, boost::bind(&ReleaseOperatorStaticBorderServer::executeReleaseOperator, this, _1), false),
       action_name_release_operator(name_release_operator),
-      sbm(sbm)
+      controller(projector_interface_controller)
       {
          //Start prerequisites
          displayed_request_ids.clear();
-         release_border_operator.clear();
          as_release_operator.start();
          std::cout<<"ReleaseOperatorStaticBorderServer running\n";
       }
@@ -23,14 +22,7 @@
       //release operator border
       void ReleaseOperatorStaticBorderServer::executeReleaseOperator(const ReleaseOperatorStaticBorderGoalConstPtr &goal)
       {
-         BorderStatus bs = {
-            goal->id,
-            goal->status
-         };
-         release_border_operator.push_back(bs);
-         sbm->releaseOperatorBorder(goal->id, goal->status);
-         sbm->publishBorder();
-         release_operator_border = true;
+
          bool success = true;
          sendFeedbackReleaseOperator(goal->request_id);
          if (as_release_operator.isPreemptRequested() || !ros::ok())

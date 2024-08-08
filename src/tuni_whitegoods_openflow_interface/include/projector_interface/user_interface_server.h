@@ -10,7 +10,7 @@
 
 #include <integration/VirtualButtonReference.h>
 #include <integration/ProjectorUI.h>
-#include <unity_msgs/Instructions.h>
+
 
 #include <std_msgs/Bool.h>
 #include <std_msgs/String.h>
@@ -33,10 +33,11 @@ class UserInterfaceServer
       std::vector<std::string> displayed_request_ids;
       ros::Publisher pub_preset_ui;
 
+      std::shared_ptr<ProjectorInterfaceController> controller ;
 
 
    public:
-      UserInterfaceServer(ros::NodeHandle *nh_, std::string name_pre);
+      UserInterfaceServer(ros::NodeHandle *nh_, std::string name_pre, std::shared_ptr<ProjectorInterfaceController> projector_interface_controller);
       //create a smart interface
       void executePresetUI(const SetPresetUIProjectionGoalConstPtr &goal);
       // create the smart interface by sending the infos to the projector python code through ROS publisher

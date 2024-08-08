@@ -6,10 +6,6 @@
 #include <actionlib/server/simple_action_server.h>
 #include <integration/SetVirtualButtonsProjectionAction.h>
 
-#include <sensor_msgs/JointState.h>
-#include <control_msgs/FollowJointTrajectoryAction.h>
-#include <integration/VirtualButtonReference.h>
-
 #include <string>
 
 using namespace integration;
@@ -27,10 +23,11 @@ protected:
     SetVirtualButtonsProjectionActionFeedback feedback_button_;
     SetVirtualButtonsProjectionActionResult result_;
 
-    ros::Publisher pub_button;
+    std::shared_ptr<ProjectorInterfaceController> controller ;
+
 
 public:
-    ButtonProjectionServer(ros::NodeHandle* nh_, std::string name_vb);
+    ButtonProjectionServer(ros::NodeHandle* nh_, std::string name_vb, std::shared_ptr<ProjectorInterfaceController> projector_interface_controller);
     // create a virtual button
     void executeVirtualButtonsGoal(const SetVirtualButtonsProjectionGoalConstPtr& goal);
     //send feedback
@@ -38,8 +35,6 @@ public:
     //send result
     void sendResultButton(std::string id_goal);
 
-    //fill ros msg to send button
-    VirtualButtonReference fillMsg(const SetVirtualButtonsProjectionGoalConstPtr& goal);
 };
 #endif
 

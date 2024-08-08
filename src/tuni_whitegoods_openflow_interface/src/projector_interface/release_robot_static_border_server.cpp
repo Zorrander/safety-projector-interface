@@ -1,18 +1,16 @@
 #include "projector_interface/release_robot_static_border_server.h"
-
-#include "border/StaticBorderManager.h"
-
+#include "projector_interface_controller.h"
 #include <ros/ros.h>
 #include <actionlib/server/simple_action_server.h>
 #include <integration/ReleaseRobotStaticBorderAction.h>
 
 
 
-      ReleaseRobotStaticBorderServer::ReleaseRobotStaticBorderServer(ros::NodeHandle *nh_, std::string name_release_robot, std::shared_ptr<StaticBorderManager> sbm) :
+      ReleaseRobotStaticBorderServer::ReleaseRobotStaticBorderServer(ros::NodeHandle *nh_, std::string name_release_robot, std::shared_ptr<ProjectorInterfaceController> projector_interface_controller) :
       // Bind the callback to the action server. False is for thread spinning
       as_release_robot(*nh_, name_release_robot, boost::bind(&ReleaseRobotStaticBorderServer::executeReleaseRobot, this, _1), false),
       action_name_release_robot(name_release_robot),
-      sbm(sbm)
+      controller(projector_interface_controller)
       {
          release_border_robot.clear();
          as_release_robot.start();
@@ -22,14 +20,6 @@
       //release robot border
       void ReleaseRobotStaticBorderServer::executeReleaseRobot(const ReleaseRobotStaticBorderGoalConstPtr &goal)
       {
-         BorderStatus bs = {
-            goal->id,
-            goal->status
-         };
-         release_border_robot.push_back(bs);
-         sbm->releaseRobotBorder(goal->id, goal->status);
-         sbm->publishBorder();
-         release_robot_border = true;
          bool success = true;
          sendFeedbackReleaseRobot(goal->request_id);
          if (as_release_robot.isPreemptRequested() || !ros::ok())

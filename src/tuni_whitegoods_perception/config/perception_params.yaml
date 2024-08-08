@@ -1,4 +1,0 @@
-camera_resolution: [1920, 1080]
-
-robot_frame: base
-camera_frame: rgb_camera_link

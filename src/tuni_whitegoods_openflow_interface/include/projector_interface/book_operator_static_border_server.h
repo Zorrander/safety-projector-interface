@@ -2,8 +2,6 @@
 #define BookOperatorStaticBorderServer_H
 
 
-#include "border/StaticBorder.h"
-
 #include <ros/ros.h>
 #include <actionlib/server/simple_action_server.h>
 
@@ -16,8 +14,6 @@
 using namespace integration;
 
 
-class StaticBorderManager;
-
 class BookOperatorStaticBorderServer
 {
 protected:
@@ -28,7 +24,8 @@ protected:
     std::string action_name_book_operator;
     bool book_operator_border;
 
-    std::shared_ptr<StaticBorderManager> sbm;
+    std::shared_ptr<ProjectorInterfaceController> controller ;
+
 
     // create messages that are used to published feedback/result
     BookOperatorStaticBorderActionFeedback feedback_book_operator_;
@@ -39,11 +36,11 @@ protected:
     std::vector<std::string> displayed_request_ids;
     std::vector<std::string> border_operator_booked;
     std::vector<std::string> release_border_operator;
-    std::vector<StaticBorder> l_borders;
+
 
 
 public:
-    BookOperatorStaticBorderServer(ros::NodeHandle* nh_, std::string name_book_operator, std::shared_ptr<StaticBorderManager> sbm);
+    BookOperatorStaticBorderServer(ros::NodeHandle* nh_, std::string name_book_operator, std::shared_ptr<ProjectorInterfaceController> projector_interface_controller);
 
     void executeBookOperator(const BookOperatorStaticBorderGoalConstPtr& goal);
 

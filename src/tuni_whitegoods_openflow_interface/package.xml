@@ -56,7 +56,7 @@
   <build_depend>actionlib</build_depend>
   <build_depend>actionlib_msgs</build_depend>
   <build_depend>integration</build_depend>
-  <build_depend>tuni_whitegoods_projector</build_depend>
+  <build_depend>tuni_whitegoods_controller</build_depend>
 
   <build_export_depend>roscpp</build_export_depend>
   <build_export_depend>sensor_msgs</build_export_depend>
@@ -64,8 +64,9 @@
   <build_export_depend>actionlib</build_export_depend>
   <build_export_depend>actionlib_msgs</build_export_depend>
   <build_export_depend>integration</build_export_depend>
-
-  <exec_depend>tuni_whitegoods_projector</exec_depend>
+  <build_export_depend>tuni_whitegoods_controller</build_export_depend>
+  
+  <exec_depend>tuni_whitegoods_controller</exec_depend>
   <exec_depend>actionlib</exec_depend>
   <exec_depend>actionlib_msgs</exec_depend>
   <exec_depend>integration</exec_depend>

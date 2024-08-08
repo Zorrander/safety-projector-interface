@@ -1,0 +1,3 @@
+<launch>
+    <node name="moving_table_tracker" pkg="tuni_whitegoods_perception" type="moving_table_tracker.py" output="screen"/>
+</launch>

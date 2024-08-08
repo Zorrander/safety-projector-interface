@@ -1,15 +1,15 @@
 #include "projector_interface/instruction_projection_server.h"
-
+#include "projector_interface_controller.h"
 #include <ros/ros.h>
 #include <actionlib/server/simple_action_server.h>
 #include <integration/SetInstructionsProjectionAction.h>
 
 
 
-      InstructionProjectionServer::InstructionProjectionServer(ros::NodeHandle *nh_, std::string name_in) :
+      InstructionProjectionServer::InstructionProjectionServer(ros::NodeHandle *nh_, std::string name_in, std::shared_ptr<ProjectorInterfaceController> projector_interface_controller) :
       // Bind the callback to the action server. False is for thread spinning
       as_instruct(*nh_, name_in, boost::bind(&InstructionProjectionServer::executeInstruction, this, _1), false),
-
+      controller(projector_interface_controller),
       action_name_instruct(name_in)
       {
 
@@ -21,20 +21,7 @@
       //send instruction to be written on the interface
       void InstructionProjectionServer::executeInstruction(const SetInstructionsProjectionGoalConstPtr &goal)
       {
-         std::cout<<"got instruction !\n";
-         ros::Rate r(1);
          bool success = true;
-         unity_msgs::Instructions msg;
-         displayed_request_ids.push_back(goal->request_id);
-         msg.request_id = goal->request_id;
-         msg.zone = goal->zone;
-         msg.target_location = goal->target_location;
-         msg.title = goal->title;
-         msg.title_color = goal->title_color;
-         msg.description = goal->description;
-         msg.description_color = goal->description_color;
-         msg.lifetime = goal->lifetime;
-         pub_instruction.publish(msg);
          sendFeedBackInstruction();
          if (as_instruct.isPreemptRequested() || !ros::ok())
          {

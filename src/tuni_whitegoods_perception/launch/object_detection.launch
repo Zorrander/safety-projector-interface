@@ -1,0 +1,5 @@
+<launch>
+
+    <node pkg="tuni_whitegoods_perception" name="object_detection_node" type="object_detection_node" output="screen"/>
+
+</launch>

@@ -1,8 +1,0 @@
-<launch> 
-    <param name="~robot_base" value="base" />
-    <param name="~topic_pcl_master" value="/kinect_master/cloud_robot_frame" />
-    <param name="~sub_points" value="/voxel_grid_master/output" />
-    <param name="~number_cam" value="1" />
-    <param name="~name_transform_robot_space" value="master_to_base" />
-    <node name="kinect_transformed_master" pkg="transform_pcl" type="transform_pcl_node" output="screen"/> 
-</launch>

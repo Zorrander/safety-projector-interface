@@ -1,5 +1,5 @@
 #include "projector_interface/button_color_server.h"
-
+#include "projector_interface_controller.h"
 #include <ros/ros.h>
 #include <actionlib/server/simple_action_server.h>
 #include <integration/SetVirtualButtonChangeColorAction.h>
@@ -7,12 +7,12 @@
 
 
 
-    ButtonColorServer::ButtonColorServer(ros::NodeHandle* nh_, std::string name_cc) :
+    ButtonColorServer::ButtonColorServer(ros::NodeHandle* nh_, std::string name_cc, std::shared_ptr<ProjectorInterfaceController> projector_interface_controller) :
         as_change(*nh_, name_cc, boost::bind(&ButtonColorServer::executeChangeButtonColor, this, _1), false),
-        action_name_color_(name_cc)
+        action_name_color_(name_cc),
+        controller(projector_interface_controller)
 
     {
-        pub_button_color = nh_->advertise<VirtualButtonReference>("/interfaceUI/openflow/change_button_color", 1);
         as_change.start();
         std::cout<<"ButtonColorServer running \n";
     }
@@ -20,14 +20,6 @@
     //change button color
     void ButtonColorServer::executeChangeButtonColor(const SetVirtualButtonChangeColorGoalConstPtr& goal)
     {
-        ROS_INFO("Received color change request");
-        ros::Rate r(1);
-        bool success = true;
-        //send button to inteface
-        VirtualButtonReference msg;
-        msg.id = goal->resource_id;
-        msg.button_color = goal->button_color;
-        pub_button_color.publish(msg);
         sendFeedBackChangeButton(goal->request_id);
         if (as_change.isPreemptRequested() || !ros::ok())
         {

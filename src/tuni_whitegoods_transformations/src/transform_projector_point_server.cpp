@@ -58,7 +58,7 @@ int main(int argc, char** argv)
     ros::NodeHandle nh;
     TransformProjectorPointServer server(&nh);
 
-    ros::spin();
+    ros::waitForShutdown();
 
     return 0;
 }

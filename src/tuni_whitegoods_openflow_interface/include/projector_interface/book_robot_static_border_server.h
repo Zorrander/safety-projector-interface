@@ -2,9 +2,6 @@
 #define BookRobotStaticBorderServer_H
 
 
-#include "border/StaticBorder.h"
-
-
 #include <ros/ros.h>
 
 #include <actionlib/server/simple_action_server.h>
@@ -17,7 +14,6 @@
 using namespace integration;
 
 
-class StaticBorderManager;
 
 class BookRobotStaticBorderServer
 {
@@ -30,13 +26,14 @@ protected:
     BookRobotStaticBorderActionFeedback feedback_book_robot_;
     BookRobotStaticBorderResult result_book_robot_;
 
-    std::shared_ptr<StaticBorderManager> sbm;
+    std::shared_ptr<ProjectorInterfaceController> controller ;
+
     
     std::vector<std::string> border_robot_booked;
     std::vector<std::string> displayed_request_ids;
 
 public:
-    BookRobotStaticBorderServer(ros::NodeHandle* nh_, std::string name_book_robot,std::shared_ptr<StaticBorderManager> sbm);
+    BookRobotStaticBorderServer(ros::NodeHandle* nh_, std::string name_book_robot, std::shared_ptr<ProjectorInterfaceController> projector_interface_controller);
     //book robot border
     void executeBookRobot(const BookRobotStaticBorderGoalConstPtr& goal);
     //send feedback

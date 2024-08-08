@@ -13,7 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
   actionlib
   actionlib_msgs
   integration
-  tuni_whitegoods_projector
+  tuni_whitegoods_controller
 )
 
 catkin_package(
@@ -23,7 +23,7 @@ catkin_package(
                  actionlib 
                  actionlib_msgs
                  integration
-                 tuni_whitegoods_projector
+                 tuni_whitegoods_controller
 )
 ###########
 ## Build ##
@@ -43,13 +43,6 @@ file(GLOB ROBOT_INTERFACE_SOURCES "src/robot_interface/*.cpp")
 
 add_library(projector_interface ${PROJECTOR_INTERFACE_SOURCES})
 add_library(robot_interface ${ROBOT_INTERFACE_SOURCES})
-
-add_executable(static_border_booking_node src/static_border_booking_node.cpp)
-target_link_libraries(static_border_booking_node 
-                        projector_interface
-                        ${catkin_LIBRARIES}
-                      )
-add_dependencies(static_border_booking_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 
 add_executable(smart_interface_node src/smart_interface_node.cpp)

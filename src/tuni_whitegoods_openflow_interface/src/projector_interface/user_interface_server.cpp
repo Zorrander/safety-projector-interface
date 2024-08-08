@@ -1,14 +1,14 @@
-#include "projector_interface/user_interface_server.h"
-
 #include <ros/ros.h>
 #include <actionlib/server/simple_action_server.h>
 #include <integration/SetPresetUIProjectionAction.h>
 
+#include "projector_interface/user_interface_server.h"
+#include "projector_interface_controller.h"
 
-
-      UserInterfaceServer::UserInterfaceServer(ros::NodeHandle *nh_, std::string name_pre) :
+      UserInterfaceServer::UserInterfaceServer(ros::NodeHandle *nh_, std::string name_pre, std::shared_ptr<ProjectorInterfaceController> projector_interface_controller) :
       as_preset_ui(*nh_, name_pre, boost::bind(&UserInterfaceServer::executePresetUI, this, _1), false),
-      action_name_preset_ui(name_pre)
+      action_name_preset_ui(name_pre),
+      controller(projector_interface_controller)
       {
          //Start prerequisites
          displayed_request_ids.clear();
@@ -21,11 +21,9 @@
       //create a smart interface
       void UserInterfaceServer::executePresetUI(const SetPresetUIProjectionGoalConstPtr &goal)
       {
-         ros::Rate r(1);
+
          bool success = true;
-         displayed_request_ids.push_back(goal->request_id);
-         //send preset_ui
-         createPresetUIMsg(goal);
+
          sendFeedBackPresetUI();
          if (as_preset_ui.isPreemptRequested() || !ros::ok())
          {
@@ -42,22 +40,7 @@
             sendResultPresetUI();
          }
       }
-      // create the smart interface by sending the infos to the projector python code through ROS publisher
-      void UserInterfaceServer::createPresetUIMsg(const SetPresetUIProjectionGoalConstPtr &goal)
-      {
-         ProjectorUI msg;
-         msg.resource_id = goal->resource_id;
-         msg.zone = goal->zone;
-         msg.name = goal->name;
-         msg.description = goal->description;
-         //msg.hidden = goal->hidden;
-         msg.virtual_button_references.clear();
-         for(VirtualButtonReference i : goal->virtual_button_references)
-         {
-            msg.virtual_button_references.push_back(i);
-         }
-         pub_preset_ui.publish(msg);
-      }
+
       //send feedback
       void UserInterfaceServer::sendFeedBackPresetUI()
       {

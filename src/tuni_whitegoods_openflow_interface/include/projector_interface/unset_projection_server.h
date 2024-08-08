@@ -34,10 +34,11 @@ class UnsetProjectionServer
       //monitor active buttons and publish them
       std::vector<std::string> displayed_request_ids;
       ros::Publisher pub_unset;
+      std::shared_ptr<ProjectorInterfaceController> controller ;
 
 
    public:
-      UnsetProjectionServer(ros::NodeHandle *nh_, std::string name_un);
+      UnsetProjectionServer(ros::NodeHandle *nh_, std::string name_un, std::shared_ptr<ProjectorInterfaceController> projector_interface_controller);
       //unset the smart interface
       void executeUnsetUI(const UnsetProjectionGoalConstPtr &goal);
       //send feedback

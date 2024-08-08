@@ -7,10 +7,6 @@
 
 #include <integration/SetVirtualButtonChangeColorAction.h>
 
-#include <sensor_msgs/JointState.h>
-#include <control_msgs/FollowJointTrajectoryAction.h>
-#include <integration/VirtualButtonReference.h>
-
 #include <std_msgs/Bool.h>
 #include <std_msgs/String.h>
 #include <string>
@@ -28,10 +24,11 @@ protected:
     SetVirtualButtonChangeColorActionFeedback feedback_color_;
     SetVirtualButtonChangeColorResult result_color_;
 
-    ros::Publisher pub_button_color;
+    std::shared_ptr<ProjectorInterfaceController> controller ;
+
 
 public:
-    ButtonColorServer(ros::NodeHandle* nh_, std::string name_cc);
+    ButtonColorServer(ros::NodeHandle* nh_, std::string name_cc, std::shared_ptr<ProjectorInterfaceController> projector_interface_controller);
 
     //change button color
     void executeChangeButtonColor(const SetVirtualButtonChangeColorGoalConstPtr& goal);

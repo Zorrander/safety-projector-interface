@@ -1,13 +1,10 @@
 <launch>
-	<include file="$(find tuni_whitegoods_perception)/launch/params.launch" />
+	<rosparam file="$(find tuni_whitegoods_perception)/config/perception_params.yaml" /> 
 
 	<include file="$(find tuni_whitegoods_perception)/launch/kinect_simple.launch" />
 
-    <include file="$(find tuni_whitegoods_perception)/launch/depth_interface.launch"  />
-    
+    <include file="$(find tuni_whitegoods_perception)/launch/object_detection.launch"  />
     <include file="$(find tuni_whitegoods_perception)/launch/hand_tracking.launch" />
-
-    <include file="$(find tuni_whitegoods_transformations)/launch/transformation_servers.launch" />
-
+    <include file="$(find tuni_whitegoods_perception)/launch/moving_table_tracking.launch" />
 
 </launch>

@@ -1,8 +1,6 @@
 #ifndef ReleaseRobotStaticBorderServer_H
 #define ReleaseRobotStaticBorderServer_H
 
-#include "border/StaticBorder.h"
-
 #include <ros/ros.h>
 #include <ros/spinner.h>
 #include <ros/callback_queue.h>
@@ -16,7 +14,7 @@
 
 using namespace integration;
 
-class StaticBorderManager;
+
 
 class ReleaseRobotStaticBorderServer
 {
@@ -28,12 +26,12 @@ class ReleaseRobotStaticBorderServer
 
       bool release_robot_border;
 
-      std::vector<StaticBorder> l_borders;
       // create messages that are used to published feedback/result
       ReleaseRobotStaticBorderActionFeedback feedback_release_robot_;
       ReleaseRobotStaticBorderResult result_release_robot_;
 
-      std::shared_ptr<StaticBorderManager> sbm;
+      std::shared_ptr<ProjectorInterfaceController> controller ;
+
 
       //attributes to monitor situation
       //monitor active buttons and publish them
@@ -42,7 +40,7 @@ class ReleaseRobotStaticBorderServer
 
 
    public:
-      ReleaseRobotStaticBorderServer(ros::NodeHandle *nh_, std::string name_release_robot, std::shared_ptr<StaticBorderManager> sbm);
+      ReleaseRobotStaticBorderServer(ros::NodeHandle *nh_, std::string name_release_robot, std::shared_ptr<ProjectorInterfaceController> projector_interface_controller);
       //release robot border
       void executeReleaseRobot(const ReleaseRobotStaticBorderGoalConstPtr &goal);
       //send feedback

@@ -1,13 +1,14 @@
 #include "projector_interface/button_projection_server.h"
-
+#include "projector_interface_controller.h"
 #include <ros/ros.h>
 #include <actionlib/server/simple_action_server.h>
 #include <integration/SetVirtualButtonsProjectionAction.h>
 
 
-    ButtonProjectionServer::ButtonProjectionServer(ros::NodeHandle* nh_, std::string name_vb) :
+    ButtonProjectionServer::ButtonProjectionServer(ros::NodeHandle* nh_, std::string name_vb, std::shared_ptr<ProjectorInterfaceController> projector_interface_controller) :
         as_(*nh_, name_vb, boost::bind(&ButtonProjectionServer::executeVirtualButtonsGoal, this, _1), false),
-        action_name_button_(name_vb)
+        action_name_button_(name_vb),
+        controller(projector_interface_controller)
     {
         pub_button = nh_->advertise<VirtualButtonReference>("/interfaceUI/openflow/new_button", 1);
         as_.start();
@@ -17,14 +18,6 @@
     // create a virtual button
     void ButtonProjectionServer::executeVirtualButtonsGoal(const SetVirtualButtonsProjectionGoalConstPtr& goal)
     {
-        // monitor time
-        std::cout<<"receivedexecuteVirtualButtonsGoal \n";
-        ros::Rate r(1);
-        bool success = true;
-        //send button to inteface
-        displayed_request_ids.push_back(goal->request_id);
-        VirtualButtonReference msg = fillMsg(goal);
-        pub_button.publish(msg);
         sendFeedBackButton(goal->request_id);
         if (as_.isPreemptRequested() || !ros::ok())
         {

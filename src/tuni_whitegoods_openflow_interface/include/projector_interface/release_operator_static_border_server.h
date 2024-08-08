@@ -2,8 +2,6 @@
 #define ReleaseOperatorStaticBorderServer_H
 
 
-#include "border/StaticBorder.h"
-
 #include <ros/ros.h>
 #include <ros/spinner.h>
 #include <ros/callback_queue.h>
@@ -17,7 +15,7 @@
 
 using namespace integration;
 
-class StaticBorderManager;
+
 
 class ReleaseOperatorStaticBorderServer
 {
@@ -27,12 +25,12 @@ class ReleaseOperatorStaticBorderServer
       std::string action_name_release_operator;
       bool release_operator_border;
       //std::vector<> vec_borders;
-      std::vector<StaticBorder> l_borders;
       // create messages that are used to published feedback/result
       ReleaseOperatorStaticBorderActionFeedback feedback_release_operator_;
       ReleaseOperatorStaticBorderResult result_release_operator;
 
-      std::shared_ptr<StaticBorderManager> sbm;
+      std::shared_ptr<ProjectorInterfaceController> controller ;
+
       //attributes to monitor situation
       //monitor active buttons and publish them
       std::vector<std::string> displayed_request_ids;
@@ -40,7 +38,7 @@ class ReleaseOperatorStaticBorderServer
 
 
    public:
-      ReleaseOperatorStaticBorderServer(ros::NodeHandle *nh_, std::string name_release_operator, std::shared_ptr<StaticBorderManager> sbm);
+      ReleaseOperatorStaticBorderServer(ros::NodeHandle *nh_, std::string name_release_operator, std::shared_ptr<ProjectorInterfaceController> projector_interface_controller);
       //release operator border
       void executeReleaseOperator(const ReleaseOperatorStaticBorderGoalConstPtr &goal);
       //send feedback

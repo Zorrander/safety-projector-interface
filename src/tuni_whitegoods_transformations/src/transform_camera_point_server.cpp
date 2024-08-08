@@ -49,7 +49,7 @@ int main(int argc, char** argv)
     ros::NodeHandle nh;
     TransformCameraPointServer server(&nh);
 
-    ros::spin();
+    ros::waitForShutdown();
 
     return 0;
 }

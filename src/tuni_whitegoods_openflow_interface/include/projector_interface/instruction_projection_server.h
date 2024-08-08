@@ -7,12 +7,6 @@
 
 #include <integration/SetInstructionsProjectionAction.h>
 
-#include <sensor_msgs/JointState.h>
-#include <control_msgs/FollowJointTrajectoryAction.h>
-#include <integration/VirtualButtonReference.h>
-#include <integration/ProjectorUI.h>
-#include <unity_msgs/Instructions.h>
-
 #include <std_msgs/Bool.h>
 #include <std_msgs/String.h>
 #include <string>
@@ -33,6 +27,7 @@ class InstructionProjectionServer
       SetInstructionsProjectionActionFeedback feedback_instruct_;
       SetInstructionsProjectionResult result_instruct_;
       
+      std::shared_ptr<ProjectorInterfaceController> controller ;
 
       //attributes to monitor situation
       //monitor active buttons and publish them
@@ -42,7 +37,7 @@ class InstructionProjectionServer
 
 
    public:
-      InstructionProjectionServer(ros::NodeHandle *nh_, std::string name_in);
+      InstructionProjectionServer(ros::NodeHandle *nh_, std::string name_in, std::shared_ptr<ProjectorInterfaceController> projector_interface_controller);
       //send instruction to be written on the interface
       void executeInstruction(const SetInstructionsProjectionGoalConstPtr &goal);
       //send feedback

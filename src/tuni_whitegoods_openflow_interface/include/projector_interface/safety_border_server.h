@@ -10,8 +10,6 @@
 
 #include <integration/SetSafetyBorderProjectionAction.h>
 
-#include "border/StaticBorder.h"
-
 #include <std_msgs/Bool.h>
 #include <std_msgs/String.h>
 #include <string>
@@ -19,12 +17,11 @@
 
 using namespace integration;
 
-class StaticBorderManager;
 
 class SafetyBorderServer
 {
    public:
-      SafetyBorderServer(ros::NodeHandle *nh_, std::string name_border, std::shared_ptr<StaticBorderManager> sbm);
+      SafetyBorderServer(ros::NodeHandle *nh_, std::string name_border, std::shared_ptr<ProjectorInterfaceController> projector_interface_controller);
 
       //create a static or dynamic border. For a static border, it just pass the information to the already running thread.
       // For the dynamic border, it starts a dynamic border thread.
@@ -47,11 +44,8 @@ class SafetyBorderServer
       // create messages that are used to published feedback/result
       SetSafetyBorderProjectionActionFeedback feedback_border_;
       SetSafetyBorderProjectionResult result_border_;
-      std::vector<StaticBorder> l_borders;
-      //attributes to monitor situation
-      //monitor active buttons and publish them
-      std::vector<std::string> displayed_request_ids;
-      std::vector<std::string> displayed_ids_borders;
+      
+      std::shared_ptr<ProjectorInterfaceController> controller ;
 
 };
 #endif

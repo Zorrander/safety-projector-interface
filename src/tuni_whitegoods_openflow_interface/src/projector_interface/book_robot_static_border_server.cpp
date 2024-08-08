@@ -1,20 +1,17 @@
 #include "projector_interface/book_robot_static_border_server.h"
-
-#include "border/StaticBorderManager.h"
+#include "projector_interface_controller.h"
 
 #include <ros/ros.h>
 #include <actionlib/server/simple_action_server.h>
 #include <integration/BookRobotStaticBorderAction.h>
 
 
-    BookRobotStaticBorderServer::BookRobotStaticBorderServer(ros::NodeHandle* nh_, std::string name_book_robot, std::shared_ptr<StaticBorderManager> sbm) :
+    BookRobotStaticBorderServer::BookRobotStaticBorderServer(ros::NodeHandle* nh_, std::string name_book_robot, std::shared_ptr<ProjectorInterfaceController> projector_interface_controller) :
         as_book_robot(*nh_, name_book_robot, boost::bind(&BookRobotStaticBorderServer::executeBookRobot, this, _1), false),
         action_name_book_robot(name_book_robot),
-        sbm(sbm)
+        controller(projector_interface_controller)
     {
-        displayed_request_ids.clear();
-        border_robot_booked.clear();
-      
+        displayed_request_ids.clear();      
         as_book_robot.start();
         std::cout<<"BookRobotStaticBorderServer running\n";
     }
@@ -23,11 +20,6 @@
     //book robot border
     void BookRobotStaticBorderServer::executeBookRobot(const BookRobotStaticBorderGoalConstPtr& goal)
     {
-        ROS_INFO("MoveRobotServer::executeBookRobot");
-        border_robot_booked.push_back(goal->id);
-        sbm->bookBorderRobot(goal->id);
-        sbm->publishBorder();
-        book_robot_border = true;
         bool success = true;
         sendFeedbackBookRobot(goal->request_id);
         if (as_book_robot.isPreemptRequested() || !ros::ok())

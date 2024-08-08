@@ -1,4 +1,0 @@
-<launch>
-   <!--<param name="calibration_homography" value="/odin/src/whitegoods/calibration/homography/" />-->
-   <include file="$(find calibration)/launch/calibration.launch" />
-</launch>
