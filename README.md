@@ -182,7 +182,9 @@ Documentation on how to launch the nodes inside the package whitegoods
 | display dynamic border                            | 🔵 | 🟢 | ❌ |  
 | robot booking static border                       | 🟢 | ❌ | 🔵 | 
 | human booking static border                       | 🟢 | ❌ | 🔵 |  
-| detect violation static border                    | 🟢 | ❌ | 🔵 | 
+| detect violation static border                    | 🟢 | ❌ | 🔵 |
+| detect hands                                      | 🟢 | 🔵 | 🔵 | 
+| detect objects within borders                     | 🟢 | 🔵 | 🟢 | 
 | robot releasing static border                     | 🟢 | ❌ | 🔵 |  
 | human releasing static border                     | 🟢 | ❌ | 🔵 | 
 | display instructions                              | ❌ | 🔵 | 🔵 | 
