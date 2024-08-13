@@ -1,11 +1,15 @@
 #ifndef InstructionProjectionServer_H
 #define InstructionProjectionServer_H
 
+#include <memory>
 #include <ros/ros.h>
 
 #include <actionlib/server/simple_action_server.h>
 
 #include <integration/SetInstructionsProjectionAction.h>
+
+#include "tuni_whitegoods_controller/projector_interface_controller.h"
+
 
 #include <std_msgs/Bool.h>
 #include <std_msgs/String.h>

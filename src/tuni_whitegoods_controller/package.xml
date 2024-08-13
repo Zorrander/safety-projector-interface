@@ -50,9 +50,21 @@
   <!--   <doc_depend>doxygen</doc_depend> -->
   <buildtool_depend>catkin</buildtool_depend>
   <depend>roscpp</depend>
-  <depend>tuni_whitegoods_projector_interface</depend>
-  <depend>tuni_whitegoods_msgs</depend>
-  <depend>tuni_whitegoods_view</depend>  
+
+
+  <build_depend>tuni_whitegoods_projector_interface</build_depend>
+  <build_depend>tuni_whitegoods_msgs</build_depend>
+  <build_depend>tuni_whitegoods_view</build_depend>
+
+  <build_export_depend>tuni_whitegoods_projector_interface</build_export_depend>
+  <build_export_depend>tuni_whitegoods_msgs</build_export_depend>
+  <build_export_depend>tuni_whitegoods_view</build_export_depend>
+
+
+
+  <exec_depend>tuni_whitegoods_projector_interface</exec_depend>
+  <exec_depend>tuni_whitegoods_msgs</exec_depend>
+  <exec_depend>tuni_whitegoods_view</exec_depend>
   
   <!-- The export tag contains other, unspecified, tags -->
   <export>

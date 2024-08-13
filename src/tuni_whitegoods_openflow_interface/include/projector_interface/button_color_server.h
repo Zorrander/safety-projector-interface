@@ -1,11 +1,15 @@
 #ifndef ButtonColorServer_H
 #define ButtonColorServer_H
 
+#include <memory>
 #include <ros/ros.h>
 
 #include <actionlib/server/simple_action_server.h>
 
 #include <integration/SetVirtualButtonChangeColorAction.h>
+
+#include "tuni_whitegoods_controller/projector_interface_controller.h"
+
 
 #include <std_msgs/Bool.h>
 #include <std_msgs/String.h>

@@ -18,14 +18,14 @@ class ObjectDetector
 public:
     ObjectDetector(ros::NodeHandle* nh)
     {
-		sub_scene = nh_->subscribe("odin/visualization/scene_detection", 1, &DepthInterface::depthSceneCallback, this);
+		sub_scene = nh_->subscribe("odin/visualization/scene_detection", 1, &ObjectDetector::depthImageCallback, this);
 
     }
 
 private:
 
 
-	  void StaticBorderManager::depthImageCallback(const sensor_msgs::ImageConstPtr& depth_msg){
+	  void ObjectDetector::depthImageCallback(const sensor_msgs::ImageConstPtr& depth_msg){
 		     cv_bridge::CvImagePtr cv_bridge_depth = cv_bridge::toCvCopy(depth_msg, sensor_msgs::image_encodings::TYPE_16UC1);
 		     cv_depth = cv_bridge_depth->image.clone();
 		        

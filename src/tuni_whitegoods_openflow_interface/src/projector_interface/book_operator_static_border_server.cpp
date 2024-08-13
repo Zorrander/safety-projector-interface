@@ -1,17 +1,16 @@
 #include "projector_interface/book_operator_static_border_server.h"
-#include "projector_interface_controller.h"
 
 #include <ros/ros.h>
 #include <actionlib/server/simple_action_server.h>
 #include <integration/BookOperatorStaticBorderAction.h>
 
 
-    BookOperatorStaticBorderServer::BookOperatorStaticBorderServer(ros::NodeHandle* nh_, std::string name_book_operator, std::shared_ptr<ProjectorInterfaceController> projector_interface_controller) :
+    BookOperatorStaticBorderServer::BookOperatorStaticBorderServer(ros::NodeHandle* nh_, std::string name_book_operator, std::shared_ptr<ProjectorInterfaceController> controller) :
         // Bind the callback to the action server. False is for thread spinning
         //nh_border_(*n),
         as_book_operator(*nh_, name_book_operator, boost::bind(&BookOperatorStaticBorderServer::executeBookOperator, this, _1), false),
         action_name_book_operator(name_book_operator),
-        controller(projector_interface_controller)
+        controller(controller)
     {
         displayed_request_ids.clear();
 

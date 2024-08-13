@@ -1,5 +1,5 @@
 #include "projector_interface/instruction_projection_server.h"
-#include "projector_interface_controller.h"
+
 #include <ros/ros.h>
 #include <actionlib/server/simple_action_server.h>
 #include <integration/SetInstructionsProjectionAction.h>

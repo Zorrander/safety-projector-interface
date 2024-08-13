@@ -21,14 +21,8 @@
 #include <string>
 #include <std_msgs/ColorRGBA.h>
 
-using namespace message_filters;
 using namespace std;
-static const std::string OPENCV_WIN = "Image window";
 
-struct BorderStatus{
-   std::string id_border;
-   int status;
-}  ;
 
 class StaticBorder
 {

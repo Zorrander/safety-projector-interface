@@ -36,6 +36,7 @@ include_directories(
   integration
   ${OpenCV_INCLUDE_DIRS}
   ${catkin_INCLUDE_DIRS}
+  tuni_whitegoods_controller
 )
 
 file(GLOB PROJECTOR_INTERFACE_SOURCES "src/projector_interface/*.cpp")

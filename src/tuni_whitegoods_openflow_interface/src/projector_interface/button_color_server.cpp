@@ -1,5 +1,5 @@
 #include "projector_interface/button_color_server.h"
-#include "projector_interface_controller.h"
+
 #include <ros/ros.h>
 #include <actionlib/server/simple_action_server.h>
 #include <integration/SetVirtualButtonChangeColorAction.h>
@@ -20,6 +20,7 @@
     //change button color
     void ButtonColorServer::executeChangeButtonColor(const SetVirtualButtonChangeColorGoalConstPtr& goal)
     {
+        bool success = true;
         sendFeedBackChangeButton(goal->request_id);
         if (as_change.isPreemptRequested() || !ros::ok())
         {

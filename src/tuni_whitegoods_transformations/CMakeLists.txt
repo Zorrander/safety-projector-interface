@@ -15,9 +15,10 @@ find_package(OpenCV 4 REQUIRED)
 
 catkin_package(
    INCLUDE_DIRS include
+   CATKIN_DEPENDS roscpp 
+                  tuni_whitegoods_msgs 
+                  tf2_ros
    LIBRARIES pinhole_camera
-   CATKIN_DEPENDS roscpp tuni_whitegoods_msgs tf2_ros
-#  DEPENDS system_lib
 )
 
 
@@ -35,19 +36,20 @@ target_link_libraries(transform_camera_point_server
       pinhole_camera
       ${catkin_LIBRARIES}
 )
-
+add_dependencies(transform_camera_point_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 add_executable(transform_projector_point_server src/transform_projector_point_server.cpp)
 target_link_libraries(transform_projector_point_server 
       ${catkin_LIBRARIES}
       ${OpenCV_LIBRARIES}
 )
-
+add_dependencies(transform_projector_point_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 add_executable(transform_robot_point_server src/transform_robot_point_server.cpp)
 target_link_libraries(transform_robot_point_server 
       ${catkin_LIBRARIES}
 )
+add_dependencies(transform_robot_point_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 
 install(TARGETS pinhole_camera

@@ -1,7 +1,7 @@
 /*
 Class to create StaticBorder
 */
-#include "staticBorder.h"
+#include "tuni_whitegoods_projector_interface/staticBorder.h"
 
 //The parameters are defined in OpenFlow
 //id : id of the border

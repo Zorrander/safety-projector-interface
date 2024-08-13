@@ -5,12 +5,15 @@ project(tuni_whitegoods_msgs)
 find_package(catkin REQUIRED
     message_generation
     geometry_msgs
+    sensor_msgs
 )
 
 add_message_files(
   FILES
+  Projection.msg
   DynamicArea.msg
   HandsState.msg
+  RobotViewElement.msg
 )
 
 
@@ -25,6 +28,7 @@ add_service_files(
 generate_messages(
   DEPENDENCIES
   geometry_msgs
+  sensor_msgs
 )
 
 catkin_package(

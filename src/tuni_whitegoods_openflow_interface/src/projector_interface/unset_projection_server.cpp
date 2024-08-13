@@ -1,5 +1,5 @@
 #include "projector_interface/unset_projection_server.h"
-#include "projector_interface_controller.h"
+
 #include <ros/ros.h>
 #include <actionlib/server/simple_action_server.h>
 #include <integration/UnsetProjectionAction.h>
@@ -10,9 +10,6 @@
       action_name_unset(name_un),
       controller(projector_interface_controller)
       {
-         //Start prerequisites
-         displayed_request_ids.clear();
-         pub_unset = nh_->advertise<std_msgs::Bool>("/interfaceUI/openflow/unset_projection",1);
          as_unset.start();
          std::cout<<"UnsetProjectionServer running \n";
       }
@@ -40,20 +37,12 @@
       void UnsetProjectionServer::sendFeedBackUnset()
       {
          feedback_unset_.feedback.displayed_request_ids.clear();
-         for(std::string i : displayed_request_ids)
-         {
-            feedback_unset_.feedback.displayed_request_ids.push_back(i);
-         }
          as_unset.publishFeedback(feedback_unset_.feedback);
       }
       //send result
       void UnsetProjectionServer::sendResultUnset()
       {
          result_unset_.displayed_request_ids.clear();
-         for(std::string i : displayed_request_ids)
-         {
-            result_unset_.displayed_request_ids.push_back(i);
-         }
          as_unset.setSucceeded(result_unset_);
       }
 

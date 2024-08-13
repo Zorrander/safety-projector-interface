@@ -51,7 +51,11 @@
   <buildtool_depend>catkin</buildtool_depend>
 
   <depend>roscpp</depend>
-  <depend>tuni_whitegoods_msgs</depend>
+  
+  <build_depend>tuni_whitegoods_msgs</build_depend>
+  <build_export_depend>tuni_whitegoods_msgs</build_export_depend>
+  <exec_depend>tuni_whitegoods_msgs</exec_depend>
+
   <depend>tf2_ros</depend>
   
   <!-- The export tag contains other, unspecified, tags -->

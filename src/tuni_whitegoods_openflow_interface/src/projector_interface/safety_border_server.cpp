@@ -1,5 +1,5 @@
 #include "projector_interface/safety_border_server.h"
-#include "projector_interface_controller.h"
+
 #include <ros/ros.h>
 #include <actionlib/server/simple_action_server.h>
 #include <integration/SetSafetyBorderProjectionAction.h>
@@ -12,8 +12,6 @@
       action_name_border_(name_border),
       controller(projector_interface_controller)
       {
-         //Start prerequisites
-         displayed_request_ids.clear();
          as_border.start();
          std::cout<<"SafetyBorderServer running\n";
       }
@@ -25,10 +23,9 @@
          if(goal->border.polygon.points.size() > 1)
          {
             // Pass the shared_ptr to the addBorder method
-            projector_interface_controller->addBorder(goal->request_id, goal->zone, goal->position_row, goal->position_col, goal->border, goal->border_topic, goal->border_color, goal->is_filled, goal->thickness, goal->lifetime, goal->track_violations);
+            controller->addBorder(goal->request_id, goal->zone, goal->position_row, goal->position_col, goal->border, goal->border_topic, goal->border_color, goal->is_filled, goal->thickness, goal->lifetime, goal->track_violations);
    
          }
-         displayed_ids_borders.push_back(goal->request_id);
          sendFeedBackBorder();
          if (as_border.isPreemptRequested() || !ros::ok() || !success)
          {
@@ -49,20 +46,12 @@
       void SafetyBorderServer::sendFeedBackBorder()
       {
          feedback_border_.feedback.displayed_request_ids.clear();
-         for(std::string i : displayed_ids_borders)
-         {
-            feedback_border_.feedback.displayed_request_ids.push_back(i);
-         }
          as_border.publishFeedback(feedback_border_.feedback);
       }
       //send result
       void SafetyBorderServer::sendResultBorder()
       {
          result_border_.displayed_request_ids.clear();
-         for(std::string i : displayed_ids_borders)
-         {
-            result_border_.displayed_request_ids.push_back(i);
-         }
          as_border.setSucceeded(result_border_);
       }
 

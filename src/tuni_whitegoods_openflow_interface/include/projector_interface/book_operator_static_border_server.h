@@ -1,11 +1,13 @@
 #ifndef BookOperatorStaticBorderServer_H
 #define BookOperatorStaticBorderServer_H
 
-
+#include <memory>
 #include <ros/ros.h>
 #include <actionlib/server/simple_action_server.h>
 
 #include <integration/BookOperatorStaticBorderAction.h>
+
+#include "tuni_whitegoods_controller/projector_interface_controller.h"
 
 #include <std_msgs/Bool.h>
 #include <std_msgs/String.h>

@@ -4,35 +4,17 @@
 - update view (projector, camera and robot)
 */
 
-#include <ros/ros.h>
-
-#include <tf2_ros/buffer.h>
-#include <tf2_ros/transform_listener.h>
-#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
-
-#include "tuni_whitegoods_msgs/HandsState.h"
-
-#include "project_view.h"
-#include "camera_view.h"
-#include "robot_view.h"
-
-#include "tuni_whitegoods_projector_interface/ProjectorInterfaceModel.h"
+#include "tuni_whitegoods_controller/projector_interface_controller.h"
 
 
     ProjectorInterfaceController::ProjectorInterfaceController(ros::NodeHandle* nh)
-        : nh_(nh), 
-          tfBuffer(),  // Initialize tfBuffer
-          tfListener(new tf2_ros::TransformListener(tfBuffer))  // Initialize tfListener with tfBuffer
-    {
-    	ProjectorInterfaceProjectorView projector_view;
-		ProjectorInterfaceCameraView camera_view;
-		ProjectorInterfaceRobotView robot_view;
+        : nh_(nh)
+    {	
 
-		ProjectorInterfaceModel model;
 		// Subscribe to hand detections
         hand_pose_sub = nh_->subscribe("/hand_tracking/rgb/coordinates", 1, &ProjectorInterfaceController::handTrackerCallback, this);
         // Subscribe to moving table detections
-        hand_pose_sub = nh_->subscribe("/odin/projector_interface/moving_table", 1, &ProjectorInterfaceController::movingTableTrackerCallback, this);
+        moving_table_pose_sub = nh_->subscribe("/odin/projector_interface/moving_table", 1, &ProjectorInterfaceController::movingTableTrackerCallback, this);
         // Subscribe to object detections
 
         // Subscribe to commands coming from OpenFlow or custom scheduler
@@ -40,7 +22,7 @@
         // 
 
     	//
-
+    	/*
        client = nh_->serviceClient<tuni_whitegoods_msgs::TransformRobotCameraCoordinates>("transform_world_coordinates_frame");
 	   client_3D_to_pixel = nh_->serviceClient<tuni_whitegoods_msgs::Transform3DToPixel>("transform_3D_to_pixel");
 	   client_pixel_to_3D = nh_->serviceClient<tuni_whitegoods_msgs::TransformPixelTo3D>("transform_pixel_to_3D");
@@ -52,7 +34,6 @@
 	   pub_border_violation = nh.advertise<integration::SafetyBorderViolation>("/execution/projector_interface/integration/topics/safety_border_violation",1);
 	   pub_pose_violation = nh.advertise<geometry_msgs::PoseStamped>("/projector_interface/pose_violation",1);
 	   
-	   vis_pub = nh.advertise<visualization_msgs::Marker>( "visualization_marker", 0 );
 
 	   pub_event = nh.advertise<integration::VirtualButtonEventArray> ("/execution/projector_interface/integration/topics/virtual_button_event_array", 1);
 	   
@@ -250,13 +231,12 @@
 
 	   ros::Duration(5.0).sleep(); 
 	   ROS_INFO("StaticBorderManager running");
+	   */
+    	ROS_INFO("constructor");
     }
 
-private:
-
-
 	void ProjectorInterfaceController::createBorderLayout(int rows, int cols, float sf_factor, bool adjacent, std_msgs::ColorRGBA status_booked, std_msgs::ColorRGBA status_free, std_msgs::ColorRGBA status_operator){
-
+		ROS_INFO("createBorderLayout");
 	}
 
 	void ProjectorInterfaceController::movingTableTrackerCallback(const tuni_whitegoods_msgs::HandsState& msg)
@@ -266,6 +246,8 @@ private:
 	
     void ProjectorInterfaceController::handTrackerCallback(const tuni_whitegoods_msgs::HandsState& msg)
     {
+    	ROS_INFO("handTrackerCallback");
+    	/*
         cv::Mat cv_viz_depth_hands = cv_viz_depth.clone();
         for(int i = 0; i < msg->name.size(); i++)
         {
@@ -325,222 +307,216 @@ private:
         
         }
 
-        list_points_hand.header = msg->header;
+			border_crossed = false;
+		   button_pressed = false;
+		   list_hand_violation.clear();
+		   std::string handType = msg->header.frame_id;
+		   for (auto& border : borders){
+		      const cv::Point border_center = border->getCenter();
+
+		      for (const auto& hand_point : msg->pts)
+		      {
+		          geometry_msgs::PoseStamped hand_pose;
+		          hand_pose.pose.position.x = hand_point.x;
+		          hand_pose.pose.position.y = hand_point.y;
+
+		         if (handType == "Left") {
+		            cv::Point left_hand_position(static_cast<int>(hand_point.x), static_cast<int>(hand_point.y));
+
+		            float distance = cv::norm(left_hand_position - border_center);
+
+		            if (distance < border->getBorderDiagonal()*0.75)
+		            {
+		               // Hand violation detected
+		               border_crossed = true;
+		               border->left_hand_crossed = true;
+		               // No need to check further once a violation is detected
+		               break;
+		            }
+
+		            dist_buffers[0] = distance ; 
+		         }
+
+		         else if (handType == "Right") {
+		            cv::Point right_hand_position(static_cast<int>(hand_point.x), static_cast<int>(hand_point.y));
+
+		            float distance = cv::norm(right_hand_position - border_center);
+
+		            if (distance < border->getBorderDiagonal()*0.75)
+		            {
+		               // Hand violation detected
+		               border_crossed = true;
+		               border->right_hand_crossed = true; 
+		            }
+
+		            dist_buffers[1] = distance ;            
+		         }
+
+		         if (border_crossed){
+		            // No need to check further once a violation is detected
+		            break;
+		         }
+
+		      }
+
+		      if (border_crossed == false){
+		         if (handType == "Left"){
+		            border->left_hand_crossed = false;
+		         }
+		         else if (handType == "Right"){
+		            border->right_hand_crossed = false;
+		         }
+		      }
+		      
+		      if (border->right_hand_crossed || border->left_hand_crossed == true){
+		        border->changeThickness(-1);
+		        
+		         //if (border->occupied){
+		         //   border->changeBorderColor(stat_operator);
+		         //}
+		         //else if (border->booked){
+		          //  border->changeThickness(-1);
+		            //Communicate with openflow
+		            //pub_border_violation.publish(msg_border);
+		            //pub_border_polygon.publish(bord);
+		            //pub_pose_violation.publish(pose_location);
+		         //} else {
+		         //   border->changeThickness(2);
+		         //} 
+
+		      }
+
+		      else {
+		         border->changeThickness(1);
+		         if (border->booked){
+		            border->changeBorderColor(stat_booked);
+		         }
+		         else {
+		            border->changeBorderColor(stat_free);
+		         }
+		      }
+		      publishBorder();
+
+		   }
+
+
+		   for (auto& btn : buttons){
+		      geometry_msgs::Point ros_btn_center = btn.center;
+		      const cv::Point btn_center(static_cast<int>(ros_btn_center.x), static_cast<int>(ros_btn_center.y));
+		      // ROS_INFO("Button center x,y coordinates: (%i, %i)", btn_center.x, btn_center.y);
+		      for (const auto& hand_point : msg->pts)
+		      {
+		         if (handType == "Left") {
+		            cv::Point left_hand_position(static_cast<int>(hand_point.x), static_cast<int>(hand_point.y));
+
+		            float distance = cv::norm(left_hand_position - btn_center);
+		            if (distance < 10)
+		            {
+		               ROS_INFO("distance: (%f)", distance);
+		               ROS_INFO("onHover");
+		               // Hand violation detected
+		               button_pressed = true;
+		               btn.left_hand_hover = true;
+		               // No need to check further once a violation is detected
+		               break;
+		            }
+		         }
+
+		         else if (handType == "Right") {
+		            cv::Point right_hand_position(static_cast<int>(hand_point.x), static_cast<int>(hand_point.y));
+
+		            float distance = cv::norm(right_hand_position - btn_center);
+		            if (distance < 10)
+		            {
+		               ROS_INFO("distance: (%f)", distance);
+		               ROS_INFO("onHover");
+		               // Hand violation detected
+		               button_pressed = true;
+		               btn.right_hand_hover = true;
+		               // No need to check further once a violation is detected
+		               break;
+		            }
+
+		         }
+
+		         if (button_pressed){
+		            // No need to check further once a violation is detected
+		            break;
+		         }
+
+		      }
+
+		      if (button_pressed == false){
+		         if (handType == "Left"){
+		            btn.left_hand_hover = false;
+		         }
+		         else if (handType == "Right"){
+		            btn.right_hand_hover = false;
+		         }
+		      }
+		      
+		      if (btn.right_hand_hover || btn.left_hand_hover == true){
+
+		         integration::SetVirtualButtonChangeColorGoal color_goal;
+		         color_goal.request_id = "go_button_color";
+		         color_goal.resource_id = "40";
+		         color_goal.button_color.r = 1.0;
+		         color_goal.button_color.g = 1.0;
+		         color_goal.button_color.b = 0.0;
+		         color_goal.button_color.a = 0.0;
+		         // ROS_INFO("new color (r: %f, g: %f, b: %f)", color_goal.button_color.r, color_goal.button_color.g, color_goal.button_color.b);
+		         client_button_color.sendGoal(color_goal);
+
+		         integration::VirtualButtonEvent btn_event;
+		         btn_event.virtual_button_id = btn.id;
+		         btn_event.event_type = btn_event.PRESSED;
+
+		         integration::VirtualButtonEventArray btn_events;
+		         btn_events.virtual_button_events.push_back(btn_event);
+
+		         pub_event.publish(btn_events);
+
+		      }
+
+		      else {
+
+		            integration::SetVirtualButtonChangeColorGoal color_goal;
+		            color_goal.request_id = "go_button_color";
+		            color_goal.resource_id = "40";
+		            color_goal.button_color.r = 0.0;
+		            color_goal.button_color.g = 0.0;
+		            color_goal.button_color.b = 1.0;
+		            color_goal.button_color.a = 0.0;
+		            client_button_color.sendGoal(color_goal);
+		         }
+		   }
+
+		   
+
+		   // Would be better to iterate through every border
+		   for (const auto& booked_border : borders_booked)
+		   {
+		      if (booked_border.status == 1)
+		      {
+		         const cv::Point border_center(static_cast<int>(booked_border.center.x), static_cast<int>(booked_border.center.y));
+		         for (const auto& hand_point : msg->pts)
+		         {
+		            const cv::Point hand_position(static_cast<int>(hand_point.x), static_cast<int>(hand_point.y));
+		            const float distance = cv::norm(hand_position - border_center);
+
+		            if (distance < booked_border.safety_distance*0.75)
+		            {
+		               // Hand violation detected
+		               list_hand_violation.push_back(booked_border);
+		               // No need to check further once a violation is detected
+		               break;
+		            }
+		         }
+		      }
+
+        */
     }
 
-    void ProjectorInterfaceController::handTrackingCallback(const unity_msgs::poiPCLConstPtr& msg)
-	{
-	   border_crossed = false;
-	   button_pressed = false;
-	   list_hand_violation.clear();
-	   std::string handType = msg->header.frame_id;
-	   for (auto& border : borders){
-	      const cv::Point border_center = border->getCenter();
-
-	      for (const auto& hand_point : msg->pts)
-	      {
-	          geometry_msgs::PoseStamped hand_pose;
-	          hand_pose.pose.position.x = hand_point.x;
-	          hand_pose.pose.position.y = hand_point.y;
-
-	         if (handType == "Left") {
-	            cv::Point left_hand_position(static_cast<int>(hand_point.x), static_cast<int>(hand_point.y));
-
-	            float distance = cv::norm(left_hand_position - border_center);
-
-	            if (distance < border->getBorderDiagonal()*0.75)
-	            {
-	               // Hand violation detected
-	               border_crossed = true;
-	               border->left_hand_crossed = true;
-	               // No need to check further once a violation is detected
-	               break;
-	            }
-
-	            dist_buffers[0] = distance ; 
-	         }
-
-	         else if (handType == "Right") {
-	            cv::Point right_hand_position(static_cast<int>(hand_point.x), static_cast<int>(hand_point.y));
-
-	            float distance = cv::norm(right_hand_position - border_center);
-
-	            if (distance < border->getBorderDiagonal()*0.75)
-	            {
-	               // Hand violation detected
-	               border_crossed = true;
-	               border->right_hand_crossed = true; 
-	            }
-
-	            dist_buffers[1] = distance ;            
-	         }
-
-	         if (border_crossed){
-	            // No need to check further once a violation is detected
-	            break;
-	         }
-
-	      }
-
-	      if (border_crossed == false){
-	         if (handType == "Left"){
-	            border->left_hand_crossed = false;
-	         }
-	         else if (handType == "Right"){
-	            border->right_hand_crossed = false;
-	         }
-	      }
-	      
-	      if (border->right_hand_crossed || border->left_hand_crossed == true){
-	        border->changeThickness(-1);
-	        /*
-	         if (border->occupied){
-	            border->changeBorderColor(stat_operator);
-	         }
-	         else if (border->booked){
-	            border->changeThickness(-1);
-	            //Communicate with openflow
-	            //pub_border_violation.publish(msg_border);
-	            //pub_border_polygon.publish(bord);
-	            //pub_pose_violation.publish(pose_location);
-	         } else {
-	            border->changeThickness(2);
-	         } */  
-	      }
-
-	      else {
-	         border->changeThickness(1);
-	         if (border->booked){
-	            border->changeBorderColor(stat_booked);
-	         }
-	         else {
-	            border->changeBorderColor(stat_free);
-	         }
-	      }
-	      publishBorder();
-
-	   }
-
-
-	   for (auto& btn : buttons){
-	      geometry_msgs::Point ros_btn_center = btn.center;
-	      const cv::Point btn_center(static_cast<int>(ros_btn_center.x), static_cast<int>(ros_btn_center.y));
-	      // ROS_INFO("Button center x,y coordinates: (%i, %i)", btn_center.x, btn_center.y);
-	      for (const auto& hand_point : msg->pts)
-	      {
-	         if (handType == "Left") {
-	            cv::Point left_hand_position(static_cast<int>(hand_point.x), static_cast<int>(hand_point.y));
-
-	            float distance = cv::norm(left_hand_position - btn_center);
-	            if (distance < 10)
-	            {
-	               ROS_INFO("distance: (%f)", distance);
-	               ROS_INFO("onHover");
-	               // Hand violation detected
-	               button_pressed = true;
-	               btn.left_hand_hover = true;
-	               // No need to check further once a violation is detected
-	               break;
-	            }
-	         }
-
-	         else if (handType == "Right") {
-	            cv::Point right_hand_position(static_cast<int>(hand_point.x), static_cast<int>(hand_point.y));
-
-	            float distance = cv::norm(right_hand_position - btn_center);
-	            if (distance < 10)
-	            {
-	               ROS_INFO("distance: (%f)", distance);
-	               ROS_INFO("onHover");
-	               // Hand violation detected
-	               button_pressed = true;
-	               btn.right_hand_hover = true;
-	               // No need to check further once a violation is detected
-	               break;
-	            }
-
-	         }
-
-	         if (button_pressed){
-	            // No need to check further once a violation is detected
-	            break;
-	         }
-
-	      }
-
-	      if (button_pressed == false){
-	         if (handType == "Left"){
-	            btn.left_hand_hover = false;
-	         }
-	         else if (handType == "Right"){
-	            btn.right_hand_hover = false;
-	         }
-	      }
-	      
-	      if (btn.right_hand_hover || btn.left_hand_hover == true){
-
-	         integration::SetVirtualButtonChangeColorGoal color_goal;
-	         color_goal.request_id = "go_button_color";
-	         color_goal.resource_id = "40";
-	         color_goal.button_color.r = 1.0;
-	         color_goal.button_color.g = 1.0;
-	         color_goal.button_color.b = 0.0;
-	         color_goal.button_color.a = 0.0;
-	         // ROS_INFO("new color (r: %f, g: %f, b: %f)", color_goal.button_color.r, color_goal.button_color.g, color_goal.button_color.b);
-	         client_button_color.sendGoal(color_goal);
-
-	         integration::VirtualButtonEvent btn_event;
-	         btn_event.virtual_button_id = btn.id;
-	         btn_event.event_type = btn_event.PRESSED;
-
-	         integration::VirtualButtonEventArray btn_events;
-	         btn_events.virtual_button_events.push_back(btn_event);
-
-	         pub_event.publish(btn_events);
-
-	      }
-
-	      else {
-
-	            integration::SetVirtualButtonChangeColorGoal color_goal;
-	            color_goal.request_id = "go_button_color";
-	            color_goal.resource_id = "40";
-	            color_goal.button_color.r = 0.0;
-	            color_goal.button_color.g = 0.0;
-	            color_goal.button_color.b = 1.0;
-	            color_goal.button_color.a = 0.0;
-	            client_button_color.sendGoal(color_goal);
-	         }
-	   }
-
-	   
-
-	   // Would be better to iterate through every border
-	   for (const auto& booked_border : borders_booked)
-	   {
-	      if (booked_border.status == 1)
-	      {
-	         const cv::Point border_center(static_cast<int>(booked_border.center.x), static_cast<int>(booked_border.center.y));
-	         for (const auto& hand_point : msg->pts)
-	         {
-	            const cv::Point hand_position(static_cast<int>(hand_point.x), static_cast<int>(hand_point.y));
-	            const float distance = cv::norm(hand_position - border_center);
-
-	            if (distance < booked_border.safety_distance*0.75)
-	            {
-	               // Hand violation detected
-	               list_hand_violation.push_back(booked_border);
-	               // No need to check further once a violation is detected
-	               break;
-	            }
-	         }
-	      }
-	   }
-
-
-
-
-	}
 
 
 	void ProjectorInterfaceController::addBorder(std::string r_id, std::string z, int pos_row, int pos_col, geometry_msgs::PolygonStamped bord, std::string b_topic, std_msgs::ColorRGBA b_color, bool filling, int thic, ros::Duration life, bool track) {
@@ -548,7 +524,7 @@ private:
 
 	    std::cout<<"StaticBorderManager::addBorder\n";
 
-
+	    /*
 	     geometry_msgs::Point topLeftCornerPt;
 	     topLeftCornerPt.x = bord.polygon.points[0].x; 
 	     topLeftCornerPt.y = bord.polygon.points[0].y;
@@ -606,12 +582,16 @@ private:
 	   //borders.push_back(sb);
 	   
 	  // ///////////  model->addBorder()
+
+	  */
 	}
 
 	//Book a robot border by its id
 	void ProjectorInterfaceController::bookBorderRobot(std::string id)
 	{
 	   ROS_INFO("BOOKING BORDER %s", id.c_str());
+
+	   /*
 	   int tmp_col;
 	   int tmp_row;
 
@@ -654,11 +634,15 @@ private:
 	   {
 	      ROS_INFO("Border %s --> %d", bdr.id.c_str(), bdr.status);
 	   }
+
+	   */
 	}
 
 	//Book a border for the operator. It signals the operator that an object can be picked by using a different color.
 	void ProjectorInterfaceController::bookBorderOperator(std::string id)
 	{
+		 ROS_INFO("bookBorderOperator");
+		/*
 	   for(int i = 0; i < borders_booked.size(); i++)
 	   {
 	      if(borders_booked[i].id.compare(id) == 0)
@@ -673,13 +657,17 @@ private:
 	         borders[i]->changeBorderColor(stat_operator);
 	      }
 	   }
+
+	   */
 	}
 
 	//release a border booked by the robot
 	void ProjectorInterfaceController::releaseRobotBorder(std::string id, int status)
 	{
+
 	   //release booking and change color
 	   ROS_INFO("RELEASING BORDER %s -> %i", id.c_str(), status);
+	   /*
 	   if(status == 0)
 	   {  
 	      for(int i = 0; i < borders.size(); i++)
@@ -709,11 +697,15 @@ private:
 	         }
 	      }
 	   }
+	   */
 	}
 
 	//release a booking made by the operator
 	void ProjectorInterfaceController::releaseOperatorBorder(std::string id, int status)
 	{
+		 ROS_INFO("releaseOperatorBorder");
+
+		 /*
 	   //release booking and change color
 	   if(status == 0)
 	   {
@@ -748,6 +740,8 @@ private:
 	         }
 	      }
 	   }
+
+	   */
 	}
 
 	/**
@@ -759,8 +753,11 @@ private:
 	 */
 	std::vector<std::string> ProjectorInterfaceController::getAdjacentBorders(int row, int col)
 	{
+		ROS_INFO("getAdjacentBorders");
+
+		
 	   std::vector<std::string> list_adj;
-	   
+	   /*
 	   // Check if single row or multiple rows
 	   for (const BorderContentStatus& bdr : borders_booked)
 	   {
@@ -771,7 +768,7 @@ private:
 	         list_adj.push_back(bdr.id);
 	      }
 	   }
-	   
+	   */
 	   return list_adj;
 	}
 
@@ -783,6 +780,8 @@ private:
 	bool ProjectorInterfaceController::getBordersService(integration::ListStaticBordersStatus::Request& req, integration::ListStaticBordersStatus::Response& res)
 	{
 	   ROS_INFO("Checking border status...");
+
+	   /*
 	   res.status_borders.clear();
 
 	   // Populate the response with border statuses
@@ -796,13 +795,15 @@ private:
 	   }
 
 	   ROS_INFO("Border status check complete.");
+	   */
 	   return true;
 	}
 
 
 
-    void ProjectorInterfaceController::callback_button(const unity_msgs::ElementUI::ConstPtr &msg) {
-        cout << "msg.zone " << msg->zone << endl;
+ //   void ProjectorInterfaceController::callback_button(const unity_msgs::ElementUI::ConstPtr &msg) {
+ //       cout << "msg.zone " << msg->zone << endl;
+        /*
         if (msg->zone.empty()) {
             process_button(msg->center.position.x, msg->center.position.y, *msg);
         } else if (msg->zone == "moving_table") {
@@ -811,10 +812,12 @@ private:
             process_button(world_center_x, world_center_y, *msg);
         }
         object_detection_pub.publish(bridge_interface.cv2_to_imgmsg(cv_image, "bgr8"));
-    }
+        */
+  //  }
 
-    void process_button(double center_x, double center_y, const unity_msgs::ElementUI &msg) {
-        cout << "process_button " << center_x << ", " << center_y << endl;
+  //  void process_button(double center_x, double center_y, const unity_msgs::ElementUI &msg) {
+  //      cout << "process_button " << center_x << ", " << center_y << endl;
+        /*
         // Create Rviz marker
         visualization_msgs::Marker marker;
         marker.header.frame_id = "base";
@@ -893,13 +896,17 @@ private:
                 }
             }
         }
-    }
+        */
+   // }
     
-    void ProjectorInterfaceController::callback_button_color(const unity_msgs::ElementUI::ConstPtr &msg) {
+   // void ProjectorInterfaceController::callback_button_color(const unity_msgs::ElementUI::ConstPtr &msg) {
+    //	ROS_INFO("callback_button_color");
+    	/*
         for (auto &i : _list_interface) {
             if (!i.get_hidden()) {
                 i.modify_button_color(*msg);
             }
         }
-    }
+        */
+   // }
 

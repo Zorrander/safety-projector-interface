@@ -1,5 +1,4 @@
 #include "projector_interface/book_robot_static_border_server.h"
-#include "projector_interface_controller.h"
 
 #include <ros/ros.h>
 #include <actionlib/server/simple_action_server.h>

@@ -2,6 +2,7 @@
 #define UnsetProjectionServer_H
 
 
+#include <memory>
 #include <ros/ros.h>
 #include <ros/spinner.h>
 #include <ros/callback_queue.h>
@@ -12,6 +13,9 @@
 #include <integration/VirtualButtonReference.h>
 #include <integration/ProjectorUI.h>
 #include <unity_msgs/Instructions.h>
+
+#include "tuni_whitegoods_controller/projector_interface_controller.h"
+
 
 #include <std_msgs/Bool.h>
 #include <std_msgs/String.h>
@@ -30,10 +34,7 @@ class UnsetProjectionServer
       UnsetProjectionResult result_unset_;   
       bool activate_dynamic_border;
       bool activate_static_border_manager;
-      //attributes to monitor situation
-      //monitor active buttons and publish them
-      std::vector<std::string> displayed_request_ids;
-      ros::Publisher pub_unset;
+
       std::shared_ptr<ProjectorInterfaceController> controller ;
 
 

@@ -1,11 +1,14 @@
 #ifndef BookRobotStaticBorderServer_H
 #define BookRobotStaticBorderServer_H
 
-
+#include <memory>
 #include <ros/ros.h>
 
 #include <actionlib/server/simple_action_server.h>
 #include <integration/BookRobotStaticBorderAction.h>
+
+#include "tuni_whitegoods_controller/projector_interface_controller.h"
+
 
 #include <std_msgs/Bool.h>
 #include <std_msgs/String.h>
@@ -22,7 +25,6 @@ protected:
     actionlib::SimpleActionServer<BookRobotStaticBorderAction> as_book_robot;
     std::string action_name_book_robot;
     bool book_robot_border;
-    std::vector<StaticBorder> l_borders;
     BookRobotStaticBorderActionFeedback feedback_book_robot_;
     BookRobotStaticBorderResult result_book_robot_;
 

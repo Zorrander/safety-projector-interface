@@ -1,6 +1,6 @@
 #include "projector_interface/release_operator_static_border_server.h"
 
-#include "projector_interface_controller.h"
+
 #include <ros/ros.h>
 #include <actionlib/server/simple_action_server.h>
 #include <integration/ReleaseOperatorStaticBorderAction.h>
@@ -12,8 +12,6 @@
       action_name_release_operator(name_release_operator),
       controller(projector_interface_controller)
       {
-         //Start prerequisites
-         displayed_request_ids.clear();
          as_release_operator.start();
          std::cout<<"ReleaseOperatorStaticBorderServer running\n";
       }

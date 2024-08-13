@@ -22,10 +22,15 @@ catkin_package(
   )
 
 
+include_directories(${catkin_INCLUDE_DIRS})
 
-add_executable(object_detection_node src/object_detection_node.cpp)
-target_link_libraries(object_detection_node
-  ${catkin_LIBRARIES} 
-  ${OpenCV_LIBS} 
-)
+
+#add_executable(object_detection_node src/object_detection_node.cpp)
+#target_link_libraries(object_detection_node
+#  ${catkin_LIBRARIES} 
+#  ${OpenCV_LIBS} 
+#)
+
+
+
 

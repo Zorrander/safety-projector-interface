@@ -1,13 +1,16 @@
 #ifndef ReleaseOperatorStaticBorderServer_H
 #define ReleaseOperatorStaticBorderServer_H
 
-
+#include <memory>
 #include <ros/ros.h>
 #include <ros/spinner.h>
 #include <ros/callback_queue.h>
 #include <actionlib/server/simple_action_server.h>
 
 #include <integration/ReleaseOperatorStaticBorderAction.h>
+
+#include "tuni_whitegoods_controller/projector_interface_controller.h"
+
 
 #include <std_msgs/Bool.h>
 #include <std_msgs/String.h>
@@ -30,11 +33,6 @@ class ReleaseOperatorStaticBorderServer
       ReleaseOperatorStaticBorderResult result_release_operator;
 
       std::shared_ptr<ProjectorInterfaceController> controller ;
-
-      //attributes to monitor situation
-      //monitor active buttons and publish them
-      std::vector<std::string> displayed_request_ids;
-      std::vector<BorderStatus> release_border_operator;
 
 
    public:

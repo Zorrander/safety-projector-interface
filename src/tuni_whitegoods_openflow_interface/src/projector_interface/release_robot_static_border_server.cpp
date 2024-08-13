@@ -1,5 +1,5 @@
 #include "projector_interface/release_robot_static_border_server.h"
-#include "projector_interface_controller.h"
+
 #include <ros/ros.h>
 #include <actionlib/server/simple_action_server.h>
 #include <integration/ReleaseRobotStaticBorderAction.h>
@@ -12,7 +12,7 @@
       action_name_release_robot(name_release_robot),
       controller(projector_interface_controller)
       {
-         release_border_robot.clear();
+
          as_release_robot.start();
          std::cout<<"ReleaseRobotStaticBorderServer running\n";
       }

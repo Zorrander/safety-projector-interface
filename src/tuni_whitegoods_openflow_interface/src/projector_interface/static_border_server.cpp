@@ -1,5 +1,5 @@
 #include "projector_interface/static_border_server.h"
-#include "projector_interface_controller.h"
+
 #include <ros/ros.h>
 #include <actionlib/server/simple_action_server.h>
 #include <integration/SetLayoutStaticBordersAction.h>
@@ -11,9 +11,6 @@
       controller(projector_interface_controller),
       nh_(nh)
       {
-         //Start prerequisites
-         displayed_request_ids.clear();
-
          // Start the action server
          as_border_manager.start();
       }

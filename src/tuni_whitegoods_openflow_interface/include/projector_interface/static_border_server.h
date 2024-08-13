@@ -2,12 +2,15 @@
 #define StaticBorderServer_H
 
 
+#include <memory>
 #include <ros/ros.h>
 #include <ros/spinner.h>
 #include <ros/callback_queue.h>
 #include <actionlib/server/simple_action_server.h>
 
 #include <integration/SetLayoutStaticBordersAction.h>
+
+#include "tuni_whitegoods_controller/projector_interface_controller.h"
 
 #include <std_msgs/Bool.h>
 #include <std_msgs/String.h>
@@ -23,15 +26,7 @@ class StaticBorderServer
       // NodeHandle instance must be created before this line. Otherwise strange error occurs.
       actionlib::SimpleActionServer<SetLayoutStaticBordersAction> as_border_manager;
       std::string action_name_border_manager_;
-      bool activate_static_border_manager;
-      bool activate_dynamic_border;
-      bool add_static_border;
-      bool book_operator_border;
-      bool release_operator_border;
-      bool book_robot_border;
-      bool release_robot_border;
-      //std::vector<> vec_borders;
-      boost::shared_ptr<ros::AsyncSpinner> g_spinner;
+
       // create messages that are used to published feedback/result
       SetLayoutStaticBordersActionFeedback feedback_layout;
       SetLayoutStaticBordersResult result_layout;

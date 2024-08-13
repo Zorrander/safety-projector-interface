@@ -4,6 +4,11 @@
 #include "projector_interface/user_interface_server.h"
 #include "projector_interface/unset_projection_server.h"
 #include "projector_interface/static_border_server.h"
+#include "projector_interface/book_robot_static_border_server.h"
+#include "projector_interface/release_robot_static_border_server.h"
+#include "projector_interface/book_operator_static_border_server.h"
+#include "projector_interface/release_operator_static_border_server.h"
+#include "projector_interface/safety_border_server.h"
 
 #include "tuni_whitegoods_controller/projector_interface_controller.h"
 
@@ -21,7 +26,12 @@ int main(int argc, char** argv)
                user_interface_server_name,
                unset_projection_server_name,
                instruction_projection_server_name,
-               static_border_server_name;
+               static_border_server_name,
+               book_robot_static_border_server_name,
+               release_robot_static_border_server_name,
+               book_operator_static_border_server_name,
+               release_operator_static_border_server_name,
+               safety_border_server_name;
 
    ros::param::get("button_projection_server_name", button_projection_server_name);
    ros::param::get("button_color_server_name", button_color_server_name);
@@ -37,7 +47,7 @@ int main(int argc, char** argv)
    ros::param::get("safety_border_server", safety_border_server_name);
 
    // Instantiate th core of the software
-   std::shared_ptr<ProjectorInterfaceController> controller = std::make_shared<ProjectorInterfaceController>(); 
+   std::shared_ptr<ProjectorInterfaceController> controller = std::make_shared<ProjectorInterfaceController>(&nh); 
 
    // Create an action server object and spin ROS
    UserInterfaceServer srv4(&nh, user_interface_server_name, controller);
@@ -48,13 +58,13 @@ int main(int argc, char** argv)
    UnsetProjectionServer srv5(&nh, unset_projection_server_name, controller);
    InstructionProjectionServer srv6(&nh, instruction_projection_server_name, controller);
    
-   BookRobotStaticBorderServer book_robot_static_border_server(nh_, book_robot_static_border_server_name, controller);
-   ReleaseRobotStaticBorderServer release_robot_static_border_server(nh_, release_robot_static_border_server_name, controller);
-   BookOperatorStaticBorderServer book_operator_static_border_server(nh_, book_operator_static_border_server_name, controller);
-   ReleaseOperatorStaticBorderServer release_operator_static_border_server(nh_, release_operator_static_border_server_name, controller);
+   BookRobotStaticBorderServer book_robot_static_border_server(&nh, book_robot_static_border_server_name, controller);
+   ReleaseRobotStaticBorderServer release_robot_static_border_server(&nh, release_robot_static_border_server_name, controller);
+   BookOperatorStaticBorderServer book_operator_static_border_server(&nh, book_operator_static_border_server_name, controller);
+   ReleaseOperatorStaticBorderServer release_operator_static_border_server(&nh, release_operator_static_border_server_name, controller);
 
    StaticBorderServer static_border_server(&nh, static_border_server_name, controller);
-   SafetyBorderServer safety_border_server(nh_, safety_border_server_name, controller);
+   SafetyBorderServer safety_border_server(&nh, safety_border_server_name, controller);
 
    ros::waitForShutdown();
    
