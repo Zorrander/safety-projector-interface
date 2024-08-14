@@ -11,6 +11,13 @@ CameraView::CameraView()
   img_callback = nh_.subscribe("/depth_to_rgb/image_raw", 1,  &CameraView::depthSceneCallback,this);
 }
 
+void CameraView::init() {
+
+}
+
+void CameraView::update() {
+	
+}
 
 void CameraView::depthSceneCallback(const sensor_msgs::ImageConstPtr& depth_msg){
   cv_depth = cv_bridge::toCvCopy(depth_msg, sensor_msgs::image_encodings::BGR8);

@@ -6,6 +6,13 @@
 
 #include "tuni_whitegoods_controller/projector_interface_controller.h"
 
+#include "tuni_whitegoods_msgs/TransformRobotCameraCoordinates.h"
+#include "tuni_whitegoods_msgs/Transform3DToPixel.h"
+#include "tuni_whitegoods_msgs/TransformPixelTo3D.h"
+#include "tuni_whitegoods_msgs/TransformPixelToProjection.h"
+
+#include <integration/VirtualButtonEventArray.h>
+
 
     ProjectorInterfaceController::ProjectorInterfaceController(ros::NodeHandle* nh)
         : nh_(nh)
@@ -18,222 +25,47 @@
         // Subscribe to object detections
 
         // Subscribe to commands coming from OpenFlow or custom scheduler
+        service_borders = nh->advertiseService("/execution/projector_interface/integration/services/list_static_border_status", &ProjectorInterfaceController::getBordersService, this); 
+        pub_button_event = nh->advertise<integration::VirtualButtonEventArray> ("/execution/projector_interface/integration/topics/virtual_button_event_array", 1);
 
-        // 
+        // Start clients for transform       
+        client_world_coordinates = nh_->serviceClient<tuni_whitegoods_msgs::TransformRobotCameraCoordinates>("transform_world_coordinates_frame");
+	    client_3D_to_pixel = nh_->serviceClient<tuni_whitegoods_msgs::Transform3DToPixel>("transform_3D_to_pixel");
+	    client_pixel_to_3D = nh_->serviceClient<tuni_whitegoods_msgs::TransformPixelTo3D>("transform_pixel_to_3D");
+	    client_projector_point = nh_->serviceClient<tuni_whitegoods_msgs::TransformPixelToProjection>("transform_point_to_project");
+	    client_reverse_projector_point = nh_->serviceClient<tuni_whitegoods_msgs::TransformPixelToProjection>("reverse_transform_point_to_project");
 
-    	//
-    	/*
-       client = nh_->serviceClient<tuni_whitegoods_msgs::TransformRobotCameraCoordinates>("transform_world_coordinates_frame");
-	   client_3D_to_pixel = nh_->serviceClient<tuni_whitegoods_msgs::Transform3DToPixel>("transform_3D_to_pixel");
-	   client_pixel_to_3D = nh_->serviceClient<tuni_whitegoods_msgs::TransformPixelTo3D>("transform_pixel_to_3D");
-	   client_reverse_projector_point = nh_->serviceClient<tuni_whitegoods_msgs::TransformPixelToProjection>("reverse_transform_point_to_project");
+	    // Initialize model 
+	    model_ = std::make_unique<ProjectorInterfaceModel>();
+	    model_->add_zone("table");
 
-	   service_borders = nh.advertiseService("/execution/projector_interface/integration/services/list_static_border_status", &StaticBorderManager::getBordersService, this); 
+	    this->model_->attach(shared_from_this());
 
-	   pub_border_projection = nh.advertise<unity_msgs::LBorder>("/projector_interface/display_static_border",1);
-	   pub_border_violation = nh.advertise<integration::SafetyBorderViolation>("/execution/projector_interface/integration/topics/safety_border_violation",1);
-	   pub_pose_violation = nh.advertise<geometry_msgs::PoseStamped>("/projector_interface/pose_violation",1);
-	   
+	    // Initialize views
+	    views.push_back(std::make_unique<Projector>());
+	    views.push_back(std::make_unique<CameraView>());  
+	    views.push_back(std::make_unique<RobotView>()); 
+ 
+		std::for_each(views.begin(), views.end(), [](auto& view) {
+		    view->init();
+		});
 
-	   pub_event = nh.advertise<integration::VirtualButtonEventArray> ("/execution/projector_interface/integration/topics/virtual_button_event_array", 1);
-	   
-	   client_button_color.waitForServer();
-	   sub_poi = nh.subscribe("/depth_interface/poi_depthmap", 1, &StaticBorderManager::pointsOfInterestCb,this);
+	    ROS_INFO("StaticBorderManager running");
 
-	   depth_sub = nh_->subscribe("/depth_to_rgb/image_raw", 1, &StaticBorderManager::depthImageCallback,this);
-	   object_detection_pub = it_.advertise("odin/visualization/object_detection", 1);
-
-	   border_crossed = false;
-	   button_pressed = false; 
-
-	   // Enable dedicated thread
-	   tfBuffer.setUsingDedicatedThread(true);
-
-	   geometry_msgs::TransformStamped transformStamped;
-
-	   // Try for a limited number of times
-	   for (int i = 0; i < 10; ++i) {
-	       try {
-	            transformStamped = tfBuffer.lookupTransform("base", "rgb_camera_link", ros::Time(0));
-	            ROS_INFO("Got transform: translation (%.2f, %.2f, %.2f), rotation (%.2f, %.2f, %.2f, %.2f)",
-	                     transformStamped.transform.translation.x,
-	                     transformStamped.transform.translation.y,
-	                     transformStamped.transform.translation.z,
-	                     transformStamped.transform.rotation.x,
-	                     transformStamped.transform.rotation.y,
-	                     transformStamped.transform.rotation.z,
-	                     transformStamped.transform.rotation.w);
-	            break;
-	        } catch (tf2::TransformException &ex) {
-	            ROS_WARN("TF2 Transform Exception: %s", ex.what());
-	        }
-	        ros::Duration(1.0).sleep(); // Wait a bit before checking again
-	   }
-
-
-	   geometry_msgs::Point tableTopLeftCornerPt;
-	   tableTopLeftCornerPt.x = 1.0487210514766203; 
-	   tableTopLeftCornerPt.y = 0.4651205344735724;
-
-	   geometry_msgs::Point tableTopRightCornerPt;
-	   tableTopRightCornerPt.x = 0.9794720649924923; 
-	   tableTopRightCornerPt.y = -0.7313395459246643;
-
-	   geometry_msgs::Point tableBottomRightCornerPt;
-	   tableBottomRightCornerPt.x = 0.12127247533236307; 
-	   tableBottomRightCornerPt.y = -0.6793050608740877;
-
-	   geometry_msgs::Point tableBottomLeftCornerPt;
-	   tableBottomLeftCornerPt.x = 0.1905214618164912; 
-	   tableBottomLeftCornerPt.y = 0.5171550195241489;
-
-	   // Create Rviz marker 
-	   visualization_msgs::Marker marker;
-	   marker.header.frame_id = "base";
-	   marker.header.stamp = ros::Time::now();
-	   marker.id = 150;
-	   marker.type = visualization_msgs::Marker::LINE_STRIP;
-	   marker.action = visualization_msgs::Marker::ADD;
-	   marker.scale.x = 0.01;  // Line width
-	   marker.color.r = 1.0;
-	   marker.color.g = 1.0;
-	   marker.color.b = 1.0;
-	   marker.color.a = 1.0;
-
-	   marker.points.push_back(tableTopLeftCornerPt);
-	   marker.points.push_back(tableTopRightCornerPt);
-	   marker.points.push_back(tableBottomRightCornerPt);
-	   marker.points.push_back(tableBottomLeftCornerPt);
-	   marker.points.push_back(tableTopLeftCornerPt);
-
-	   vis_pub.publish( marker );
-
-	   visualization_msgs::Marker marker2;
-	   marker2.header.frame_id = "base";
-	   marker2.header.stamp = ros::Time::now();
-	   marker2.id = 77;
-	   marker2.type = visualization_msgs::Marker::LINE_STRIP;
-	   marker2.action = visualization_msgs::Marker::ADD;
-	   marker2.scale.x = 0.01;  // Line width
-	   marker2.color.r = 0.0;
-	   marker2.color.g = 1.0;
-	   marker2.color.b = 0.0;
-	   marker2.color.a = 1.0;
-
-	   cv::Matx33d hom = cv::Matx33d(-2.15507712e+00,  1.91967042e-01,  2.86695078e+03, 
-	                      5.92436261e-03, -2.16676604e+00,  1.75534894e+03, 
-	                      1.69314309e-05,  2.45548501e-04,  1.00000000e+00);
-
-	   std::vector<cv::Point2f> cameraPoint, projectorPoint;
-	   cv::Point2f input_point1(0, 0);
-	   cv::Point2f input_point2(1920, 0);
-	   cv::Point2f input_point3(1920, 1080);
-	   cv::Point2f input_point4(0, 1080);
-	   projectorPoint.push_back(input_point1);
-	   projectorPoint.push_back(input_point2);
-	   projectorPoint.push_back(input_point3);
-	   projectorPoint.push_back(input_point4);
-	   cv::perspectiveTransform(projectorPoint, cameraPoint, hom.inv());
-
-	   tuni_whitegoods_msgs::TransformRobotCameraCoordinates srv;
-	   tuni_whitegoods_msgs::TransformPixelTo3D srv_pixel_to_3D;
-	  
-	   
-	    ROS_INFO("2D Point in RGB camera coordinate system: U = %.3f, V = %.3f", cameraPoint[0].x , cameraPoint[0].y );
-	    ROS_INFO("2D Point in RGB camera coordinate system: U = %.3f, V = %.3f", cameraPoint[1].x , cameraPoint[1].y );
-	    ROS_INFO("2D Point in RGB camera coordinate system: U = %.3f, V = %.3f", cameraPoint[2].x , cameraPoint[2].y );
-	    ROS_INFO("2D Point in RGB camera coordinate system: U = %.3f, V = %.3f", cameraPoint[3].x , cameraPoint[3].y );
-
-	    srv_pixel_to_3D.request.u = cameraPoint[0].x;
-	    srv_pixel_to_3D.request.v = cameraPoint[0].y;
-	    client_pixel_to_3D.call(srv_pixel_to_3D);
-	    
-	    ROS_INFO("3D Point in RGB camera coordinate system: X = %.3f, Y = %.3f, Z = %.3f", srv_pixel_to_3D.response.x , srv_pixel_to_3D.response.y , srv_pixel_to_3D.response.z);
-
-
-	    geometry_msgs::PoseStamped in_point_stamped;
-	    in_point_stamped.header.frame_id = "rgb_camera_link";
-	    in_point_stamped.header.stamp = ros::Time(0);
-	    in_point_stamped.pose.position.x = srv_pixel_to_3D.response.x;
-	    in_point_stamped.pose.position.y = srv_pixel_to_3D.response.y;
-	    in_point_stamped.pose.position.z = srv_pixel_to_3D.response.z; 
-
-	    srv.request.in_point_stamped = in_point_stamped;
-	    srv.request.target_frame = "base";
-	    client.call(srv);
-
-	    ROS_INFO("3D Point in robot coordinate system: X = %.3f, Y = %.3f, Z = %.3f", srv.response.out_point_stamped.pose.position.x , srv.response.out_point_stamped.pose.position.y , srv.response.out_point_stamped.pose.position.z);
-
-
-	    marker2.points.push_back(srv.response.out_point_stamped.pose.position);
-	    geometry_msgs::Point buffer = srv.response.out_point_stamped.pose.position;
-
-	    srv_pixel_to_3D.request.u = cameraPoint[1].x;
-	    srv_pixel_to_3D.request.v = cameraPoint[1].y;
-	    client_pixel_to_3D.call(srv_pixel_to_3D);
-	  
-	    ROS_INFO("3D Point in RGB camera coordinate system: X = %.3f, Y = %.3f, Z = %.3f", srv_pixel_to_3D.response.x , srv_pixel_to_3D.response.y , srv_pixel_to_3D.response.z);
-
-	    in_point_stamped.header.stamp = ros::Time(0);
-	    in_point_stamped.pose.position.x = srv_pixel_to_3D.response.x;
-	    in_point_stamped.pose.position.y = srv_pixel_to_3D.response.y;
-	    in_point_stamped.pose.position.z = srv_pixel_to_3D.response.z; 
-
-	    srv.request.in_point_stamped = in_point_stamped;
-	    srv.request.target_frame = "base";
-	    client.call(srv);
-
-	    ROS_INFO("3D Point in robot coordinate system: X = %.3f, Y = %.3f, Z = %.3f", srv.response.out_point_stamped.pose.position.x , srv.response.out_point_stamped.pose.position.y , srv.response.out_point_stamped.pose.position.z);
-
-	    marker2.points.push_back(srv.response.out_point_stamped.pose.position);
-
-	    srv_pixel_to_3D.request.u = cameraPoint[2].x;
-	    srv_pixel_to_3D.request.v = cameraPoint[2].y;
-	    client_pixel_to_3D.call(srv_pixel_to_3D);
-
-	    ROS_INFO("3D Point in RGB camera coordinate system: X = %.3f, Y = %.3f, Z = %.3f", srv_pixel_to_3D.response.x , srv_pixel_to_3D.response.y , srv_pixel_to_3D.response.z);
-	 
-	    in_point_stamped.header.stamp = ros::Time(0);
-	    in_point_stamped.pose.position.x = srv_pixel_to_3D.response.x;
-	    in_point_stamped.pose.position.y = srv_pixel_to_3D.response.y;
-	    in_point_stamped.pose.position.z = srv_pixel_to_3D.response.z; 
-
-	    srv.request.in_point_stamped = in_point_stamped;
-	    srv.request.target_frame = "base";
-	    client.call(srv);
-
-	    ROS_INFO("3D Point in robot coordinate system: X = %.3f, Y = %.3f, Z = %.3f", srv.response.out_point_stamped.pose.position.x , srv.response.out_point_stamped.pose.position.y , srv.response.out_point_stamped.pose.position.z);
-
-	    marker2.points.push_back(srv.response.out_point_stamped.pose.position);
-
-	    srv_pixel_to_3D.request.u = cameraPoint[3].x;
-	    srv_pixel_to_3D.request.v = cameraPoint[3].y;
-	    client_pixel_to_3D.call(srv_pixel_to_3D);
-
-	    ROS_INFO("3D Point in RGB camera coordinate system: X = %.3f, Y = %.3f, Z = %.3f", srv_pixel_to_3D.response.x , srv_pixel_to_3D.response.y , srv_pixel_to_3D.response.z);
-	 
-	    in_point_stamped.header.stamp = ros::Time(0);
-	    in_point_stamped.pose.position.x = srv_pixel_to_3D.response.x;
-	    in_point_stamped.pose.position.y = srv_pixel_to_3D.response.y;
-	    in_point_stamped.pose.position.z = srv_pixel_to_3D.response.z; 
-
-	    srv.request.in_point_stamped = in_point_stamped;
-	    srv.request.target_frame = "base";
-	    client.call(srv);
-
-	    ROS_INFO("3D Point in robot coordinate system: X = %.3f, Y = %.3f, Z = %.3f", srv.response.out_point_stamped.pose.position.x , srv.response.out_point_stamped.pose.position.y , srv.response.out_point_stamped.pose.position.z);
-
-	    marker2.points.push_back(srv.response.out_point_stamped.pose.position);
-
-	    marker2.points.push_back(buffer);
-
-	   vis_pub.publish( marker2 );
-
-	   ros::Duration(5.0).sleep(); 
-	   ROS_INFO("StaticBorderManager running");
-	   */
-    	ROS_INFO("constructor");
     }
+
+
+    ProjectorInterfaceController::~ProjectorInterfaceController() {
+        if (model_) {
+            model_->detach(); 
+        }
+    }
+
+	void ProjectorInterfaceController::notify(){
+		std::for_each(views.begin(), views.end(), [](auto& view) {
+		    view->update();
+		});
+	}
 
 	void ProjectorInterfaceController::createBorderLayout(int rows, int cols, float sf_factor, bool adjacent, std_msgs::ColorRGBA status_booked, std_msgs::ColorRGBA status_free, std_msgs::ColorRGBA status_operator){
 		ROS_INFO("createBorderLayout");

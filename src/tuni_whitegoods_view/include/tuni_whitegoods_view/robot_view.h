@@ -1,11 +1,12 @@
 #ifndef RobotView_H
 #define RobotView_H
 
-#include <ros/ros.h>
+
+#include "tuni_whitegoods_view/view.h"
 #include <tuni_whitegoods_msgs/RobotViewElement.h>
 
 
-class RobotView
+class RobotView : public View
 {
 private:
   ros::NodeHandle nh_;
@@ -14,6 +15,10 @@ private:
   
 public:
     RobotView();
+
+    void init() override;
+    void update() override;
+    
     void createRvizMarker(const tuni_whitegoods_msgs::RobotViewElement::ConstPtr& msg);
 };
 

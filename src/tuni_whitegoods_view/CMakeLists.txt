@@ -1,9 +1,8 @@
 cmake_minimum_required(VERSION 3.0.2)
 project(tuni_whitegoods_view)
 
-## Compile as C++11, supported in ROS Kinetic and newer
-add_compile_options(-std=c++11)
-
+set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(catkin REQUIRED COMPONENTS
   roscpp
@@ -33,9 +32,7 @@ catkin_package(
                  tf2_ros
                  tf2_geometry_msgs
                  tuni_whitegoods_msgs
-  LIBRARIES project_view
-            robot_view
-            camera_view
+  LIBRARIES view
 )
 
 include_directories(
@@ -45,35 +42,21 @@ include_directories(
 )
 
 
-add_library(project_view
+add_library(view
   src/tuni_whitegoods_view/project_view.cpp
-)
-target_link_libraries(project_view
-  ${catkin_LIBRARIES} 
-  ${OpenCV_LIBS} 
-)
-add_dependencies(project_view ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-
-add_library(robot_view
   src/tuni_whitegoods_view/robot_view.cpp
-)
-target_link_libraries(robot_view
-  ${catkin_LIBRARIES} 
-)
-add_dependencies(robot_view ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-
-add_library(camera_view
   src/tuni_whitegoods_view/camera_view.cpp
+  src/tuni_whitegoods_view/view.cpp
 )
-target_link_libraries(camera_view
+target_link_libraries(view
   ${catkin_LIBRARIES} 
   ${OpenCV_LIBS} 
 )
-add_dependencies(camera_view ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(view ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 
 
-install(TARGETS project_view robot_view camera_view
+install(TARGETS view
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

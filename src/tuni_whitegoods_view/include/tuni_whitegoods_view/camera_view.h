@@ -1,15 +1,15 @@
 #ifndef CameraView_H
 #define CameraView_H
 
-#include <ros/ros.h>
-
 #include <opencv2/opencv.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
 
 #include <cv_bridge/cv_bridge.h>
 
-class CameraView
+#include "tuni_whitegoods_view/view.h"
+
+class CameraView : public View
 {
 private:
   ros::NodeHandle nh_;
@@ -21,6 +21,9 @@ private:
 
 public:
     CameraView();
+    void init() override;
+    void update() override;
+    
 };
 
 #endif

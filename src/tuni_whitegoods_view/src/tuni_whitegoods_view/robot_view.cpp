@@ -9,6 +9,13 @@ RobotView::RobotView()
   vis_pub = nh_.advertise<visualization_msgs::Marker>( "visualization_marker", 0 );
 }
 
+void RobotView::init() {
+
+}
+
+void RobotView::update() {
+	
+}
 
 void RobotView::createRvizMarker(const tuni_whitegoods_msgs::RobotViewElement::ConstPtr& msg)
 {
