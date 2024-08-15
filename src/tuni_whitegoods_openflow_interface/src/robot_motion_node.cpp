@@ -28,7 +28,7 @@ int main(int argc, char** argv)
       queue.callAvailable();
    }
 
-   ros::waitForShutdown();
+   ros::spin();
    
 
    return 0;

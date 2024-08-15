@@ -21,6 +21,7 @@ class TableTracker(object):
         self.arucoDict = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_6X6_250)
         self.arucoParams = cv2.aruco.DetectorParameters()
 
+        self.use_moving_table = rospy.get_param("is_moving")
         self.vis_pub = rospy.Publisher("visualization_marker", Marker, queue_size=10);
 
         self.zone_msg = DynamicArea()
@@ -34,7 +35,8 @@ class TableTracker(object):
    #subscriber that get the RGB image
     def callback_image(self, msg):
         rgb_img = CvBridge().imgmsg_to_cv2(msg, "bgr8")
-        self.find_dynamic_ui_transform(rgb_img)
+        if self.use_moving_table:
+        	self.find_dynamic_ui_transform(rgb_img)
 
     def create_input_message(self, coordinates):
 	    self.in_point_stamped.header.stamp = rospy.Time(0)

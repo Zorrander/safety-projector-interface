@@ -22,10 +22,8 @@ class HandTracker(object):
       #subscribe to the RGB image
       self.sub_camera = rospy.Subscriber("/rgb/image_raw", Image, self.callback_image)
       self.bridge = CvBridge()
-
+      self.pub_hands_poi = rospy.Publisher("/odin/internal/hand_detection", HandsState, queue_size=10)
       #publish the RGN coordinates
-      self.pub_hands_poi = rospy.Publisher("/hand_tracking/rgb/coordinates", HandsState, queue_size=10)
-      self.hand_detection_pub = rospy.Publisher("/odin/visualization/hand_detection", Image, queue_size=1)
       self.mode = mode
       self.maxHands = maxHands
       self.detectionCon = detectionCon
@@ -33,7 +31,7 @@ class HandTracker(object):
       self.trackCon = trackCon
       self.mpHands = mp.solutions.hands
       self.hands = self.mpHands.Hands(self.mode, self.maxHands,self.modelComplex, self.detectionCon, self.trackCon)
-      self.mpDraw = mp.solutions.drawing_utils
+      # self.mpDraw = mp.solutions.drawing_utils
       self.colors = [(255,0,255), (255,255,0)]
    
    #subscriber that get the RGB image
@@ -74,19 +72,14 @@ class HandTracker(object):
                lmlist.append([id,cx,cy])
                if draw and id == 12:
                   if handType=='Right':
-                     cv2.circle(cv_img,(cx,cy), 15 , (255,0,0), cv2.FILLED)
                      msg_hands.name.append("right")
                   if handType=='Left':
-                        cv2.circle(cv_img,(cx,cy), 15 , (0,0,255), cv2.FILLED)
                         msg_hands.name.append("left")
                   tmp_pos = Point()
                   tmp_pos.x = cx
                   tmp_pos.y = cy
                   msg_hands.position.append(tmp_pos)
-            self.pub_hands_poi.publish(msg_hands)
-      #publish RGB coordinates of the hand
-      self.hand_detection_pub.publish(self.bridge.cv2_to_imgmsg(cv_img, "passthrough"))
-      
+            self.pub_hands_poi.publish(msg_hands)      
 
       return lmlist
 

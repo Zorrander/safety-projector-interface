@@ -6,10 +6,6 @@
 
 #include "tuni_whitegoods_controller/projector_interface_controller.h"
 
-#include "tuni_whitegoods_msgs/TransformRobotCameraCoordinates.h"
-#include "tuni_whitegoods_msgs/Transform3DToPixel.h"
-#include "tuni_whitegoods_msgs/TransformPixelTo3D.h"
-#include "tuni_whitegoods_msgs/TransformPixelToProjection.h"
 
 #include <integration/VirtualButtonEventArray.h>
 
@@ -19,7 +15,7 @@
     {	
 
 		// Subscribe to hand detections
-        hand_pose_sub = nh_->subscribe("/hand_tracking/rgb/coordinates", 1, &ProjectorInterfaceController::handTrackerCallback, this);
+        hand_pose_sub = nh_->subscribe("/odin/internal/hand_detection", 1, &ProjectorInterfaceController::handTrackerCallback, this);
         // Subscribe to moving table detections
         moving_table_pose_sub = nh_->subscribe("/odin/projector_interface/moving_table", 1, &ProjectorInterfaceController::movingTableTrackerCallback, this);
         // Subscribe to object detections
@@ -28,38 +24,29 @@
         service_borders = nh->advertiseService("/execution/projector_interface/integration/services/list_static_border_status", &ProjectorInterfaceController::getBordersService, this); 
         pub_button_event = nh->advertise<integration::VirtualButtonEventArray> ("/execution/projector_interface/integration/topics/virtual_button_event_array", 1);
 
-        // Start clients for transform       
-        client_world_coordinates = nh_->serviceClient<tuni_whitegoods_msgs::TransformRobotCameraCoordinates>("transform_world_coordinates_frame");
-	    client_3D_to_pixel = nh_->serviceClient<tuni_whitegoods_msgs::Transform3DToPixel>("transform_3D_to_pixel");
-	    client_pixel_to_3D = nh_->serviceClient<tuni_whitegoods_msgs::TransformPixelTo3D>("transform_pixel_to_3D");
-	    client_projector_point = nh_->serviceClient<tuni_whitegoods_msgs::TransformPixelToProjection>("transform_point_to_project");
-	    client_reverse_projector_point = nh_->serviceClient<tuni_whitegoods_msgs::TransformPixelToProjection>("reverse_transform_point_to_project");
-
 	    // Initialize model 
-	    model_ = std::make_unique<ProjectorInterfaceModel>();
+	    model_ = std::make_unique<ProjectorInterfaceModel>(nh_);
 	    model_->add_zone("table");
 
-	    this->model_->attach(shared_from_this());
+	    projector_view = std::make_shared<Projector>();
+	    camera_view = std::make_shared<CameraView>(nh_);
+	    robot_view = std::make_shared<RobotView>();
 
 	    // Initialize views
-	    views.push_back(std::make_unique<Projector>());
-	    views.push_back(std::make_unique<CameraView>());  
-	    views.push_back(std::make_unique<RobotView>()); 
- 
+	    views.push_back(projector_view);
+	    views.push_back(camera_view);  
+	    views.push_back(robot_view); 
+ 		
+ 		ros::Duration(3.0).sleep();
+
 		std::for_each(views.begin(), views.end(), [](auto& view) {
 		    view->init();
 		});
 
-	    ROS_INFO("StaticBorderManager running");
+	    ROS_INFO("ProjectorInterfaceController running");
 
     }
 
-
-    ProjectorInterfaceController::~ProjectorInterfaceController() {
-        if (model_) {
-            model_->detach(); 
-        }
-    }
 
 	void ProjectorInterfaceController::notify(){
 		std::for_each(views.begin(), views.end(), [](auto& view) {
@@ -71,14 +58,17 @@
 		ROS_INFO("createBorderLayout");
 	}
 
-	void ProjectorInterfaceController::movingTableTrackerCallback(const tuni_whitegoods_msgs::HandsState& msg)
+	void ProjectorInterfaceController::movingTableTrackerCallback(const tuni_whitegoods_msgs::DynamicArea& msg)
     {
         ROS_INFO("movingTableTrackerCallback");
     }
 	
     void ProjectorInterfaceController::handTrackerCallback(const tuni_whitegoods_msgs::HandsState& msg)
     {
-    	ROS_INFO("handTrackerCallback");
+    	for(int i = 0; i < msg->name.size(); i++)
+        {
+        	model_->update_hand_pose(msg->name[i], msg->position[i]);
+        }
     	/*
         cv::Mat cv_viz_depth_hands = cv_viz_depth.clone();
         for(int i = 0; i < msg->name.size(); i++)

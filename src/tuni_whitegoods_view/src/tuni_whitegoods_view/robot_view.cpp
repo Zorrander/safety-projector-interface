@@ -7,6 +7,7 @@ RobotView::RobotView()
 {
   marker_sub = nh_.subscribe("/robot_frame_element", 1, &RobotView::createRvizMarker, this);
   vis_pub = nh_.advertise<visualization_msgs::Marker>( "visualization_marker", 0 );
+  ROS_INFO("RobotView running");
 }
 
 void RobotView::init() {

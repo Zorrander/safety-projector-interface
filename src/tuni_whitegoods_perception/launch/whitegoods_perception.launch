@@ -1,6 +1,4 @@
 <launch>
-	<rosparam file="$(find tuni_whitegoods_perception)/config/perception_params.yaml" /> 
-
 	<include file="$(find tuni_whitegoods_perception)/launch/kinect_simple.launch" />
 
     <include file="$(find tuni_whitegoods_perception)/launch/object_detection.launch"  />

@@ -12,6 +12,7 @@
 #include "tuni_whitegoods_projector_interface/model.h"
 
 #include "tuni_whitegoods_msgs/HandsState.h"
+#include "tuni_whitegoods_msgs/DynamicArea.h"
 
 #include <geometry_msgs/PolygonStamped.h>
 #include <std_msgs/ColorRGBA.h>
@@ -25,7 +26,11 @@ protected:
 
     ros::NodeHandle* nh_;
     
-    std::vector<std::unique_ptr<View>> views;
+    std::vector<std::shared_ptr<View>> views;
+
+    std::shared_ptr<View> projector_view, 
+                          camera_view,
+                          robot_view;
 
     std::unique_ptr<ProjectorInterfaceModel> model_;
 
@@ -36,22 +41,15 @@ protected:
 
     ros::ServiceServer service_borders;
 
-    ros::ServiceClient client_world_coordinates,
-                       client_3D_to_pixel,
-                       client_pixel_to_3D,
-                       client_projector_point,
-                       client_reverse_projector_point;
-
     bool border_crossed,
          button_pressed; 
 
 public:
     ProjectorInterfaceController(ros::NodeHandle *nh);
-    ~ProjectorInterfaceController() ;
     void notify();
     void createBorderLayout(int rows, int cols, float sf_factor, bool adjacent, std_msgs::ColorRGBA status_booked, std_msgs::ColorRGBA status_free, std_msgs::ColorRGBA status_operator);
 
-    void movingTableTrackerCallback(const tuni_whitegoods_msgs::HandsState& msg);
+    void movingTableTrackerCallback(const tuni_whitegoods_msgs::DynamicArea& msg);
     void handTrackerCallback(const tuni_whitegoods_msgs::HandsState& msg);
     
     void addBorder(std::string r_id, std::string z, int pos_row, int pos_col, geometry_msgs::PolygonStamped bord, std::string b_topic, std_msgs::ColorRGBA b_color, bool filling, int thic, ros::Duration life, bool track); 

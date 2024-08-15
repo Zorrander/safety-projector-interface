@@ -66,7 +66,7 @@ int main(int argc, char** argv)
    StaticBorderServer static_border_server(&nh, static_border_server_name, controller);
    SafetyBorderServer safety_border_server(&nh, safety_border_server_name, controller);
 
-   ros::waitForShutdown();
+   ros::spin();
    
    return 0;
 }

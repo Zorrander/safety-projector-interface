@@ -19,7 +19,7 @@ Projector::Projector()
                     5.92436261e-03, -2.16676604e+00,  1.75534894e+03, 
                     1.69314309e-05,  2.45548501e-04,  1.00000000e+00);
   sum_img.create(1080, 1920, CV_8UC3);
-
+  ROS_INFO("ProjectorView running");
 }
 
 Projector::~Projector()
