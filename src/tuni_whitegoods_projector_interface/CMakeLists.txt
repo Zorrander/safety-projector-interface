@@ -10,7 +10,6 @@ find_package(catkin REQUIRED COMPONENTS
   tuni_whitegoods_msgs
 )
 
-
 find_package(OpenCV 4 REQUIRED)
 
 catkin_package(
@@ -23,19 +22,24 @@ include_directories(
   include
   ${catkin_INCLUDE_DIRS}
   ${OpenCV_INCLUDE_DIRS}
-  tuni_whitegoods_msgs
 )
 
 
 add_library(hmi_model
   src/tuni_whitegoods_projector_interface/button.cpp
-  src/tuni_whitegoods_projector_interface/staticBorder.cpp
+  src/tuni_whitegoods_projector_interface/static_border.cpp
   src/tuni_whitegoods_projector_interface/instruction.cpp
   #src/tuni_whitegoods_projector_interface/ui.cpp
   src/tuni_whitegoods_projector_interface/model.cpp
   src/tuni_whitegoods_projector_interface/display_area.cpp
   src/tuni_whitegoods_projector_interface/hand.cpp
 )
+target_link_libraries(hmi_model
+  ${catkin_LIBRARIES} 
+  ${OpenCV_LIBS} 
+)
+add_dependencies(hmi_model ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
 
 
 install(TARGETS hmi_model

@@ -14,7 +14,7 @@ private:
 
 public:
     Hand(std::string name);
-    void set_positon(geometry_msgs::Point pixel_position, geometry_msgs::Point projected_position, geometry_msgs::Point robot_frame_position);
+    void set_position(geometry_msgs::Point pixel_position, geometry_msgs::Point projected_position, geometry_msgs::Point robot_frame_position);
 
 };
 

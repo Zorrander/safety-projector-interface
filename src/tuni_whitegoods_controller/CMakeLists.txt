@@ -4,23 +4,20 @@ project(tuni_whitegoods_controller)
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-## Find catkin macros and libraries
-## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
-## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
   roscpp
+  tuni_whitegoods_msgs
   tuni_whitegoods_projector_interface
   tuni_whitegoods_view
-  tuni_whitegoods_msgs
 )
 
 
 catkin_package(
   INCLUDE_DIRS include
   CATKIN_DEPENDS roscpp 
+                 tuni_whitegoods_msgs
                  tuni_whitegoods_projector_interface
                  tuni_whitegoods_view
-                 tuni_whitegoods_msgs
   LIBRARIES projector_interface_controller
 )
 
@@ -28,9 +25,6 @@ catkin_package(
 include_directories(
    include
    ${catkin_INCLUDE_DIRS}
-   tuni_whitegoods_projector_interface
-   tuni_whitegoods_view
-   tuni_whitegoods_msgs
 )
 
 ## Declare a C++ library

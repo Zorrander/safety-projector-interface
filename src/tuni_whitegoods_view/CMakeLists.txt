@@ -15,6 +15,7 @@ find_package(catkin REQUIRED COMPONENTS
   tf2_ros
   tf2_geometry_msgs
   tuni_whitegoods_msgs
+  tuni_whitegoods_projector_interface
 
 )
 
@@ -32,6 +33,7 @@ catkin_package(
                  tf2_ros
                  tf2_geometry_msgs
                  tuni_whitegoods_msgs
+                 tuni_whitegoods_projector_interface
   LIBRARIES view
 )
 
@@ -41,12 +43,11 @@ include_directories(
   ${OpenCV_INCLUDE_DIRS}
 )
 
-
 add_library(view
+  src/tuni_whitegoods_view/view.cpp
   src/tuni_whitegoods_view/project_view.cpp
   src/tuni_whitegoods_view/robot_view.cpp
   src/tuni_whitegoods_view/camera_view.cpp
-  src/tuni_whitegoods_view/view.cpp
 )
 target_link_libraries(view
   ${catkin_LIBRARIES} 

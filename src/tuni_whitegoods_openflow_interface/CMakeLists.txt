@@ -33,17 +33,15 @@ catkin_package(
 ## Your package locations should be listed before other locations
 include_directories(
   include
-  integration
   ${OpenCV_INCLUDE_DIRS}
   ${catkin_INCLUDE_DIRS}
-  tuni_whitegoods_controller
 )
 
 file(GLOB PROJECTOR_INTERFACE_SOURCES "src/projector_interface/*.cpp")
 file(GLOB ROBOT_INTERFACE_SOURCES "src/robot_interface/*.cpp")
 
 add_library(projector_interface ${PROJECTOR_INTERFACE_SOURCES})
-add_library(robot_interface ${ROBOT_INTERFACE_SOURCES})
+# add_library(robot_interface ${ROBOT_INTERFACE_SOURCES})
 
 
 add_executable(smart_interface_node src/smart_interface_node.cpp)
@@ -53,9 +51,9 @@ target_link_libraries(smart_interface_node
                       )
 add_dependencies(smart_interface_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
-add_executable(robot_motion_node src/robot_motion_node.cpp)
-target_link_libraries(robot_motion_node
-                        robot_interface 
-                        ${catkin_LIBRARIES}
-                      )
-add_dependencies(robot_motion_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+# add_executable(robot_motion_node src/robot_motion_node.cpp)
+# target_link_libraries(robot_motion_node
+#                        robot_interface 
+#                        ${catkin_LIBRARIES}
+#                      )
+# add_dependencies(robot_motion_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
