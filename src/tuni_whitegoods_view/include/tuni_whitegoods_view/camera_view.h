@@ -32,7 +32,7 @@ public:
     void updateButtons(std::vector<std::shared_ptr<Button>> buttons) override;
     void updateBorders(std::vector<std::shared_ptr<StaticBorder>> borders) override;
     void updateHands(std::vector<std::shared_ptr<Hand>> hands) override;
-    
+    void publish_image();
 };
 
 #endif

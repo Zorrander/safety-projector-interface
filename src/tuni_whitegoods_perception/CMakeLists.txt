@@ -15,21 +15,32 @@ find_package(catkin REQUIRED COMPONENTS
 find_package(OpenCV 4 REQUIRED)
 
 catkin_package(
+    INCLUDE_DIRS include
     CATKIN_DEPENDS roscpp
                    sensor_msgs
                    cv_bridge
                    tuni_whitegoods_msgs
+    LIBRARIES object_detection
   )
 
 
-include_directories(${catkin_INCLUDE_DIRS})
+include_directories(
+  include
+  ${catkin_INCLUDE_DIRS}
+  ${OpenCV_INCLUDE_DIRS}
+)
 
 
-#add_executable(object_detection_node src/object_detection_node.cpp)
-#target_link_libraries(object_detection_node
-#  ${catkin_LIBRARIES} 
-#  ${OpenCV_LIBS} 
-#)
+add_library(object_detection
+  src/tuni_whitegoods_perception/object_detection_node.cpp
+)
+target_link_libraries(object_detection
+  ${catkin_LIBRARIES} 
+  ${OpenCV_LIBS} 
+)
+add_dependencies(object_detection ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
+
 
 
 

@@ -19,6 +19,7 @@
     //book robot border
     void BookRobotStaticBorderServer::executeBookRobot(const BookRobotStaticBorderGoalConstPtr& goal)
     {
+        controller->robot_book_border(goal->id);
         bool success = true;
         sendFeedbackBookRobot(goal->request_id);
         if (as_book_robot.isPreemptRequested() || !ros::ok())

@@ -1,7 +1,7 @@
 <launch>
 	<include file="$(find tuni_whitegoods_perception)/launch/kinect_simple.launch" />
 
-    <include file="$(find tuni_whitegoods_perception)/launch/object_detection.launch"  />
+    <!--<include file="$(find tuni_whitegoods_perception)/launch/object_detection.launch"  />-->
     <include file="$(find tuni_whitegoods_perception)/launch/hand_tracking.launch" />
     <include file="$(find tuni_whitegoods_perception)/launch/moving_table_tracking.launch" />
 

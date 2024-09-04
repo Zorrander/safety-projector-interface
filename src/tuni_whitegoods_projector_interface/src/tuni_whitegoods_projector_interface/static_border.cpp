@@ -13,27 +13,27 @@ Class to create StaticBorder
 // thic : thickness of the border
 // life : lifetime of the border. Not implemented here because not really useful
 // track : if we track the border (monitor any crossing)
-StaticBorder::StaticBorder(std::string r_id, std::string z, int pos_row,
+StaticBorder::StaticBorder(std::string r_id, int pos_row,
                            int pos_col, geometry_msgs::PolygonStamped bord,
                            std::string b_topic, std_msgs::ColorRGBA b_color,
                            bool filling, int thic, ros::Duration life,
                            bool track) {
   request_id = r_id;
-  zone = z;
   position_row = pos_row;
   position_col = pos_col;
-  border_robot_space.header = bord.header;
-  border_robot_space.polygon.points.clear();
-  for (int i = 0; i < bord.polygon.points.size(); i++) {
-    border_robot_space.polygon.points.push_back(bord.polygon.points[i]);
-    ROS_INFO("pt: (%f, %f)", bord.polygon.points[i].x,
-             bord.polygon.points[i].y);
-  }
-  ROS_INFO("InitBorder robt x,y coordinates: (%f, %f), (%f, %f)",
-           border_robot_space.polygon.points[0].x,
-           border_robot_space.polygon.points[0].y,
-           border_robot_space.polygon.points[1].x,
-           border_robot_space.polygon.points[1].y);
+
+  topLeftCornerPt.x = bord.polygon.points[0].x;
+  topLeftCornerPt.y = bord.polygon.points[0].y;
+
+  topRightCornerPt.x = bord.polygon.points[1].x;
+  topRightCornerPt.y = bord.polygon.points[1].y;
+
+  bottomRightCornerPt.x = bord.polygon.points[2].x;
+  bottomRightCornerPt.y = bord.polygon.points[2].y;
+
+  bottomLeftCornerPt.x = bord.polygon.points[3].x;
+  bottomLeftCornerPt.y = bord.polygon.points[3].y;
+
   border_color = b_color;
   is_filled = filling;
   thickness = thic;
@@ -41,11 +41,13 @@ StaticBorder::StaticBorder(std::string r_id, std::string z, int pos_row,
   track_violations = track;
   left_hand_crossed = false;
   right_hand_crossed = false;
-  booked = false;
+  robot_booked = false;
+  operator_booked = false;
 }
 
 // draw a border
 cv::Mat StaticBorder::drawBorder() {
+
   sf_line_colored = cv::Mat::zeros(1080, 1920, CV_8UC3);
   cv::rectangle(sf_line_colored, top_left_cam_point, bottom_right_cam_point,
                 cv::Scalar(border_color.b * 255, border_color.g * 255,
@@ -55,20 +57,30 @@ cv::Mat StaticBorder::drawBorder() {
 }
 
 // change the color of the border
-void StaticBorder::changeBorderColor(std_msgs::ColorRGBA &col) {
+void StaticBorder::changeBorderColor(std_msgs::ColorRGBA col) {
   border_color.r = col.r;
   border_color.g = col.g;
   border_color.b = col.b;
   border_color.a = col.a;
 }
 
-// change the thickness oZf the border
 void StaticBorder::changeThickness(int thic) { thickness = thic; }
 
-// get the coloumn location of the border within the virtual layout
-void StaticBorder::book() { booked = true; }
-// get the row location of the border within the virtual layout
-void StaticBorder::release() { booked = false; }
+void StaticBorder::robot_book(std_msgs::ColorRGBA col) { 
+  robot_booked = true; 
+  changeBorderColor(col);
+}
+
+void StaticBorder::operator_book(std_msgs::ColorRGBA col) { 
+  operator_booked = true; 
+  changeBorderColor(col);
+}
+
+void StaticBorder::release(std_msgs::ColorRGBA col) { 
+  robot_booked = false; 
+  operator_booked = false; 
+  changeBorderColor(col);
+}
 
 // get the diagonal of the border. Used for hand detection if a hand's location
 // is less than diagonal*factor then it throws a violation
@@ -97,7 +109,32 @@ void StaticBorder::checkForInteractions(std::string name,
     right_hand_crossed = is_crossed;
   }
 
-  border_violated = (right_hand_crossed || left_hand_crossed) ? true : false;
+  border_violated = (right_hand_crossed || left_hand_crossed);
+
+  if (!border_violated){
+    thickness = 1;
+  } else {
+      if (robot_booked){
+        thickness = -1;
+      } else if (operator_booked){
+        thickness = 3;
+      } 
+  }
+}
+
+void StaticBorder::resetInteractions() {
+  left_hand_crossed = false;
+  right_hand_crossed = false;
+  border_violated = false;
+  thickness = 1;
+}
+
+bool StaticBorder::isAdjacent(std::shared_ptr<StaticBorder> sb) {
+  bool result = false;
+  if (sb->getCol() == position_col + 1 || sb->getCol() == position_col - 1){
+    result = true;
+  }
+  return result;
 }
 
 // return the zone where the border should be displayed

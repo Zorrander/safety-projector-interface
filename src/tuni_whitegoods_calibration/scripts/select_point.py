@@ -9,7 +9,7 @@ def select_point(event,x,y,flags,param):
     if event == cv2.EVENT_LBUTTONDBLCLK: # captures left button double-click
         print(x,y)
 
-img = cv2.imread('/home/odin3/rgb_img.png', cv2.IMREAD_UNCHANGED)
+img = cv2.imread('/home/odin-lms2/rgb_img.png', cv2.IMREAD_UNCHANGED)
 cv2.namedWindow('image')
 # bind select_point function to a window that will capture the mouse click
 cv2.setMouseCallback('image', select_point)

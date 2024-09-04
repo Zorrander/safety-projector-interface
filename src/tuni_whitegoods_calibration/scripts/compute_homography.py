@@ -6,12 +6,12 @@ import numpy as np
 if __name__ == '__main__' :
  
     # Read source image.
-    im_src = cv2.imread('/home/odin3/rgb_img.png', cv2.IMREAD_UNCHANGED)
+    im_src = cv2.imread('/home/odin-lms2/rgb_img.png', cv2.IMREAD_UNCHANGED)
     # Four corners of the book in source image
-    pts_src = np.array([[1224, 650], [1167, 598], [1101, 650],[1046, 598], [979, 650],[925, 598]])
+    pts_src = np.array([[612, 476], [652, 513], [703, 435],[740, 557]])
 
-    # Four corners of the book in destination image.
-    pts_dst = np.array([[300, 300],[400, 400],[525, 300],[625, 400],[750, 300],[850, 400]])
+    # Four corners of the book  destination image.
+    pts_dst = np.array([[450, 600],[500, 650],[550, 550],[600, 700]])
  
     # Calculate Homography
     h, status = cv2.findHomography(pts_src, pts_dst)

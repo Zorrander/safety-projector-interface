@@ -5,6 +5,8 @@
 
     <rosparam file="$(find tuni_whitegoods)/config/parameters.yaml" />
 
+    <include file="$(find tuni_whitegoods_transformations)/launch/transformation_servers.launch" />
+
     <include file="$(find tuni_whitegoods_openflow_interface)/launch/projector_interface.launch" />
 
     <group if="$(arg use_camera)">
@@ -14,9 +16,5 @@
     <group if="$(arg use_robot)">
     	<include file="$(find tuni_whitegoods_openflow_interface)/launch/robot_interface.launch" />
     </group>
-
- 	<include file="$(find tuni_whitegoods_transformations)/launch/transformation_servers.launch" />
-
- 	<include file="$(find tuni_whitegoods_calibration)/launch/tf.launch" /> 
 
 </launch>

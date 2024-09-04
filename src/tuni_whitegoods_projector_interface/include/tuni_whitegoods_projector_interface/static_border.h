@@ -25,7 +25,7 @@ using namespace std;
 
 class StaticBorder {
 public:
-  StaticBorder(std::string r_id, std::string z, int pos_row, int pos_col,
+  StaticBorder(std::string r_id, int pos_row, int pos_col,
                geometry_msgs::PolygonStamped bord, std::string b_topic,
                std_msgs::ColorRGBA b_color, bool filling, int thic,
                ros::Duration life, bool track);
@@ -40,28 +40,35 @@ public:
   bool getTracking();
   cv::Mat drawBorder();
   cv::Point getCenter();
-  void changeBorderColor(std_msgs::ColorRGBA &col);
+  void changeBorderColor(std_msgs::ColorRGBA col);
   void changeThickness(int thic);
   std_msgs::ColorRGBA getColor();
-  bool left_hand_crossed, right_hand_crossed, border_violated, booked, occupied;
-  void book();
-  void release();
-  geometry_msgs::PolygonStamped border_robot_space;
+  bool left_hand_crossed, right_hand_crossed, border_violated, robot_booked, operator_booked, occupied;
+  void robot_book(std_msgs::ColorRGBA col);
+  void operator_book(std_msgs::ColorRGBA col);
+  void release(std_msgs::ColorRGBA col);
+  bool isAdjacent(std::shared_ptr<StaticBorder> sb) ;
+  void resetInteractions();
+
   cv::Point top_left_cam_point;
   cv::Point bottom_right_cam_point;
-
+  geometry_msgs::Point topLeftCornerPt, topRightCornerPt, bottomLeftCornerPt, bottomRightCornerPt;
+  std_msgs::ColorRGBA border_color;
+  int thickness;
 private:
   cv::Mat border_mask;
   int position_row;
   int position_col;
 
-  std_msgs::ColorRGBA border_color;
+  
   bool is_filled;
-  int thickness;
+  
   ros::Duration lifetime;
   bool track_violations;
   std::string request_id;
   std::string zone;
   cv::Mat sf_line_colored;
+
+
 };
 #endif

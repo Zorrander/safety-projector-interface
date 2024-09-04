@@ -17,6 +17,9 @@
     // create a virtual button
     void ButtonProjectionServer::executeVirtualButtonsGoal(const SetVirtualButtonsProjectionGoalConstPtr& goal)
     {
+        controller->addButton(goal->request_id, goal->zone, goal->virtual_button.name, goal->virtual_button.text, 
+                              goal->virtual_button.button_color, goal->virtual_button.text_color, 
+                              goal->virtual_button.center, goal->virtual_button.radius);
         bool success = true;
         sendFeedBackButton(goal->request_id);
         if (as_.isPreemptRequested() || !ros::ok())

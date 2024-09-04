@@ -20,6 +20,7 @@
     //change button color
     void ButtonColorServer::executeChangeButtonColor(const SetVirtualButtonChangeColorGoalConstPtr& goal)
     {
+        controller->change_button_color(goal->resource_id, goal->button_color);
         bool success = true;
         sendFeedBackChangeButton(goal->request_id);
         if (as_change.isPreemptRequested() || !ros::ok())

@@ -17,24 +17,22 @@ if __name__ == "__main__":
 
 	cv2.namedWindow("window", cv2.WND_PROP_FULLSCREEN)
 	#change second parameter to fit your screen resolution
-	cv2.moveWindow("window", 2560, 0)
+	cv2.moveWindow("window", 1920, 0)
 	cv2.setWindowProperty("window", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
 
-	size = 100
+	size = 50
 	aruc_id = 0
 
-	for y in range(300,800,200):
-		for x in range(300,1500,225):
-			print(x, y)
 
-			
-	for y in range(300,800,200):
-		for x in range(300,1500,225):
+	for y in range(300,800,100):
+		for x in range(300,1500,100):
+			print(x, y)
 			tag = np.zeros((size, size, 1), dtype="uint8")
 			cv2.aruco.generateImageMarker(aruco_dict, aruc_id, size, tag, 1)
 			testim[y:y+size, x:x+size] = tag
+			corner_coordinates = f"({x}, {y})"
+			cv2.putText(testim, corner_coordinates, (x + 10, y - 30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1)  # Black text
 			aruc_id+=1
-
 	cv2.imshow("window", testim)
 	cv2.waitKey(0) 
 	

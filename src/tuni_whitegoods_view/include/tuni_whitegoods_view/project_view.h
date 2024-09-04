@@ -14,12 +14,10 @@
 class Projector : public View
 {
 private:
-  ros::NodeHandle nh_;
   cv_bridge::CvImagePtr cv_ptr;
-  ros::Subscriber transform_sub;
   int shift;
-  cv::Matx33d hom;
-  cv::Mat sum_img;
+  cv::Matx33d border_hom, button_hom;
+  cv::Mat sum_img, button_img, border_img;
 
 public:
     Projector();
@@ -29,8 +27,6 @@ public:
     void updateButtons(std::vector<std::shared_ptr<Button>> buttons) override;
     void updateBorders(std::vector<std::shared_ptr<StaticBorder>> borders) override;
     void updateHands(std::vector<std::shared_ptr<Hand>> hands) override;
-    
-    void transformProject(const tuni_whitegoods_msgs::Projection::ConstPtr& msg);
 };
 
 #endif

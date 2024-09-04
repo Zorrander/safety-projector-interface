@@ -20,7 +20,7 @@ class RGBImageSaver:
             rospy.logerr(f"CvBridge Error: {e}")
 
     def save_rgb_image(self, rgb_image):
-        cv2.imwrite('/home/odin3/rgb_img.png', rgb_image)
+        cv2.imwrite('/home/odin-lms2/rgb_img.png', rgb_image)
         rospy.loginfo("rgb_image saved")
 
 def main():

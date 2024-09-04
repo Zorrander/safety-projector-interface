@@ -20,7 +20,7 @@
       //release operator border
       void ReleaseOperatorStaticBorderServer::executeReleaseOperator(const ReleaseOperatorStaticBorderGoalConstPtr &goal)
       {
-
+         controller->operator_release_border(goal->id, goal->status);
          bool success = true;
          sendFeedbackReleaseOperator(goal->request_id);
          if (as_release_operator.isPreemptRequested() || !ros::ok())

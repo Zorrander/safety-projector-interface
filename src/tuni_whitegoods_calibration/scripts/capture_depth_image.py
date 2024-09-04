@@ -20,7 +20,7 @@ class DepthImageSaver:
             rospy.logerr(f"CvBridge Error: {e}")
 
     def save_depth_image(self, depth_image):
-        cv2.imwrite('/home/odin3/depthmap.png', depth_image)
+        cv2.imwrite('/home/odin-lms2/depthmap.png', depth_image)
         rospy.loginfo("Depth image saved")
 
 def main():

@@ -17,11 +17,11 @@ ProjectorInterfaceController::ProjectorInterfaceController(ros::NodeHandle *nh)
 
   // Subscribe to hand detections
   hand_pose_sub =
-      nh_->subscribe("/odin/internal/hand_detection", 1,
+      nh_->subscribe("/odin/internal/hand_detection", 50,
                      &ProjectorInterfaceController::handTrackerCallback, this);
   // Subscribe to moving table detections
   moving_table_pose_sub = nh_->subscribe(
-      "/odin/projector_interface/moving_table", 1,
+      "/odin/projector_interface/moving_table", 10,
       &ProjectorInterfaceController::movingTableTrackerCallback, this);
   // Subscribe to object detections
 
@@ -37,11 +37,14 @@ ProjectorInterfaceController::ProjectorInterfaceController(ros::NodeHandle *nh)
 
   // Initialize model
   model_ = std::make_unique<ProjectorInterfaceModel>(nh_);
-  model_->add_zone("table");
+  model_->add_zone("shelf");
   // Subscribe to model updates
   model_update_sub =
-      nh_->subscribe("/odin/internal/model_changed", 1,
+      nh_->subscribe("/odin/internal/model_changed", 50,
                      &ProjectorInterfaceController::modelUpdateCallback, this);
+
+  rgb_sub = nh_->subscribe("/rgb/image_raw", 20, &ProjectorInterfaceController::rgbImageCallback, this);
+  detector = std::make_shared<ObjectDetector>();
 
   projector_view = std::make_shared<Projector>();
   camera_view = std::make_shared<CameraView>(nh_);
@@ -54,9 +57,17 @@ ProjectorInterfaceController::ProjectorInterfaceController(ros::NodeHandle *nh)
 
   ros::Duration(3.0).sleep();
 
-  std::for_each(views.begin(), views.end(), [](auto &view) { view->init(); });
+  for (auto &view : views) {
+    view->init();
+  }
 
   ROS_INFO("ProjectorInterfaceController running");
+}
+
+
+void ProjectorInterfaceController::rgbImageCallback(const sensor_msgs::ImageConstPtr& rgb_msg) {
+  cv_bridge::CvImagePtr cv_bridge_rgb = cv_bridge::toCvCopy(rgb_msg, sensor_msgs::image_encodings::BGR8);
+  cv_rgb = cv_bridge_rgb->image.clone();  
 }
 
 void ProjectorInterfaceController::createBorderLayout(
@@ -64,6 +75,7 @@ void ProjectorInterfaceController::createBorderLayout(
     std_msgs::ColorRGBA status_booked, std_msgs::ColorRGBA status_free,
     std_msgs::ColorRGBA status_operator) {
   ROS_INFO("createBorderLayout");
+  model_->create_border_layout(rows, cols, sf_factor, adjacent, status_booked, status_free, status_operator);
 }
 
 void ProjectorInterfaceController::movingTableTrackerCallback(
@@ -72,19 +84,14 @@ void ProjectorInterfaceController::movingTableTrackerCallback(
 }
 
 void ProjectorInterfaceController::handTrackerCallback(
-    const tuni_whitegoods_msgs::HandsState &msg) {
-  if (msg.name.size() > 1) {
-    ROS_ERROR("Too many hands were detected. Make sure only one operator is "
-              "interacting with the robot.");
-  } else {
+  const tuni_whitegoods_msgs::HandsState &msg) {
     for (int i = 0; i < msg.name.size(); i++) {
       model_->updateHandPose(msg.name[i], msg.position[i]);
     }
-  }
 }
 
 void ProjectorInterfaceController::modelUpdateCallback(
-    const std_msgs::Empty &msg) {
+  const std_msgs::Empty &msg) {
 
   for (auto &view : views) {
     view->updateButtons(model_->getButtons());
@@ -93,167 +100,19 @@ void ProjectorInterfaceController::modelUpdateCallback(
   }
 }
 
-/*
+void ProjectorInterfaceController::addButton(std::string request_id, std::string zone, std::string name, std::string text, 
+                                             std_msgs::ColorRGBA button_color, std_msgs::ColorRGBA text_color, 
+                                             geometry_msgs::Pose center, float radius) {
 
+  model_->addButton(request_id, zone, name, text, 
+                    button_color, text_color, 
+                    center, radius);
 
-              if (border->right_hand_crossed || border->left_hand_crossed ==
-true){ border->changeThickness(-1);
+}
 
-                 //if (border->occupied){
-                 //   border->changeBorderColor(stat_operator);
-                 //}
-                 //else if (border->booked){
-                  //  border->changeThickness(-1);
-                    //Communicate with openflow
-                    //pub_border_violation.publish(msg_border);
-                    //pub_border_polygon.publish(bord);
-                    //pub_pose_violation.publish(pose_location);
-                 //} else {
-                 //   border->changeThickness(2);
-                 //}
-
-              }
-
-              else {
-                 border->changeThickness(1);
-                 if (border->booked){
-                    border->changeBorderColor(stat_booked);
-                 }
-                 else {
-                    border->changeBorderColor(stat_free);
-                 }
-              }
-              publishBorder();
-
-           }
-
-
-           for (auto& btn : buttons){
-              geometry_msgs::Point ros_btn_center = btn.center;
-              const cv::Point btn_center(static_cast<int>(ros_btn_center.x),
-static_cast<int>(ros_btn_center.y));
-              // ROS_INFO("Button center x,y coordinates: (%i, %i)",
-btn_center.x, btn_center.y); for (const auto& hand_point : msg->pts)
-              {
-                 if (handType == "Left") {
-                    cv::Point
-left_hand_position(static_cast<int>(hand_point.x),
-static_cast<int>(hand_point.y));
-
-                    float distance = cv::norm(left_hand_position -
-btn_center); if (distance < 10)
-                    {
-                       ROS_INFO("distance: (%f)", distance);
-                       ROS_INFO("onHover");
-                       // Hand violation detected
-                       button_pressed = true;
-                       btn.left_hand_hover = true;
-                       // No need to check further once a violation is
-detected break;
-                    }
-                 }
-
-                 else if (handType == "Right") {
-                    cv::Point
-right_hand_position(static_cast<int>(hand_point.x),
-static_cast<int>(hand_point.y));
-
-                    float distance = cv::norm(right_hand_position -
-btn_center); if (distance < 10)
-                    {
-                       ROS_INFO("distance: (%f)", distance);
-                       ROS_INFO("onHover");
-                       // Hand violation detected
-                       button_pressed = true;
-                       btn.right_hand_hover = true;
-                       // No need to check further once a violation is
-detected break;
-                    }
-
-                 }
-
-                 if (button_pressed){
-                    // No need to check further once a violation is detected
-                    break;
-                 }
-
-              }
-
-              if (button_pressed == false){
-                 if (handType == "Left"){
-                    btn.left_hand_hover = false;
-                 }
-                 else if (handType == "Right"){
-                    btn.right_hand_hover = false;
-                 }
-              }
-
-              if (btn.right_hand_hover || btn.left_hand_hover == true){
-
-                 integration::SetVirtualButtonChangeColorGoal color_goal;
-                 color_goal.request_id = "go_button_color";
-                 color_goal.resource_id = "40";
-                 color_goal.button_color.r = 1.0;
-                 color_goal.button_color.g = 1.0;
-                 color_goal.button_color.b = 0.0;
-                 color_goal.button_color.a = 0.0;
-                 // ROS_INFO("new color (r: %f, g: %f, b: %f)",
-color_goal.button_color.r, color_goal.button_color.g,
-color_goal.button_color.b); client_button_color.sendGoal(color_goal);
-
-                 integration::VirtualButtonEvent btn_event;
-                 btn_event.virtual_button_id = btn.id;
-                 btn_event.event_type = btn_event.PRESSED;
-
-                 integration::VirtualButtonEventArray btn_events;
-                 btn_events.virtual_button_events.push_back(btn_event);
-
-                 pub_event.publish(btn_events);
-
-              }
-
-              else {
-
-                    integration::SetVirtualButtonChangeColorGoal color_goal;
-                    color_goal.request_id = "go_button_color";
-                    color_goal.resource_id = "40";
-                    color_goal.button_color.r = 0.0;
-                    color_goal.button_color.g = 0.0;
-                    color_goal.button_color.b = 1.0;
-                    color_goal.button_color.a = 0.0;
-                    client_button_color.sendGoal(color_goal);
-                 }
-           }
-
-
-
-           // Would be better to iterate through every border
-           for (const auto& booked_border : borders_booked)
-           {
-              if (booked_border.status == 1)
-              {
-                 const cv::Point
-border_center(static_cast<int>(booked_border.center.x),
-static_cast<int>(booked_border.center.y)); for (const auto& hand_point :
-msg->pts)
-                 {
-                    const cv::Point
-hand_position(static_cast<int>(hand_point.x), static_cast<int>(hand_point.y));
-                    const float distance = cv::norm(hand_position -
-border_center);
-
-                    if (distance < booked_border.safety_distance*0.75)
-                    {
-                       // Hand violation detected
-                       list_hand_violation.push_back(booked_border);
-                       // No need to check further once a violation is
-detected break;
-                    }
-                 }
-              }
-
-*/
-
+void ProjectorInterfaceController::change_button_color(std::string resource_id, std_msgs::ColorRGBA button_color){
+  model_->change_button_color(resource_id, button_color);
+}
 
 void ProjectorInterfaceController::addBorder(std::string r_id, std::string z,
                                              int pos_row, int pos_col,
@@ -265,385 +124,68 @@ void ProjectorInterfaceController::addBorder(std::string r_id, std::string z,
 
   std::cout << "StaticBorderManager::addBorder\n";
 
-  /*
-   geometry_msgs::Point topLeftCornerPt;
-   topLeftCornerPt.x = bord.polygon.points[0].x;
-   topLeftCornerPt.y = bord.polygon.points[0].y;
+  model_->addBorder(r_id, z,
+                   pos_row, pos_col,
+                   bord, b_topic,
+                   b_color, filling, thic,
+                   life, track);
 
-   geometry_msgs::Point bottomRightCornerPt;
-   bottomRightCornerPt.x = bord.polygon.points[1].x;
-   bottomRightCornerPt.y = bord.polygon.points[1].y;
-
-  // Also compute camera coordinates for detections
-
-  // TOP LEFT
-  // Convert to 3D camera coordinates frame
-  geometry_msgs::PoseStamped in_point_stamped;
-  tuni_whitegoods_msgs::TransformRobotCameraCoordinates srv;
-  tuni_whitegoods_msgs::Transform3DToPixel srv_3D_to_pixel;
-
-  in_point_stamped.header.frame_id = "base";
-  in_point_stamped.header.stamp = ros::Time(0);
-  in_point_stamped.pose.position.x = topLeftCornerPt.x;
-  in_point_stamped.pose.position.y = topLeftCornerPt.y;
-
-  srv.request.in_point_stamped = in_point_stamped;
-  srv.request.target_frame = "rgb_camera_link";
-  client.call(srv);
-
-  // Project to 2D image coordinates
-  srv_3D_to_pixel.request.x = srv.response.out_point_stamped.pose.position.x;
-  srv_3D_to_pixel.request.y = srv.response.out_point_stamped.pose.position.y;
-  srv_3D_to_pixel.request.z = 1.311792;
-  client_3D_to_pixel.call(srv_3D_to_pixel);
-
- sb->top_left_cam_point.x = srv_3D_to_pixel.response.u;
- sb->top_left_cam_point.y = srv_3D_to_pixel.response.v;
-
- // BOTTOM RIGHT
- in_point_stamped.header.frame_id = "base";
- in_point_stamped.header.stamp = ros::Time(0);
- in_point_stamped.pose.position.x = bottomRightCornerPt.x;
- in_point_stamped.pose.position.y = bottomRightCornerPt.y;
-
- srv.request.in_point_stamped = in_point_stamped;
- srv.request.target_frame = "rgb_camera_link";
- client.call(srv);
-
- srv_3D_to_pixel.request.x = srv.response.out_point_stamped.pose.position.x;
- srv_3D_to_pixel.request.y = srv.response.out_point_stamped.pose.position.y;
- srv_3D_to_pixel.request.z = 1.311792;
- client_3D_to_pixel.call(srv_3D_to_pixel);
-
- sb->bottom_right_cam_point.x = srv_3D_to_pixel.response.u;
- sb->bottom_right_cam_point.y = srv_3D_to_pixel.response.v;
-
-
- // Add border to the list of borders
- //borders.push_back(sb);
-
-// ///////////  model->addBorder()
-
-*/
 }
 
 // Book a robot border by its id
-void ProjectorInterfaceController::bookBorderRobot(std::string id) {
+void ProjectorInterfaceController::robot_book_border(std::string id) {
   ROS_INFO("BOOKING BORDER %s", id.c_str());
-
-  /*
-  int tmp_col;
-  int tmp_row;
-
-  for(int i = 0; i < borders.size(); i++)
-  {
-     if(borders[i]->getId().compare(id) == 0)
-     {
-        borders[i]->book();
-        borders[i]->changeBorderColor(stat_booked);
-     }
-  }
-  //if we also book the adjacent border (if the robot is big enough to cross
-  some of them while moving - to avoid trigger a violation of border on empty
-  ones) if(adj)
-  {
-     std::vector<std::string> adj_bdrs = getAdjacentBorders(tmp_row,tmp_col);
-     //book borders
-     for(int i = 0; i < borders_booked.size(); i++)
-     {
-        for(std::string id_adj : adj_bdrs)
-        {
-           if(id_adj.compare(borders_booked[i].id) == 0)
-           {
-              borders_booked[i].status = 1;
-           }
-        }
-     }
-     //change borders color
-     for(int i = 0; i < borders.size(); i++)
-     {
-        for(std::string id_adj : adj_bdrs)
-        {
-           if(id_adj.compare(borders[i]->getId()) == 0)
-           {
-              borders[i]->changeBorderColor(stat_booked);
-           }
-        }
-     }
-  }
-  for(BorderContentStatus bdr : borders_status)
-  {
-     ROS_INFO("Border %s --> %d", bdr.id.c_str(), bdr.status);
-  }
-
-  */
+  model_->robot_book_border(id);
 }
 
 // Book a border for the operator. It signals the operator that an object can be
 // picked by using a different color.
-void ProjectorInterfaceController::bookBorderOperator(std::string id) {
+void ProjectorInterfaceController::operator_book_border(std::string id) {
   ROS_INFO("bookBorderOperator");
-  /*
-for(int i = 0; i < borders_booked.size(); i++)
-{
-if(borders_booked[i].id.compare(id) == 0)
-{
-   borders_booked[i].status = 2;
-}
-}
-for(int i = 0; i < borders.size(); i++)
-{
-if(borders[i]->getId().compare(id) == 0)
-{
-   borders[i]->changeBorderColor(stat_operator);
-}
-}
-
-*/
+  model_->operator_book_border(id);
 }
 
 // release a border booked by the robot
-void ProjectorInterfaceController::releaseRobotBorder(std::string id,
+void ProjectorInterfaceController::robot_release_border(std::string id,
                                                       int status) {
 
   // release booking and change color
   ROS_INFO("RELEASING BORDER %s -> %i", id.c_str(), status);
-  /*
-  if(status == 0)
-  {
-     for(int i = 0; i < borders.size(); i++)
-     {
-        if(borders[i]->getId().compare(id) == 0)
-        {
-           borders[i]->release();
-           borders[i]->changeBorderColor(stat_free);
-        }
-     }
-  }
-  else
-  {
-     for(int i = 0; i < borders_booked.size(); i++)
-     {
-        for(int j = 0; j < borders.size(); j++)
-        {
-           if(borders[j]->getId().compare(borders_booked[i].id) == 0)
-           {
-              if(borders_booked[i].status == 1)
-              {
-                 borders[j]->release();
-                 borders[j]->changeBorderColor(stat_free);
-              }
+  model_->robot_release_border(id, status);
 
-           }
-        }
-     }
-  }
-  */
 }
 
 // release a booking made by the operator
-void ProjectorInterfaceController::releaseOperatorBorder(std::string id,
+void ProjectorInterfaceController::operator_release_border(std::string id,
                                                          int status) {
   ROS_INFO("releaseOperatorBorder");
-
-  /*
-//release booking and change color
-if(status == 0)
-{
-for(int i = 0; i < borders_booked.size(); i++)
-{
-  if(borders_booked[i].id.compare(id) == 0)
-  {
-     borders_booked[i].status = 0;
-  }
-}
-for(int i = 0; i < borders.size(); i++)
-{
-  if(borders[i]->getId().compare(id) == 0)
-  {
-     borders[i]->changeBorderColor(stat_free);
-  }
-}
-}
-else
-{
-for(int i = 0; i < borders_booked.size(); i++)
-{
-  for(int j = 0; j < borders.size(); j++)
-  {
-     if(borders[j]->getId().compare(borders_booked[i].id) == 0)
-     {
-        if(borders_booked[i].status == 2)
-        {
-           borders[j]->changeBorderColor(stat_free);
-        }
-     }
-  }
-}
+  model_->operator_release_border(id, status);
 }
 
-*/
-}
 
-/**
- * Get the IDs of adjacent borders based on row and column indices.
- *
- * @param row The row index.
- * @param col The column index.
- * @return A vector of IDs of adjacent borders.
- */
-std::vector<std::string>
-ProjectorInterfaceController::getAdjacentBorders(int row, int col) {
-  ROS_INFO("getAdjacentBorders");
-
-  std::vector<std::string> list_adj;
-  /*
-  // Check if single row or multiple rows
-  for (const BorderContentStatus& bdr : borders_booked)
-  {
-     if ((s_rows == 1 && (bdr.col == col - 1 || bdr.col == col + 1)) ||
-         (s_rows > 1 && (bdr.col == col - 1 || bdr.col == col + 1 ||
-                        bdr.row == row - 1 || bdr.row == row + 1)))
-     {
-        list_adj.push_back(bdr.id);
-     }
-  }
-  */
-  return list_adj;
-}
 
 bool ProjectorInterfaceController::getBordersService(
     integration::ListStaticBordersStatus::Request &req,
     integration::ListStaticBordersStatus::Response &res) {
   ROS_INFO("Checking border status...");
 
-  /*
-  res.status_borders.clear();
-
-  // Populate the response with border statuses
-  for (const auto& border_status : borders_status)
+  for (auto &border: model_->getBorders())
   {
-     integration::StaticBorderStatus sbs;
-     sbs.id = border_status.id;
-     sbs.status = border_status.status;
-     res.status_borders.push_back(sbs);
-     ROS_INFO("Border %s --> %d", sbs.id.c_str(), sbs.status);
-  }
+    integration::StaticBorderStatus sbs;
+    sbs.id = border->getId();
+    cv::Rect roi_rect(border->top_left_cam_point, border->bottom_right_cam_point);
 
+    if (detector->scan(cv_rgb, roi_rect) || border->operator_booked) {
+      sbs.status = 2;  
+    } else if (border->robot_booked){
+      sbs.status = 1;  
+    } else {
+      sbs.status = 0;  
+    }
+
+    res.status_borders.push_back(sbs);
+  }
   ROS_INFO("Border status check complete.");
-  */
   return true;
 }
 
-//   void ProjectorInterfaceController::callback_button(const
-//   unity_msgs::ElementUI::ConstPtr &msg) {
-//       cout << "msg.zone " << msg->zone << endl;
-/*
-if (msg->zone.empty()) {
-    process_button(msg->center.position.x, msg->center.position.y, *msg);
-} else if (msg->zone == "moving_table") {
-    double world_center_x = (moving_table.tl.x + moving_table.bl.x) *
-msg->center.position.x; double world_center_y = (moving_table.tl.y +
-moving_table.tr.y) * msg->center.position.y; process_button(world_center_x,
-world_center_y, *msg);
-}
-object_detection_pub.publish(bridge_interface.cv2_to_imgmsg(cv_image, "bgr8"));
-*/
-//  }
-
-//  void process_button(double center_x, double center_y, const
-//  unity_msgs::ElementUI &msg) {
-//      cout << "process_button " << center_x << ", " << center_y << endl;
-/*
-// Create Rviz marker
-visualization_msgs::Marker marker;
-marker.header.frame_id = "base";
-marker.header.stamp = ros::Time::now();
-marker.id = msg.id;
-marker.type = visualization_msgs::Marker::CYLINDER;
-marker.action = visualization_msgs::Marker::ADD;
-marker.pose.position.x = center_x;
-marker.pose.position.y = center_y;
-// Set the dimensions of the cylinder
-marker.scale.x = msg.radius / 500;
-marker.scale.y = msg.radius / 500;
-marker.scale.z = 0.01;  // Height of the cylinder
-// Set the color of the cylinder
-marker.color.r = msg.button_color.r;
-marker.color.g = msg.button_color.g;
-marker.color.b = msg.button_color.b;
-marker.color.a = 1.0;
-vis_pub.publish(marker);
-
-// Create the input pose stamped message
-geometry_msgs::PoseStamped in_point_stamped;
-in_point_stamped.header.frame_id = "base";
-in_point_stamped.header.stamp = ros::Time(0);
-in_point_stamped.pose.position.x = center_x;
-in_point_stamped.pose.position.y = center_y;
-
-// Perform the transformation
-tuni_whitegoods_msgs::srv::TransformRobotCameraCoordinates srv;
-srv.request.in_point_stamped = in_point_stamped;
-srv.request.target_frame = "rgb_camera_link";
-
-if (transform_world_coordinates.call(srv)) {
-    auto cam_coordinates = srv.response.out_point_stamped.pose.position;
-
-    // Project to 2D image coordinates
-    tuni_whitegoods_msgs::srv::Transform3DToPixel srv_pixel;
-    srv_pixel.request.x = cam_coordinates.x;
-    srv_pixel.request.y = cam_coordinates.y;
-    srv_pixel.request.z = cam_coordinates.z;
-
-    if (project_3D_to_pixel.call(srv_pixel)) {
-        int center_cam_point_x = srv_pixel.response.u;
-        int center_cam_point_y = srv_pixel.response.v;
-        circle(cv_image, Point(center_cam_point_x, center_cam_point_y),
-int(msg.radius), Scalar(255, 255, 255), 2);
-
-        Button b(msg.id, msg.zone, msg.name, msg.description, msg.text,
-msg.button_color, msg.text_color, Point(center_cam_point_x, center_cam_point_y),
-msg.radius, msg.hidden);
-
-        bool add_success = false;
-        if (_list_interface.empty()) {
-            vector<Button> tmp;
-            tmp.push_back(b);
-            InterfaceUI ui("default", msg.zone, "default_interface", "interface
-by default", tmp); _list_interface.push_back(ui); add_success = true; } else {
-            for (auto &i : _list_interface) {
-                cout << i.get_zone() << endl;
-                cout << b.get_zone() << endl;
-                if (i.get_zone() == b.get_zone()) {
-                    i.add_button(b);
-                    add_success = true;
-                }
-            }
-        }
-        if (!add_success) {
-            vector<Button> tmp;
-            tmp.push_back(b);
-            uuid_t uuid;
-            uuid_generate(uuid);
-            char uuid_str[37];
-            uuid_unparse(uuid, uuid_str);
-            InterfaceUI ui(uuid_str, msg.zone, "default_interface", "interface
-by default", true, tmp); _list_interface.push_back(ui);
-        }
-    }
-}
-*/
-// }
-
-// void ProjectorInterfaceController::callback_button_color(const
-// unity_msgs::ElementUI::ConstPtr &msg) {
-//	ROS_INFO("callback_button_color");
-/*
-for (auto &i : _list_interface) {
-    if (!i.get_hidden()) {
-        i.modify_button_color(*msg);
-    }
-}
-*/
-// }

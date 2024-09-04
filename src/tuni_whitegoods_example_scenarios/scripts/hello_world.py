@@ -38,11 +38,11 @@ def main():
 
     goal = SetVirtualButtonsProjectionGoal()
     goal.request_id = "go_button"
-    goal.zone = "moving_table"
+    goal.zone = "shelf"
     goal.virtual_button = VirtualButtonReference()
     goal.virtual_button.id = "40";
-    goal.virtual_button.zone = "moving_table";
-    goal.virtual_button.name = "table";
+    goal.virtual_button.zone = "shelf";
+    goal.virtual_button.name = "go";
     goal.virtual_button.description = "button go"
     goal.virtual_button.text = "GO"
     goal.virtual_button.button_color.r = 0.0
@@ -53,10 +53,12 @@ def main():
     goal.virtual_button.text_color.g = 1.0
     goal.virtual_button.text_color.b = 1.0
     goal.virtual_button.text_color.a = 1.0
-    goal.virtual_button.center.position.x = 0.5
-    goal.virtual_button.center.position.y = 0.45
+    goal.virtual_button.center.position.x = 0.5211452915758708
+    goal.virtual_button.center.position.y = 1.4295558686987273
+    goal.virtual_button.center.position.z = 0.3843636711544014
     goal.virtual_button.radius = 35.0
     goal.virtual_button.hidden = False
+
 
     # Sends the goal to the action server.
     project_client.send_goal(goal)

@@ -3,14 +3,13 @@
 
 #include "tuni_whitegoods_view/view.h"
 
-#include <tuni_whitegoods_msgs/RobotViewElement.h>
 
 class RobotView : public View {
 private:
   ros::NodeHandle nh_;
   ros::Subscriber marker_sub;
   ros::Publisher vis_pub;
-
+  int marker_counter;
 public:
   RobotView();
 
@@ -20,7 +19,7 @@ public:
   void updateHands(std::vector<std::shared_ptr<Hand>> hands) override;
 
   void
-  createRvizMarker(const tuni_whitegoods_msgs::RobotViewElement::ConstPtr &msg);
+  createRvizMarker(std::vector<geometry_msgs::Point> points, int id = 1);
 };
 
 #endif

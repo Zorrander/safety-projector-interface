@@ -9,6 +9,7 @@ find_package(catkin REQUIRED COMPONENTS
   tuni_whitegoods_msgs
   tuni_whitegoods_projector_interface
   tuni_whitegoods_view
+  tuni_whitegoods_perception
 )
 
 
@@ -18,6 +19,7 @@ catkin_package(
                  tuni_whitegoods_msgs
                  tuni_whitegoods_projector_interface
                  tuni_whitegoods_view
+                 tuni_whitegoods_perception
   LIBRARIES projector_interface_controller
 )
 

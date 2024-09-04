@@ -17,29 +17,31 @@ public:
     {
         world_coordinates_service_ = nh_->advertiseService("transform_world_coordinates_frame", &TransformRobotPointServer::transformWorldPointCallback, this);
 
-        try {
-            geometry_msgs::TransformStamped transformStamped = tfBuffer.lookupTransform("base", "rgb_camera_link", ros::Time(0));
-            ROS_INFO("Got transform: translation (%.2f, %.2f, %.2f), rotation (%.2f, %.2f, %.2f, %.2f)",
-                     transformStamped.transform.translation.x,
-                     transformStamped.transform.translation.y,
-                     transformStamped.transform.translation.z,
-                     transformStamped.transform.rotation.x,
-                     transformStamped.transform.rotation.y,
-                     transformStamped.transform.rotation.z,
-                     transformStamped.transform.rotation.w);
-        } catch (tf2::TransformException &ex) {
-            ROS_WARN("TF2 Transform Exception: %s", ex.what());
-        }
     }
 
 private:
     bool transformWorldPointCallback(tuni_whitegoods_msgs::TransformRobotCameraCoordinates::Request &req, 
                                      tuni_whitegoods_msgs::TransformRobotCameraCoordinates::Response &res)
     {
-       try {
-            res.out_point_stamped = tfBuffer.transform(req.in_point_stamped, req.target_frame);
-        } catch (tf2::TransformException &ex) {
-            ROS_WARN("TF2 Transform Exception: %s", ex.what());    
+        ROS_INFO("transformWorldPointCallback called");
+        if (tfBuffer.canTransform(req.target_frame, req.in_point_stamped.header.frame_id, ros::Time(0))) {
+            // The transform is available
+            try {
+                res.out_point_stamped = tfBuffer.transform(req.in_point_stamped, req.target_frame);
+                /*
+                ROS_INFO("After transformation: translation (%.2f, %.2f, %.2f), rotation (%.2f, %.2f, %.2f, %.2f)",
+                         res.out_point_stamped.pose.position.x,
+                         res.out_point_stamped.pose.position.y,
+                         res.out_point_stamped.pose.position.z,
+                         res.out_point_stamped.pose.orientation.x,
+                         res.out_point_stamped.pose.orientation.y,
+                         res.out_point_stamped.pose.orientation.z,
+                         res.out_point_stamped.pose.orientation.w);*/
+            } catch (tf2::TransformException &ex) {
+                ROS_WARN("Transform Exception: %s", ex.what());
+            }
+        } else {
+            ROS_WARN("Transform from %s to %s is not available", req.in_point_stamped.header.frame_id.c_str(), req.target_frame.c_str());
         }
       
         return true;
@@ -58,7 +60,7 @@ int main(int argc, char** argv)
     ros::NodeHandle nh;
     TransformRobotPointServer server(&nh);
 
-    ros::waitForShutdown();
+    ros::spin(); 
 
     return 0;
 }

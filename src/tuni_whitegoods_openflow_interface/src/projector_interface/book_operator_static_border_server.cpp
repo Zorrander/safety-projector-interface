@@ -21,7 +21,7 @@
     //book operator border
     void BookOperatorStaticBorderServer::executeBookOperator(const BookOperatorStaticBorderGoalConstPtr& goal)
     {
-
+        controller->operator_book_border(goal->id);
         bool success = true;
         sendFeedbackBookOperator(goal->request_id);
         if (as_book_operator.isPreemptRequested() || !ros::ok())

@@ -17,27 +17,35 @@ CameraView::CameraView(ros::NodeHandle *nh) : it_(*nh), nh_(nh) {
 CameraView::~CameraView() { cv::destroyWindow(OPENCV_WINDOW); }
 
 void CameraView::init() {
-  camera_viz_msg =
-      cv_bridge::CvImage(std_msgs::Header(), "bgr8", depth_colormap)
-          .toImageMsg();
-  viz_pub.publish(camera_viz_msg);
+  publish_image();
 }
 
 void CameraView::updateButtons(std::vector<std::shared_ptr<Button>> buttons) {
-  camera_viz_msg =
-      cv_bridge::CvImage(std_msgs::Header(), "bgr8", depth_colormap)
-          .toImageMsg();
-  viz_pub.publish(camera_viz_msg);
+  for (auto& button: buttons){
+      cv::circle(depth_colormap, button->center_cam_point, button->radius, button->btn_color, -1); 
+  }
+  publish_image();
 }
 
 void CameraView::updateBorders(std::vector<std::shared_ptr<StaticBorder>> borders) {
-  camera_viz_msg =
-      cv_bridge::CvImage(std_msgs::Header(), "bgr8", depth_colormap)
-          .toImageMsg();
-  viz_pub.publish(camera_viz_msg);
+  for (auto& border: borders){
+    cv::rectangle(depth_colormap, border->top_left_cam_point, border->bottom_right_cam_point,
+                  cv::Scalar(border->border_color.b * 255, border->border_color.g * 255,
+                             border->border_color.r * 255),
+                  border->thickness*2, cv::LINE_8);      
+  }
+  publish_image();
 }
 
 void CameraView::updateHands(std::vector<std::shared_ptr<Hand>> hands) {
+  for (auto& hand: hands){
+    cv::Point hand_position(hand->pixel_position.x, hand->pixel_position.y);
+    cv::circle(depth_colormap, hand_position, 15, cv::Scalar(255,0,0), -1);     
+  }
+  publish_image();
+}
+
+void CameraView::publish_image() {
   camera_viz_msg =
       cv_bridge::CvImage(std_msgs::Header(), "bgr8", depth_colormap)
           .toImageMsg();

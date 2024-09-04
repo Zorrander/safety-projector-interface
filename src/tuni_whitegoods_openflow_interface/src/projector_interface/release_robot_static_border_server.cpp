@@ -12,7 +12,6 @@
       action_name_release_robot(name_release_robot),
       controller(projector_interface_controller)
       {
-
          as_release_robot.start();
          std::cout<<"ReleaseRobotStaticBorderServer running\n";
       }
@@ -20,6 +19,7 @@
       //release robot border
       void ReleaseRobotStaticBorderServer::executeReleaseRobot(const ReleaseRobotStaticBorderGoalConstPtr &goal)
       {
+         controller->robot_release_border(goal->id, goal->status);
          bool success = true;
          sendFeedbackReleaseRobot(goal->request_id);
          if (as_release_robot.isPreemptRequested() || !ros::ok())
