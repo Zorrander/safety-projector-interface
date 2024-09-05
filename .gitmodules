@@ -1,6 +1,0 @@
-[submodule "src/aruco_hand_eye"]
-	path = src/aruco_hand_eye
-	url = https://github.com/jhu-lcsr/aruco_hand_eye
-[submodule "src/aruco_ros"]
-	path = src/aruco_ros
-	url = https://github.com/pal-robotics/aruco_ros/tree/noetic-devel
