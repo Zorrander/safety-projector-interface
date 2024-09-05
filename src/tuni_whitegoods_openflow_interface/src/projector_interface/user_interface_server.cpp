@@ -10,16 +10,19 @@
       action_name_preset_ui(name_pre),
       controller(projector_interface_controller)
       {
-
          as_preset_ui.start();
          std::cout<<"UserInterfaceServer running \n";
- 
       }
 
       //create a smart interface
       void UserInterfaceServer::executePresetUI(const SetPresetUIProjectionGoalConstPtr &goal)
       {
-
+         for (auto button: goal->virtual_button_references)
+         {
+            controller->addButton(button.id, button.zone, button.name, button.text, 
+                                 button.button_color, button.text_color, 
+                                 button.center, button.radius);
+         }
          bool success = true;
 
          sendFeedBackPresetUI();
