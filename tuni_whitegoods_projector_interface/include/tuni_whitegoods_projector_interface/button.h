@@ -30,7 +30,7 @@ public:
   geometry_msgs::Pose center;
   cv::Point center_cam_point;
   void resetInteractions();
-  void checkForInteractions(std::string name, cv::Point hand_position);
+  bool checkForInteractions(std::string name, cv::Point hand_position);
   void set_button_color(std_msgs::ColorRGBA button_color);
   void set_text_color(std_msgs::ColorRGBA text_color);
   std::string get_name();

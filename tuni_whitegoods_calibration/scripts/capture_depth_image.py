@@ -9,7 +9,7 @@ from cv_bridge import CvBridge, CvBridgeError
 class DepthImageSaver:
     def __init__(self):
         self.bridge = CvBridge()
-        self.depth_sub = rospy.Subscriber("/depth/image_raw", Image, self.callback)
+        self.depth_sub = rospy.Subscriber("/depth_to_rgb/image_raw", Image, self.callback)
         self.depth_image = None
 
     def callback(self, data):

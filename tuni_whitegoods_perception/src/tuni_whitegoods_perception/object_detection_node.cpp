@@ -19,18 +19,21 @@ bool ObjectDetector::scan(cv::Mat image, cv::Rect roi) {
 
     // Get the region of interest from the binary image
     cv::Mat roi_image = binary_image(roi);
+    cv::Mat test_image = image(roi);
 
     // Find contours in the ROI
     std::vector<std::vector<cv::Point>> contours;
     cv::findContours(roi_image, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
-
-    ROS_INFO("Found %lu contours", contours.size());
 
     // Check if more than one contour is found
     if (contours.size() > 1) {
         ROS_INFO("Object detected");
         result = true;
     }
+
+    //cv::drawContours(test_image, contours, -1, (0,255,0), 3);
+    //cv::imshow("Input", test_image);
+    //cv::waitKey(0);
 
     return result;
 }

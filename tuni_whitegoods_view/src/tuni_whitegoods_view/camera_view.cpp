@@ -40,7 +40,7 @@ void CameraView::updateBorders(std::vector<std::shared_ptr<StaticBorder>> border
 void CameraView::updateHands(std::vector<std::shared_ptr<Hand>> hands) {
   for (auto& hand: hands){
     cv::Point hand_position(hand->pixel_position.x, hand->pixel_position.y);
-    cv::circle(depth_colormap, hand_position, 15, cv::Scalar(255,0,0), -1);     
+    cv::circle(depth_colormap, hand_position, 25, cv::Scalar(255,255,0), -1);     
   }
   publish_image();
 }

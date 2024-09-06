@@ -91,27 +91,30 @@ def main():
     border_client.wait_for_result()
     '''
     '''
-    2nd point
+    1st point
     '''
-    border_projection_goal.request_id = "3"
+    x_offset = -0.1
+    offset = 0.0
+
+    border_projection_goal.request_id = "1"
     border_projection_goal.zone = "shelf"
     border_projection_goal.position_row = 0
-    border_projection_goal.position_col = 2
-    p.x = 0.37586175059863935
-    p.y = 0.8758835892881347
-    p.z = 0.1741247569313853
+    border_projection_goal.position_col = 1
+    p.x = 0.2411861139422537-x_offset
+    p.y = 0.9989556644497138+offset
+    p.z = 0.1722252372473725
     border_projection_goal.border.polygon.points.append(p);
-    p2.x = 0.5165720791987298
-    p2.y =  0.7451930701314824
-    p2.z = 0.17547136236798178
+    p2.x = 0.3584447315720875-x_offset
+    p2.y =  0.890046888767809+offset
+    p2.z = 0.17334740854466868
     border_projection_goal.border.polygon.points.append(p2);
-    p3.x = 0.38846802507369094
-    p3.y = 0.6064494742382555
-    p3.z = 0.0960798620048009
+    p3.x = 0.18630491874250504-x_offset
+    p3.y = 0.7036101925095353+offset
+    p3.z = 0.06666508606767474
     border_projection_goal.border.polygon.points.append(p3);
-    p4.x = 0.24775769647360052
-    p4.y = 0.7371399933949078
-    p4.z = 0.09473325656820442
+    p4.x = 0.06904630111267124-x_offset
+    p4.y = 0.8125189681914401+offset
+    p4.z = 0.06554291477037855
     border_projection_goal.border.polygon.points.append(p4);
 
     border_projection_goal.border_topic = ""
@@ -127,29 +130,68 @@ def main():
     border_client.send_goal(border_projection_goal)
     
     border_client.wait_for_result()
+
+    '''
+    2nd point
+    '''
+    border_projection_goal.request_id = "2"
+    border_projection_goal.zone = "shelf"
+    border_projection_goal.position_row = 0
+    border_projection_goal.position_col = 2
+    p.x = 0.4170740403870044-x_offset
+    p.y = 0.8355925009268566+offset
+    p.z = 0.17390849419331667
+    border_projection_goal.border.polygon.points.append(p);
+    p2.x = 0.5343326470988294-x_offset
+    p2.y = 0.7266837353855026+offset
+    p2.z = 0.17503066538612688
+    border_projection_goal.border.polygon.points.append(p2);
+    p3.x = 0.3621928342692469-x_offset
+    p3.y = 0.5402470391272289+offset
+    p3.z = 0.06834834290913294
+    border_projection_goal.border.polygon.points.append(p3);
+    p4.x = 0.24493422755742195-x_offset
+    p4.y = 0.6491558046685828+offset
+    p4.z = 0.06722617171632272
+    border_projection_goal.border.polygon.points.append(p4);
+
+    border_projection_goal.border_topic = ""
+    border_projection_goal.border_color.r = 0.0
+    border_projection_goal.border_color.g = 1.0
+    border_projection_goal.border_color.b = 0.0;
+    border_projection_goal.border_color.a = 0.0;
+    border_projection_goal.is_filled = False;
+    border_projection_goal.thickness = 1;
+    #border_projection_goal.lifetime.fromNSec(0);
+    border_projection_goal.track_violations = True;
+    print("Sending border goal.")
+    border_client.send_goal(border_projection_goal)
+    
+    border_client.wait_for_result()
+
 
     '''
     3rd point
     '''
-    border_projection_goal.request_id = "5"
+    border_projection_goal.request_id = "3"
     border_projection_goal.zone = "shelf"
     border_projection_goal.position_row = 0
     border_projection_goal.position_col = 3
-    p.x = 0.637923407312738
-    p.y = 0.5982538326338909
-    p.z = 0.16625133523644675
+    p.x = 0.5929619559137462-x_offset
+    p.y = 0.6722293475445502+offset
+    p.z = 0.17559175103477487
     border_projection_goal.border.polygon.points.append(p);
-    p2.x = 0.7469739095894936
-    p2.y =  0.49696868250573073
-    p2.z = 0.16729495442695286
+    p2.x =0.7102205626255713-x_offset
+    p2.y =0.5633205820031961+offset
+    p2.z =0.17671392222758509
     border_projection_goal.border.polygon.points.append(p2);
-    p3.x = 0.6548991142806323
-    p3.y = 0.3972467160189003
-    p3.z = 0.11023230957054397
+    p3.x = 0.5380807497959887-x_offset
+    p3.y = 0.37688388574492243+offset
+    p3.z = 0.07003159975059114
     border_projection_goal.border.polygon.points.append(p3);
-    p4.x = 0.5458486120038767
-    p4.y = 0.4985318661470604
-    p4.z = 0.10918869038003787
+    p4.x = 0.4208221430841638-x_offset
+    p4.y = 0.4857926512862765+offset
+    p4.z = 0.06890942855778093
     border_projection_goal.border.polygon.points.append(p4);
 
     border_projection_goal.border_topic = ""
@@ -165,6 +207,124 @@ def main():
     border_client.send_goal(border_projection_goal)
     
     border_client.wait_for_result()
+
+    '''
+    4th point
+    
+    border_projection_goal.request_id = "4"
+    border_projection_goal.zone = "shelf"
+    border_projection_goal.position_row = 0
+    border_projection_goal.position_col = 4
+    p.x = 0.7688498550634749
+    p.y = 0.50886620937307
+    p.z = 0.17727500771950422
+    border_projection_goal.border.polygon.points.append(p);
+    p2.x =0.8861084617753
+    p2.y =0.399957443831716
+    p2.z =0.17839717891231444
+    border_projection_goal.border.polygon.points.append(p2);
+    p3.x = 0.7139686489457175
+    p3.y = 0.21352074757344236
+    p3.z = 0.0717148564353205
+    border_projection_goal.border.polygon.points.append(p3);
+    p4.x = 0.5967100422338925
+    p4.y = 0.32242951311479634
+    p4.z = 0.07059268524251028
+    border_projection_goal.border.polygon.points.append(p4);
+
+    border_projection_goal.border_topic = ""
+    border_projection_goal.border_color.r = 0.0
+    border_projection_goal.border_color.g = 1.0
+    border_projection_goal.border_color.b = 0.0;
+    border_projection_goal.border_color.a = 0.0;
+    border_projection_goal.is_filled = False;
+    border_projection_goal.thickness = 1;
+    #border_projection_goal.lifetime.fromNSec(0);
+    border_projection_goal.track_violations = True;
+    print("Sending border goal.")
+    border_client.send_goal(border_projection_goal)
+    
+    border_client.wait_for_result()        
+    '''
+
+    '''
+    5th point
+    
+    border_projection_goal.request_id = "5"
+    border_projection_goal.zone = "shelf"
+    border_projection_goal.position_row = 0
+    border_projection_goal.position_col = 5
+    p.x = 0.9447377760492213
+    p.y = 0.3455030509204882
+    p.z = 0.17895826461320552
+    border_projection_goal.border.polygon.points.append(p);
+    p2.x = 1.061996404597064
+    p2.y = 0.23659426509803244
+    p2.z = 0.1800804360149877
+    border_projection_goal.border.polygon.points.append(p2);
+    p3.x = 0.8898565917674813
+    p3.y = 0.05015756883975886
+    p3.z = 0.07339811353799353
+    border_projection_goal.border.polygon.points.append(p3);
+    p4.x = 0.7725979632196387
+    p4.y = 0.15906635466221447
+    p4.z = 0.07227594213621158
+    border_projection_goal.border.polygon.points.append(p4);
+
+    border_projection_goal.border_topic = ""
+    border_projection_goal.border_color.r = 0.0
+    border_projection_goal.border_color.g = 1.0
+    border_projection_goal.border_color.b = 0.0;
+    border_projection_goal.border_color.a = 0.0;
+    border_projection_goal.is_filled = False;
+    border_projection_goal.thickness = 1;
+    #border_projection_goal.lifetime.fromNSec(0);
+    border_projection_goal.track_violations = True;
+    print("Sending border goal.")
+    border_client.send_goal(border_projection_goal)
+    
+    border_client.wait_for_result()   
+    '''
+
+    '''
+    6th point
+    
+    border_projection_goal.request_id = "6"
+    border_projection_goal.zone = "shelf"
+    border_projection_goal.position_row = 0
+    border_projection_goal.position_col = 6
+    p.x = 1.12062567519895
+    p.y = 0.18213991274900804
+    p.z = 0.18064152129793487
+    border_projection_goal.border.polygon.points.append(p);
+    p2.x = 1.237884260074757
+    p2.y = 0.07323116748875558
+    p2.z = 0.18176369228177314
+    border_projection_goal.border.polygon.points.append(p2);
+    p3.x = 1.0657444472451747
+    p3.y = -0.11320552876951795
+    p3.z = 0.0750813698047792
+    border_projection_goal.border.polygon.points.append(p3);
+    p4.x = 0.9484858623693674
+    p4.y = -0.004296783509265767
+    p4.z = 0.07395919882094093
+    border_projection_goal.border.polygon.points.append(p4);
+
+    border_projection_goal.border_topic = ""
+    border_projection_goal.border_color.r = 0.0
+    border_projection_goal.border_color.g = 1.0
+    border_projection_goal.border_color.b = 0.0;
+    border_projection_goal.border_color.a = 0.0;
+    border_projection_goal.is_filled = False;
+    border_projection_goal.thickness = 1;
+    #border_projection_goal.lifetime.fromNSec(0);
+    border_projection_goal.track_violations = True;
+    print("Sending border goal.")
+    border_client.send_goal(border_projection_goal)
+    
+    border_client.wait_for_result()   
+
+    '''
 
     print("A static border should be visible.")
     print("----------------------------------")

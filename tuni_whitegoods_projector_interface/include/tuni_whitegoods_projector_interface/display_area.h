@@ -29,10 +29,15 @@ private:
 
     BorderLayout border_layout;
 
+    ros::Publisher pub_border_violation;
+    ros::Publisher pub_button_event;
+
+    ros::NodeHandle *nh_;
+
 public:
 	std::string name;
 
-    DisplayArea(std::string name);
+    DisplayArea(ros::NodeHandle *nh, std::string name);
     void addBorder(std::shared_ptr<StaticBorder> sb);
     void addButton(std::shared_ptr<Button> btn);
     bool change_button_color(std::string resource_id, std_msgs::ColorRGBA button_color);

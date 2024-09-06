@@ -17,11 +17,20 @@
       //create a smart interface
       void UserInterfaceServer::executePresetUI(const SetPresetUIProjectionGoalConstPtr &goal)
       {
+         int counter = 0;
          for (auto button: goal->virtual_button_references)
          {
+            
+            ROS_INFO("Received button goal from openflow.");
+            ROS_INFO("Request id: %s", button.id.c_str());
+            ROS_INFO("Zone: %s", button.zone.c_str());
+            ROS_INFO("Name: %s", button.name.c_str());
+            ROS_INFO("text: %s", button.text.c_str());
+
             controller->addButton(button.id, button.zone, button.name, button.text, 
                                  button.button_color, button.text_color, 
-                                 button.center, button.radius);
+                                 button.center, button.radius-10);
+            counter += 1;
          }
          bool success = true;
 

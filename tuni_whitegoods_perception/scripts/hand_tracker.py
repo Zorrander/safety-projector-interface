@@ -8,6 +8,7 @@ from math import pi
 from cv2 import aruco
 import mediapipe as mp
 
+import message_filters
 
 import rospy
 from tuni_whitegoods_msgs.msg import HandsState
@@ -20,9 +21,7 @@ class HandTracker(object):
    def __init__(self, mode=False, maxHands=2, detectionCon=0.9, modelComplexity=1, trackCon=0.9):
       rospy.init_node('hand_tracking')
       #subscribe to the RGB image
-      self.sub_camera = rospy.Subscriber("/rgb/image_raw", Image, self.callback_image)
-      self.bridge = CvBridge()
-      self.pub_hands_poi = rospy.Publisher("/odin/internal/hand_detection", HandsState, queue_size=50)
+      self.pub_hands_poi = rospy.Publisher("/odin/internal/hand_detection", HandsState, queue_size=10)
       #publish the RGN coordinates
       self.mode = mode
       self.maxHands = maxHands
@@ -33,17 +32,27 @@ class HandTracker(object):
       self.hands = self.mpHands.Hands(self.mode, self.maxHands,self.modelComplex, self.detectionCon, self.trackCon)
       # self.mpDraw = mp.solutions.drawing_utils
       self.colors = [(255,0,255), (255,255,0)]
-      self.send_interval = 3  # Send every 5th detection
-      self.count = 0  # Counter to keep track of detections
+      self.send_interval = 1  
+      self.count = 0  
+      self.bridge = CvBridge()
+
+      # Create message filters for synchronizing the RGB and Depth topics
+      rgb_sub = message_filters.Subscriber("/rgb/image_raw", Image)
+      depth_sub = message_filters.Subscriber("/depth_to_rgb/image_raw", Image)
+
+      # Use ApproximateTimeSynchronizer to sync the messages based on timestamps
+      sync = message_filters.ApproximateTimeSynchronizer([rgb_sub, depth_sub], queue_size=10, slop=0.1)
+      sync.registerCallback(self.callback_image)
 
    #subscriber that get the RGB image
-   def callback_image(self, msg):
+   def callback_image(self, msg, depth_msg):
       #if self.get_image:
       self.count += 1  # Increment the count
       if self.count % self.send_interval == 0:
-        rgb_img = CvBridge().imgmsg_to_cv2(msg, "bgr8")
+        rgb_img = self.bridge.imgmsg_to_cv2(msg, "bgr8")
+        depth_image = self.bridge.imgmsg_to_cv2(depth_msg, "32FC1")
         image, nb_hand = self.handsFinder(rgb_img)
-        lmList = self.positionFinder(image, nb_hand)
+        lmList = self.positionFinder(image, nb_hand, depth_image)
         #cv2.imshow("Hand Tracker", image)  # Display the image with hand position
         #cv2.waitKey(1)
         self.count = 0
@@ -59,14 +68,10 @@ class HandTracker(object):
       self.results = self.hands.process(imageRGB)
       if self.results.multi_handedness != None:
           nb_hand = len(self.results.multi_handedness)         
-      #if self.results.multi_hand_landmarks:
-      #   for handLms in self.results.multi_hand_landmarks:
-      #         if draw:
-      #            self.mpDraw.draw_landmarks(cv_img, handLms, self.mpHands.HAND_CONNECTIONS)
       return cv_img, nb_hand
    
    #get the positions of the hands. More particularly of the tip of the middle finger (id=12).
-   def positionFinder(self,cv_img, hands, draw=True):
+   def positionFinder(self,cv_img, hands, depth_image, draw=True):
       lmlist = []
       msg_hands = HandsState()
       if self.results.multi_hand_landmarks:
@@ -89,6 +94,7 @@ class HandTracker(object):
                   tmp_pos = Point()
                   tmp_pos.x = cx
                   tmp_pos.y = cy
+                  tmp_pos.z = depth_image[cy, cx]/1000
                   msg_hands.position.append(tmp_pos)
             self.pub_hands_poi.publish(msg_hands)      
 

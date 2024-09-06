@@ -22,17 +22,21 @@ StaticBorder::StaticBorder(std::string r_id, int pos_row,
   position_row = pos_row;
   position_col = pos_col;
 
-  topLeftCornerPt.x = bord.polygon.points[0].x;
-  topLeftCornerPt.y = bord.polygon.points[0].y;
+  topLeftCornerPt.x = bord.polygon.points[0].x-0.015;
+  topLeftCornerPt.y = bord.polygon.points[0].y-0.015;
+  topLeftCornerPt.z = 0.15;
 
-  topRightCornerPt.x = bord.polygon.points[1].x;
-  topRightCornerPt.y = bord.polygon.points[1].y;
+  topRightCornerPt.x = bord.polygon.points[1].x-0.015;
+  topRightCornerPt.y = bord.polygon.points[1].y-0.015;
+  topRightCornerPt.z = 0.15;
 
-  bottomRightCornerPt.x = bord.polygon.points[2].x;
-  bottomRightCornerPt.y = bord.polygon.points[2].y;
+  bottomRightCornerPt.x = bord.polygon.points[2].x-0.015;
+  bottomRightCornerPt.y = bord.polygon.points[2].y-0.015;
+  bottomRightCornerPt.z = 0.15;
 
-  bottomLeftCornerPt.x = bord.polygon.points[3].x;
-  bottomLeftCornerPt.y = bord.polygon.points[3].y;
+  bottomLeftCornerPt.x = bord.polygon.points[3].x-0.015;
+  bottomLeftCornerPt.y = bord.polygon.points[3].y-0.015;
+  bottomLeftCornerPt.z = 0.15;
 
   border_color = b_color;
   is_filled = filling;
@@ -85,8 +89,8 @@ void StaticBorder::release(std_msgs::ColorRGBA col) {
 // get the diagonal of the border. Used for hand detection if a hand's location
 // is less than diagonal*factor then it throws a violation
 float StaticBorder::getBorderDiagonal() {
-  float dist = sqrt(pow((bottom_right_cam_point.x - top_left_cam_point.x), 2) +
-                    pow((bottom_right_cam_point.y - top_left_cam_point.y), 2));
+  float dist = sqrt(pow((top_left_cam_point.x - bottom_right_cam_point.x), 2) +
+                    pow((top_left_cam_point.y - bottom_right_cam_point.y), 2));
   return dist;
 }
 
@@ -99,10 +103,11 @@ cv::Point StaticBorder::getCenter() {
   return p;
 }
 
-void StaticBorder::checkForInteractions(std::string name,
+bool StaticBorder::checkForInteractions(std::string name,
                                         cv::Point hand_position) {
+  bool result = false;
   float distance = cv::norm(hand_position - getCenter());
-  bool is_crossed = distance < getBorderDiagonal() * 0.75;
+  bool is_crossed = distance < getBorderDiagonal() * 0.5;
   if (name == "left") {
     left_hand_crossed = is_crossed;
   } else if (name == "right") {
@@ -120,6 +125,7 @@ void StaticBorder::checkForInteractions(std::string name,
         thickness = 3;
       } 
   }
+  return result;
 }
 
 void StaticBorder::resetInteractions() {

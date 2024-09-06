@@ -1,6 +1,12 @@
 #include "tuni_whitegoods_projector_interface/display_area.h"
 
-DisplayArea::DisplayArea(std::string name) : name(name) {}
+#include <integration/SafetyBorderViolation.h>
+#include <integration/VirtualButtonEventArray.h>
+
+DisplayArea::DisplayArea(ros::NodeHandle *nh, std::string name) : nh_(nh), name(name) {
+  pub_border_violation = nh->advertise<integration::SafetyBorderViolation>("/execution/projector_interface/integration/topics/safety_border_violation",1);
+  pub_button_event = nh_->advertise<integration::VirtualButtonEventArray> ("/execution/projector_interface/integration/topics/virtual_button_event_array", 1);
+}
 
 void DisplayArea::create_border_layout(
     int rows, int cols, float sf_factor, bool adjacent,
@@ -25,12 +31,36 @@ void DisplayArea::checkForInteractions(std::string name,
 
   for (auto &border : borders_) {
     if (border->robot_booked || border->operator_booked){
-      border->checkForInteractions(name, cv_hand_position);
+      if (border->checkForInteractions(name, cv_hand_position)){
+          integration::SafetyBorderViolation msg_border;
+          geometry_msgs::PolygonStamped initial_border;
+          geometry_msgs::Pose target_location;
+
+          msg_border.header.frame_id = "base";
+          msg_border.request_id = border->getId();
+
+          //initial_border.polygon.points.push_back();
+          //initial_border.polygon.points.push_back();
+          //initial_border.polygon.points.push_back();
+          //initial_border.polygon.points.push_back();
+
+          //target_location.position = ;
+
+          //msg_border.initial_border = initial_border;
+          //msg_border.target_location = target_location;
+          pub_border_violation.publish(msg_border);
+      }
     }
   }
 
   for (auto &button : buttons_) {
-    button->checkForInteractions(name, cv_hand_position);
+    if (button->checkForInteractions(name, cv_hand_position)){
+      integration::VirtualButtonEvent msg_event;
+      msg_event.virtual_button_id = button->get_name();
+      msg_event.event_type = msg_event.PRESSED;
+      //events.virtual_button_events.push_back(msg_event);
+      pub_button_event.publish(msg_event);
+    }
   }
 }
 
@@ -136,7 +166,10 @@ bool DisplayArea::operator_release_border(std::string id, int status){
 
 void DisplayArea::fetchButtons(
     std::vector<std::shared_ptr<Button>>& buttons) {
-  buttons = buttons_;
+  for (auto button: buttons_)
+  {
+   buttons.push_back(button);
+  }
 }
 
 
@@ -146,5 +179,8 @@ void DisplayArea::addBorder(std::shared_ptr<StaticBorder> sb) {
 
 void DisplayArea::fetchBorders(
     std::vector<std::shared_ptr<StaticBorder>>& borders) {
-  borders = borders_;
+  for (auto border: borders_)
+  {
+   borders.push_back(border);
+  }
 }

@@ -13,21 +13,26 @@ RobotView::RobotView() {
 void RobotView::init() {
     std::vector<geometry_msgs::Point> table_points;
     geometry_msgs::Point tableTopLeftCornerPt;
-    tableTopLeftCornerPt.x = 0.4842356167339994; 
-    tableTopLeftCornerPt.y = 1.649077461104246;
+    tableTopLeftCornerPt.x = 0.5769190341781458; 
+    tableTopLeftCornerPt.y = 2.271676229695987;
+    tableTopLeftCornerPt.z = -0.41678163128446966;
+
 
     geometry_msgs::Point tableTopRightCornerPt;
-    tableTopRightCornerPt.x = 0.7011640489770836; 
-    tableTopRightCornerPt.y = 1.4475962357262455;
+    tableTopRightCornerPt.x = 0.8398147036126069; 
+    tableTopRightCornerPt.y = 2.003771048623398;
+    tableTopRightCornerPt.z = -0.3878336824295425;
 
     geometry_msgs::Point tableBottomRightCornerPt;
-    tableBottomRightCornerPt.x = 0.4689754590291647; 
-    tableBottomRightCornerPt.y = 1.1961234770006834;
+    tableBottomRightCornerPt.x = 0.49672333993327816; 
+    tableBottomRightCornerPt.y = 1.558380452870774;
+    tableBottomRightCornerPt.z = -0.38744156965179033;
 
     geometry_msgs::Point tableBottomLeftCornerPt;
-    tableBottomLeftCornerPt.x = 0.25204702678608054; 
-    tableBottomLeftCornerPt.y = 1.397604702378684;
-
+    tableBottomLeftCornerPt.x =  0.25405491899444177; 
+    tableBottomLeftCornerPt.y = 1.791176063961366;
+    tableBottomLeftCornerPt.z = -0.40378966384045234;
+    
     table_points.push_back(tableTopLeftCornerPt); 
     table_points.push_back(tableTopRightCornerPt); 
     table_points.push_back(tableBottomRightCornerPt); 
@@ -37,20 +42,29 @@ void RobotView::init() {
 
     std::vector<geometry_msgs::Point> shelf_points;
     geometry_msgs::Point shelfTopLeftCornerPt;
-    shelfTopLeftCornerPt.x = 0.24327004565708776; 
-    shelfTopLeftCornerPt.y = 1.041316690374685;
+    shelfTopLeftCornerPt.x = 0.2459696255815204; 
+    shelfTopLeftCornerPt.y = 1.0416911823654855;
+    shelfTopLeftCornerPt.z = 0.1335070435087502;
+
+
 
     geometry_msgs::Point shelfTopRightCornerPt;
-    shelfTopRightCornerPt.x = 1.1344354828701788; 
-    shelfTopRightCornerPt.y = 0.21361004792307275;
+    shelfTopRightCornerPt.x = 1.1326225002348123; 
+    shelfTopRightCornerPt.y = 0.21348169082051777;
+    shelfTopRightCornerPt.z = 0.16334966343338553;
+
+
 
     geometry_msgs::Point shelfBottomRightCornerPt;
-    shelfBottomRightCornerPt.x = 0.8962419947096597; 
-    shelfBottomRightCornerPt.y = -0.04436633925265343;
+    shelfBottomRightCornerPt.x = 0.8757711748449375; 
+    shelfBottomRightCornerPt.y = 0.030293135651739855;
+    shelfBottomRightCornerPt.z = 0.15230856567818551;
+
 
     geometry_msgs::Point shelfBottomLeftCornerPt;
-    shelfBottomLeftCornerPt.x = 0.00507655749656849; 
-    shelfBottomLeftCornerPt.y = 0.7833403031989589;
+    shelfBottomLeftCornerPt.x = 0.05256043965352292; 
+    shelfBottomLeftCornerPt.y = 0.7938490707142187;
+    shelfBottomLeftCornerPt.z = 0.12675945620055273;
 
     shelf_points.push_back(shelfTopLeftCornerPt); 
     shelf_points.push_back(shelfTopRightCornerPt); 

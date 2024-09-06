@@ -18,7 +18,7 @@ cv::Mat Button::draw() {
   cv::circle(btn_img, center_cam_point, radius, btn_color, -1);
 
   int fontFace = cv::FONT_HERSHEY_SIMPLEX;
-  double fontScale = 1.0;
+  double fontScale = 0.5;
   int thickness = 2;
 
   // Calculate the size of the text box
@@ -36,9 +36,12 @@ cv::Mat Button::draw() {
   return btn_img;
 }
 
-void Button::checkForInteractions(std::string name,
+bool Button::checkForInteractions(std::string name,
                                         cv::Point hand_position) {
-  float distance = cv::norm(hand_position - center_cam_point);
+  bool result = false;
+  cv::Point cv_button_position(static_cast<int>(center.position.x),
+                             static_cast<int>(center.position.y));
+  float distance = cv::norm(hand_position - cv_button_position);
   bool is_crossed = distance < radius * 0.75;
   if (name == "left") {
     left_hand_press = is_crossed;
@@ -53,7 +56,8 @@ void Button::checkForInteractions(std::string name,
     btn_color = cv::Scalar(0, 0, 255);
   } else {
     ROS_INFO("button_not_pressed");
-    btn_color = cv::Scalar(255,0, 0);  }
+    btn_color = cv::Scalar(255,0, 0);  }  
+  return result;
 }
 
 void Button::resetInteractions() {

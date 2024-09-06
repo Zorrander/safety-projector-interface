@@ -19,7 +19,19 @@
       void SafetyBorderServer::executeSafetyBorder(const SetSafetyBorderProjectionGoalConstPtr &goal)
       {
          bool success = true;
-         std::cout<<"executeSafetyBorder\n";
+         ROS_INFO("Received border goal from openflow.");
+         ROS_INFO("Request id: %s", goal->request_id.c_str());
+         ROS_INFO("Zone: %s", goal->zone.c_str());
+         ROS_INFO("Row: %d", goal->position_row);
+         ROS_INFO("Col: %d", goal->position_col);
+         ROS_INFO("Border topic %s", goal->border_topic.c_str());
+         ROS_INFO("Thickness %d", goal->thickness);
+         ROS_INFO("Point: ");
+         for (auto point: goal->border.polygon.points){
+            ROS_INFO("x: %f", point.x);
+            ROS_INFO("y: %f", point.y);
+            ROS_INFO("z: %f", point.z);
+         }
          if(goal->border.polygon.points.size() > 1)
          {
             // Pass the shared_ptr to the addBorder method

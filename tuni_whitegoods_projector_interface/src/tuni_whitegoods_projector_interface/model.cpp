@@ -90,7 +90,7 @@ void ProjectorInterfaceModel::reset_interactions(const ros::TimerEvent&) {
 }
 
 void ProjectorInterfaceModel::add_zone(std::string name) {
-  zones.push_back(std::make_shared<DisplayArea>(name));
+  zones.push_back(std::make_shared<DisplayArea>(nh_, name));
 }
 
 void ProjectorInterfaceModel::addButton(std::string request_id, std::string zone, std::string name, std::string text, 
@@ -98,16 +98,20 @@ void ProjectorInterfaceModel::addButton(std::string request_id, std::string zone
                                         geometry_msgs::Pose center, float radius){
     for (auto &z : zones) {
       if (z->name == zone){
+        geometry_msgs::Pose modified_center;
+        modified_center.position.x = center.position.x + 0.2;
+        modified_center.position.y = center.position.y + 0.5;
+        modified_center.position.z = -0.40;
         std::shared_ptr<Button> btn = std::make_shared<Button>(name, text, 
                                                               button_color, text_color, 
-                                                              center, radius);
+                                                              modified_center, radius);
         geometry_msgs::PoseStamped in_point_stamped_center;
         tuni_whitegoods_msgs::TransformRobotCameraCoordinates srv_center;
         tuni_whitegoods_msgs::Transform3DToPixel srv_3D_to_pixel;
 
         in_point_stamped_center.header.frame_id = "base";
         in_point_stamped_center.header.stamp = ros::Time(0);
-        in_point_stamped_center.pose = btn->center;
+        in_point_stamped_center.pose = modified_center;
 
         srv_center.request.in_point_stamped = in_point_stamped_center;
         srv_center.request.target_frame = "rgb_camera_link";
@@ -164,6 +168,8 @@ void ProjectorInterfaceModel::addBorder(std::string r_id, std::string z, int pos
       in_point_stamped_top_left.header.stamp = ros::Time(0);
       in_point_stamped_top_left.pose.position.x = sb->topLeftCornerPt.x;
       in_point_stamped_top_left.pose.position.y = sb->topLeftCornerPt.y;
+      in_point_stamped_top_left.pose.position.z = sb->topLeftCornerPt.z;
+      
 
       srv_top_left.request.in_point_stamped = in_point_stamped_top_left;
       srv_top_left.request.target_frame = "rgb_camera_link";
@@ -189,6 +195,8 @@ void ProjectorInterfaceModel::addBorder(std::string r_id, std::string z, int pos
       in_point_stamped_bottom_right.header.stamp = ros::Time(0);
       in_point_stamped_bottom_right.pose.position.x = sb->bottomRightCornerPt.x;
       in_point_stamped_bottom_right.pose.position.y = sb->bottomRightCornerPt.y;
+      in_point_stamped_bottom_right.pose.position.z = sb->bottomRightCornerPt.z;
+
 
       srv_bottom_right.request.in_point_stamped = in_point_stamped_bottom_right;
       srv_bottom_right.request.target_frame = "rgb_camera_link";
@@ -263,6 +271,7 @@ void ProjectorInterfaceModel::updateHandPose(std::string name,
   tuni_whitegoods_msgs::TransformPixelTo3D srv_pixel_to_3D;
   srv_pixel_to_3D.request.u = position.x;
   srv_pixel_to_3D.request.v = position.y;
+  srv_pixel_to_3D.request.depth = position.z;
   client_pixel_to_3D.call(srv_pixel_to_3D);
 
   geometry_msgs::Point projected;

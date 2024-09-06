@@ -10,7 +10,6 @@
 #include <tuni_whitegoods_view/project_view.h>
 #include <tuni_whitegoods_view/robot_view.h>
 
-#include <integration/VirtualButtonEventArray.h>
 
 ProjectorInterfaceController::ProjectorInterfaceController(ros::NodeHandle *nh)
     : nh_(nh) {
@@ -30,20 +29,18 @@ ProjectorInterfaceController::ProjectorInterfaceController(ros::NodeHandle *nh)
       "/execution/projector_interface/integration/services/"
       "list_static_border_status",
       &ProjectorInterfaceController::getBordersService, this);
-  pub_button_event = nh->advertise<integration::VirtualButtonEventArray>(
-      "/execution/projector_interface/integration/topics/"
-      "virtual_button_event_array",
-      1);
 
   // Initialize model
   model_ = std::make_unique<ProjectorInterfaceModel>(nh_);
   model_->add_zone("shelf");
+  model_->add_zone("table");
   // Subscribe to model updates
   model_update_sub =
       nh_->subscribe("/odin/internal/model_changed", 50,
                      &ProjectorInterfaceController::modelUpdateCallback, this);
 
   rgb_sub = nh_->subscribe("/rgb/image_raw", 20, &ProjectorInterfaceController::rgbImageCallback, this);
+
   detector = std::make_shared<ObjectDetector>();
 
   projector_view = std::make_shared<Projector>();
@@ -86,7 +83,8 @@ void ProjectorInterfaceController::movingTableTrackerCallback(
 void ProjectorInterfaceController::handTrackerCallback(
   const tuni_whitegoods_msgs::HandsState &msg) {
     for (int i = 0; i < msg.name.size(); i++) {
-      model_->updateHandPose(msg.name[i], msg.position[i]);
+      geometry_msgs::Point position = msg.position[i];
+      model_->updateHandPose(msg.name[i], position);
     }
 }
 
@@ -182,7 +180,7 @@ bool ProjectorInterfaceController::getBordersService(
     } else {
       sbs.status = 0;  
     }
-
+    ROS_INFO("border %s status: %d", sbs.id.c_str(), sbs.status);
     res.status_borders.push_back(sbs);
   }
   ROS_INFO("Border status check complete.");

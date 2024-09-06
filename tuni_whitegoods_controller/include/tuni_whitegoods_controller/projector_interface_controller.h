@@ -65,7 +65,6 @@ public:
   bool getBordersService(integration::ListStaticBordersStatus::Request &req,
                          integration::ListStaticBordersStatus::Response &res);
   void modelUpdateCallback(const std_msgs::Empty &msg);
-
   void rgbImageCallback(const sensor_msgs::ImageConstPtr& rgb_msg);
   // void callback_button(const unity_msgs::ElementUI::ConstPtr &msg);
   // void process_button(double center_x, double center_y, const

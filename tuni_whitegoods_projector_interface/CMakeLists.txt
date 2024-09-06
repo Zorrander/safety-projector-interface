@@ -7,6 +7,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(catkin REQUIRED COMPONENTS
   roscpp
+  integration
   tuni_whitegoods_msgs
 )
 
@@ -14,7 +15,7 @@ find_package(OpenCV 4 REQUIRED)
 
 catkin_package(
   INCLUDE_DIRS include
-  CATKIN_DEPENDS roscpp tuni_whitegoods_msgs
+  CATKIN_DEPENDS roscpp tuni_whitegoods_msgs integration
   LIBRARIES hmi_model
 )
 

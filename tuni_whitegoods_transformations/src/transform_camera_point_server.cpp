@@ -30,9 +30,9 @@ private:
     bool transformPixelTo3DCallback(tuni_whitegoods_msgs::TransformPixelTo3D::Request &req, 
                                     tuni_whitegoods_msgs::TransformPixelTo3D::Response &res)
     {
-        res.x = (req.u - camera.cx()) * 1.4600766 / camera.fx();
-        res.y = (req.v - camera.cy()) * 1.4600766 / camera.fy();
-        res.z =  1.4600766;
+        res.x = (req.u - camera.cx()) * req.depth / camera.fx();
+        res.y = (req.v - camera.cy()) * req.depth / camera.fy();
+        res.z =  req.depth;
 
         //ROS_INFO("3D Point in RGB camera coordinate system: X = %.3f, Y = %.3f, Z = %.3f", res.x , res.y , res.z);
 

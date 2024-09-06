@@ -35,7 +35,6 @@ def main():
     interaction_topic = "/execution/projector_interface/integration/topics/virtual_button_event_array"
     interaction_sub = rospy.Subscriber(interaction_topic, VirtualButtonEventArray, interaction_cb)
     ## Project button 
-
     goal = SetVirtualButtonsProjectionGoal()
     goal.request_id = "go_button"
     goal.zone = "shelf"
@@ -53,12 +52,42 @@ def main():
     goal.virtual_button.text_color.g = 1.0
     goal.virtual_button.text_color.b = 1.0
     goal.virtual_button.text_color.a = 1.0
-    goal.virtual_button.center.position.x = 0.5211452915758708
-    goal.virtual_button.center.position.y = 1.4295558686987273
-    goal.virtual_button.center.position.z = 0.3843636711544014
-    goal.virtual_button.radius = 35.0
+    goal.virtual_button.center.position.x = 0.6347894913928517-0.075
+    goal.virtual_button.center.position.y = 1.4488399414350095-0.05
+    goal.virtual_button.center.position.z = 0.4233126879551239
+    goal.virtual_button.radius = 30.0
     goal.virtual_button.hidden = False
 
+    # Sends the goal to the action server.
+    project_client.send_goal(goal)
+
+    # Waits for the server to finish performing the action.
+    project_client.wait_for_result()
+
+    ## Project button 2
+
+    goal = SetVirtualButtonsProjectionGoal()
+    goal.request_id = "stop_button"
+    goal.zone = "shelf"
+    goal.virtual_button = VirtualButtonReference()
+    goal.virtual_button.id = "stop";
+    goal.virtual_button.zone = "shelf";
+    goal.virtual_button.name = "go";
+    goal.virtual_button.description = "button go"
+    goal.virtual_button.text = "STOP"
+    goal.virtual_button.button_color.r = 1.0
+    goal.virtual_button.button_color.g = 0.0
+    goal.virtual_button.button_color.b = 0.0
+    goal.virtual_button.button_color.a = 0.0
+    goal.virtual_button.text_color.r = 1.0
+    goal.virtual_button.text_color.g = 1.0
+    goal.virtual_button.text_color.b = 1.0
+    goal.virtual_button.text_color.a = 1.0
+    goal.virtual_button.center.position.x = 0.45509882460172196
+    goal.virtual_button.center.position.y = 1.2754568319698545+0.05
+    goal.virtual_button.center.position.z = 0.3183901015238977
+    goal.virtual_button.radius = 30.0
+    goal.virtual_button.hidden = False
 
     # Sends the goal to the action server.
     project_client.send_goal(goal)
