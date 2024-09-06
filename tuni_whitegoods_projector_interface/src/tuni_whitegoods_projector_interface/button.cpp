@@ -1,15 +1,17 @@
 #include "tuni_whitegoods_projector_interface/button.h"
 
-Button::Button(std::string name, std::string text, 
+Button::Button(std::string request_id, std::string name, std::string text, 
                std_msgs::ColorRGBA button_color, std_msgs::ColorRGBA text_color, 
                geometry_msgs::Pose center, float radius) 
 			: name(name),
 		    text(text),
 			  center(center),
-			  radius(radius)
+			  radius(radius),
+        id(request_id)
 {
   set_button_color(button_color);
   set_text_color(text_color);
+  button_already_pressed = false;
 }
 
 cv::Mat Button::draw() {
@@ -36,13 +38,19 @@ cv::Mat Button::draw() {
   return btn_img;
 }
 
+bool Button::isAlreadyPressed(){
+  return button_already_pressed;
+}
+
+void Button::setAlreadyPressed(bool alreadyPressed){
+  button_already_pressed = alreadyPressed;
+}
+
 bool Button::checkForInteractions(std::string name,
                                         cv::Point hand_position) {
   bool result = false;
-  cv::Point cv_button_position(static_cast<int>(center.position.x),
-                             static_cast<int>(center.position.y));
-  float distance = cv::norm(hand_position - cv_button_position);
-  bool is_crossed = distance < radius * 0.75;
+  float distance = cv::norm(hand_position - center_cam_point);
+  bool is_crossed = distance < radius*1.2;
   if (name == "left") {
     left_hand_press = is_crossed;
   } else if (name == "right") {
@@ -52,10 +60,9 @@ bool Button::checkForInteractions(std::string name,
   button_pressed = (left_hand_press || right_hand_press);
 
   if (button_pressed){
-    ROS_INFO("BUTTON PRESSED");
     btn_color = cv::Scalar(0, 0, 255);
+    result = true;
   } else {
-    ROS_INFO("button_not_pressed");
     btn_color = cv::Scalar(255,0, 0);  }  
   return result;
 }
@@ -70,14 +77,17 @@ std::string Button::get_name() {
 }
 
 void Button::set_button_color(std_msgs::ColorRGBA button_color) {
+  ros_btn_color = button_color;
+  base_btn_color= cv::Scalar(button_color.b * 255, button_color.g * 255, button_color.r * 255, button_color.a * 255);
   btn_color = cv::Scalar(button_color.b * 255, button_color.g * 255, button_color.r * 255, button_color.a * 255);
 }
 
 void Button::set_text_color(std_msgs::ColorRGBA text_color) {
-  ROS_INFO("setcolor");
+  ros_text_color = text_color;
   txt_color = cv::Scalar(text_color.b * 255, text_color.g * 255, text_color.r * 255, text_color.a * 255);
 }
 
+std::string Button::getId() { return id; }
 
 
             

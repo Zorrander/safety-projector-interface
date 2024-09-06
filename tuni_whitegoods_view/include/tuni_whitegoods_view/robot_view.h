@@ -10,6 +10,7 @@ private:
   ros::Subscriber marker_sub;
   ros::Publisher vis_pub;
   int marker_counter;
+  std_msgs::ColorRGBA hand_color;
 public:
   RobotView();
 
@@ -19,7 +20,7 @@ public:
   void updateHands(std::vector<std::shared_ptr<Hand>> hands) override;
 
   void
-  createRvizMarker(std::vector<geometry_msgs::Point> points, int id = 1);
+  createRvizMarker(std::vector<geometry_msgs::Point> points, std_msgs::ColorRGBA color, int id = 1);
 };
 
 #endif

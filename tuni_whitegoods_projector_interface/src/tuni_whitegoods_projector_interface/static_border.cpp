@@ -120,6 +120,7 @@ bool StaticBorder::checkForInteractions(std::string name,
     thickness = 1;
   } else {
       if (robot_booked){
+        result = true;
         thickness = -1;
       } else if (operator_booked){
         thickness = 3;

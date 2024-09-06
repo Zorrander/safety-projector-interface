@@ -18,7 +18,7 @@ from cv_bridge import CvBridge, CvBridgeError
 
 
 class HandTracker(object):
-   def __init__(self, mode=False, maxHands=2, detectionCon=0.9, modelComplexity=1, trackCon=0.9):
+   def __init__(self, mode=False, maxHands=2, detectionCon=0.5, modelComplexity=0, trackCon=0.5):
       rospy.init_node('hand_tracking')
       #subscribe to the RGB image
       self.pub_hands_poi = rospy.Publisher("/odin/internal/hand_detection", HandsState, queue_size=10)
@@ -32,7 +32,7 @@ class HandTracker(object):
       self.hands = self.mpHands.Hands(self.mode, self.maxHands,self.modelComplex, self.detectionCon, self.trackCon)
       # self.mpDraw = mp.solutions.drawing_utils
       self.colors = [(255,0,255), (255,255,0)]
-      self.send_interval = 1  
+      self.send_interval = 2  
       self.count = 0  
       self.bridge = CvBridge()
 
@@ -75,7 +75,7 @@ class HandTracker(object):
       lmlist = []
       msg_hands = HandsState()
       if self.results.multi_hand_landmarks:
-         for i in range(0, hands):
+          for i in range(0, hands):
             handType=self.results.multi_handedness[i].classification[0].label 
             Hand = self.results.multi_hand_landmarks[i]
             for id, lm in enumerate(Hand.landmark):
@@ -83,20 +83,19 @@ class HandTracker(object):
                cx,cy = int(lm.x*w), int(lm.y*h)
                lmlist.append([id,cx,cy])
                if draw and id == 12:
-                  #color = (0, 255, 0) if handType == 'Right' else (255, 0, 0)
-                  #cv2.circle(cv_img, (cx, cy), 10, color, cv2.FILLED)  # Draw a circle at the fingertip
-                  #cv2.putText(cv_img, f"{handType} Hand", (cx + 10, cy - 10), 
-                  #            cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
                   if handType=='Right':
                      msg_hands.name.append("right")
                   if handType=='Left':
                         msg_hands.name.append("left")
+                  #color = (0, 255, 0) if handType == 'Right' else (255, 0, 0)
+                  #cv2.circle(cv_img, (cx, cy), 10, color, cv2.FILLED)  # Draw a circle at the fingertip
+                  #cv2.putText(cv_img, f"{handType} Hand", (cx + 10, cy - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
                   tmp_pos = Point()
                   tmp_pos.x = cx
                   tmp_pos.y = cy
                   tmp_pos.z = depth_image[cy, cx]/1000
                   msg_hands.position.append(tmp_pos)
-            self.pub_hands_poi.publish(msg_hands)      
+          self.pub_hands_poi.publish(msg_hands)      
 
       return lmlist
 

@@ -2,6 +2,8 @@
 
 import cv2
 import rospy
+
+import message_filters
 import numpy as np
 from cv_bridge import CvBridge
 from visualization_msgs.msg import Marker
@@ -16,7 +18,14 @@ class TableTracker(object):
     def __init__(self):
         rospy.init_node('moving_table_tracking')
         #subscribe to the RGB image
-        self.sub_camera = rospy.Subscriber("/rgb/image_raw", Image, self.callback_image)
+        # Create message filters for synchronizing the RGB and Depth topics
+        rgb_sub = message_filters.Subscriber("/rgb/image_raw", Image)
+        depth_sub = message_filters.Subscriber("/depth_to_rgb/image_raw", Image)
+
+        # Use ApproximateTimeSynchronizer to sync the messages based on timestamps
+        sync = message_filters.ApproximateTimeSynchronizer([rgb_sub, depth_sub], queue_size=10, slop=0.1)
+        sync.registerCallback(self.callback_image)
+
         self.bridge = CvBridge()
         self.arucoDict = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_6X6_250)
         self.arucoParams = cv2.aruco.DetectorParameters()
@@ -33,10 +42,11 @@ class TableTracker(object):
         self.in_point_stamped.header.frame_id = "rgb_camera_link"
 
    #subscriber that get the RGB image
-    def callback_image(self, msg):
-        rgb_img = CvBridge().imgmsg_to_cv2(msg, "bgr8")
+    def callback_image(self, msg, depth_msg):
+        rgb_img = self.bridge.imgmsg_to_cv2(msg, "bgr8")
+        depth_image = self.bridge.imgmsg_to_cv2(depth_msg, "32FC1")
         if self.use_moving_table:
-        	self.find_dynamic_ui_transform(rgb_img)
+        	self.find_dynamic_ui_transform(rgb_img, depth_image)
 
     def create_input_message(self, coordinates):
 	    self.in_point_stamped.header.stamp = rospy.Time(0)
@@ -46,10 +56,11 @@ class TableTracker(object):
 
     #method called when the display is dynamic like on a moving table.
     #it has to update the transform so it always fit on the table
-    def find_dynamic_ui_transform(self, rgb_img):
+    def find_dynamic_ui_transform(self, rgb_img, depth_image):
         (corners, ids, rejected) = cv2.aruco.detectMarkers(rgb_img, self.arucoDict, parameters=self.arucoParams)
         if len(corners) == 0:
-        	print("No marker detected")
+        	# print("No marker detected")
+        	pass
         else:
 	        markerCorner = corners[0].reshape((4, 2))
 	        (topLeft, topRight, bottomRight, bottomLeft) = markerCorner
@@ -78,14 +89,17 @@ class TableTracker(object):
 	        print("y1: ", y1)
 	        print("y2: ", y2)
 
+	        table_z = depth_image[y1, x1]/1000
+	        print("z: ", table_z)
+
 	        tr_point_t = (x2, y1)
 	        br_point_t = (x2, y2)
 	        bl_point_t = (x1, y2) 
 
-	        tl_3D_coordinates =  self.project_pixel_to_3D(topLeft[0], topLeft[1])
-	        tr_3D_coordinates =  self.project_pixel_to_3D(tr_point_t[0], tr_point_t[1])
-	        br_3D_coordinates =  self.project_pixel_to_3D(br_point_t[0], br_point_t[1])
-	        bl_3D_coordinates =  self.project_pixel_to_3D(bl_point_t[0], bl_point_t[1])
+	        tl_3D_coordinates =  self.project_pixel_to_3D(topLeft[0], topLeft[1], table_z)
+	        tr_3D_coordinates =  self.project_pixel_to_3D(tr_point_t[0], tr_point_t[1], table_z)
+	        br_3D_coordinates =  self.project_pixel_to_3D(br_point_t[0], br_point_t[1], table_z)
+	        bl_3D_coordinates =  self.project_pixel_to_3D(bl_point_t[0], bl_point_t[1], table_z)
 
 	        # Create the input pose stamped message
 	        self.create_input_message(tl_3D_coordinates) 

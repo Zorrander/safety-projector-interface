@@ -23,7 +23,6 @@ private:
     bool transformWorldPointCallback(tuni_whitegoods_msgs::TransformRobotCameraCoordinates::Request &req, 
                                      tuni_whitegoods_msgs::TransformRobotCameraCoordinates::Response &res)
     {
-        ROS_INFO("transformWorldPointCallback called");
         if (tfBuffer.canTransform(req.target_frame, req.in_point_stamped.header.frame_id, ros::Time(0))) {
             // The transform is available
             try {

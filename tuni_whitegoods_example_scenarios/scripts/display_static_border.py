@@ -26,15 +26,15 @@ def main():
     layout_goal.status_booked.r = 1.0
     layout_goal.status_booked.g = 0.0
     layout_goal.status_booked.b = 0.0
-    layout_goal.status_booked.a = 0.0
+    layout_goal.status_booked.a = 1.0
     layout_goal.status_free.r = 0.0
     layout_goal.status_free.g = 1.0
     layout_goal.status_free.b = 0.0
-    layout_goal.status_free.a = 0.0
+    layout_goal.status_free.a = 1.0
     layout_goal.status_operator.r = 0.0
     layout_goal.status_operator.g = 0.0
     layout_goal.status_operator.b = 1.0
-    layout_goal.status_operator.a = 0.0
+    layout_goal.status_operator.a = 1.0
     print("Sending layout goal.")
     layout_client.send_goal(layout_goal)
     layout_client.wait_for_result()
@@ -121,7 +121,7 @@ def main():
     border_projection_goal.border_color.r = 0.0
     border_projection_goal.border_color.g = 1.0
     border_projection_goal.border_color.b = 0.0;
-    border_projection_goal.border_color.a = 0.0;
+    border_projection_goal.border_color.a = 1.0;
     border_projection_goal.is_filled = False;
     border_projection_goal.thickness = 1;
     #border_projection_goal.lifetime.fromNSec(0);
@@ -159,7 +159,7 @@ def main():
     border_projection_goal.border_color.r = 0.0
     border_projection_goal.border_color.g = 1.0
     border_projection_goal.border_color.b = 0.0;
-    border_projection_goal.border_color.a = 0.0;
+    border_projection_goal.border_color.a = 1.0;
     border_projection_goal.is_filled = False;
     border_projection_goal.thickness = 1;
     #border_projection_goal.lifetime.fromNSec(0);
@@ -198,7 +198,7 @@ def main():
     border_projection_goal.border_color.r = 0.0
     border_projection_goal.border_color.g = 1.0
     border_projection_goal.border_color.b = 0.0;
-    border_projection_goal.border_color.a = 0.0;
+    border_projection_goal.border_color.a = 1.0;
     border_projection_goal.is_filled = False;
     border_projection_goal.thickness = 1;
     #border_projection_goal.lifetime.fromNSec(0);

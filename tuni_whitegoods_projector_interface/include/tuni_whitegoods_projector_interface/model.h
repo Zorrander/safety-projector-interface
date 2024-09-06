@@ -31,6 +31,7 @@ private:
 
   bool hands_detected, action_triggered;
 
+
 public:
   ProjectorInterfaceModel(ros::NodeHandle *nh);
   void create_border_layout(int rows, int cols, float sf_factor, bool adjacent,

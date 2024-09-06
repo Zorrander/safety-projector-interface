@@ -99,12 +99,14 @@ void ProjectorInterfaceModel::addButton(std::string request_id, std::string zone
     for (auto &z : zones) {
       if (z->name == zone){
         geometry_msgs::Pose modified_center;
-        modified_center.position.x = center.position.x + 0.2;
-        modified_center.position.y = center.position.y + 0.5;
+        modified_center.position.x = center.position.x +0.1;
+        modified_center.position.y = (request_id == "goButton") ? center.position.y + 0.55 : center.position.y + 0.5;
+
         modified_center.position.z = -0.40;
-        std::shared_ptr<Button> btn = std::make_shared<Button>(name, text, 
+        float modified_radius = radius/2.5;
+        std::shared_ptr<Button> btn = std::make_shared<Button>(request_id, name, text, 
                                                               button_color, text_color, 
-                                                              modified_center, radius);
+                                                              modified_center, modified_radius);
         geometry_msgs::PoseStamped in_point_stamped_center;
         tuni_whitegoods_msgs::TransformRobotCameraCoordinates srv_center;
         tuni_whitegoods_msgs::Transform3DToPixel srv_3D_to_pixel;

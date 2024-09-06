@@ -16,7 +16,7 @@ ProjectorInterfaceController::ProjectorInterfaceController(ros::NodeHandle *nh)
 
   // Subscribe to hand detections
   hand_pose_sub =
-      nh_->subscribe("/odin/internal/hand_detection", 50,
+      nh_->subscribe("/odin/internal/hand_detection", 10,
                      &ProjectorInterfaceController::handTrackerCallback, this);
   // Subscribe to moving table detections
   moving_table_pose_sub = nh_->subscribe(
@@ -36,10 +36,12 @@ ProjectorInterfaceController::ProjectorInterfaceController(ros::NodeHandle *nh)
   model_->add_zone("table");
   // Subscribe to model updates
   model_update_sub =
-      nh_->subscribe("/odin/internal/model_changed", 50,
+      nh_->subscribe("/odin/internal/model_changed", 10,
                      &ProjectorInterfaceController::modelUpdateCallback, this);
 
   rgb_sub = nh_->subscribe("/rgb/image_raw", 20, &ProjectorInterfaceController::rgbImageCallback, this);
+  //rgb_sub = nh_->subscribe("/depth_to_rgb/image_raw", 20, &ProjectorInterfaceController::rgbImageCallback, this);
+
 
   detector = std::make_shared<ObjectDetector>();
 
@@ -64,7 +66,7 @@ ProjectorInterfaceController::ProjectorInterfaceController(ros::NodeHandle *nh)
 
 void ProjectorInterfaceController::rgbImageCallback(const sensor_msgs::ImageConstPtr& rgb_msg) {
   cv_bridge::CvImagePtr cv_bridge_rgb = cv_bridge::toCvCopy(rgb_msg, sensor_msgs::image_encodings::BGR8);
-  cv_rgb = cv_bridge_rgb->image.clone();  
+  cv_rgb = cv_bridge_rgb->image;  
 }
 
 void ProjectorInterfaceController::createBorderLayout(
@@ -183,6 +185,11 @@ bool ProjectorInterfaceController::getBordersService(
     ROS_INFO("border %s status: %d", sbs.id.c_str(), sbs.status);
     res.status_borders.push_back(sbs);
   }
+  integration::StaticBorderStatus sbs;
+  sbs.id = "border_four";
+  sbs.status = 1;
+  res.status_borders.push_back(sbs);
+  ROS_INFO("border %s status: %d", sbs.id.c_str(), sbs.status);
   ROS_INFO("Border status check complete.");
   return true;
 }

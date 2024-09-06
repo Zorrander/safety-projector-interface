@@ -11,6 +11,12 @@ RobotView::RobotView() {
 }
 
 void RobotView::init() {
+
+    hand_color.r = 1.0; 
+    hand_color.g = 1.0;  
+    hand_color.b = 0.0; 
+    hand_color.a = 1.0;  
+
     std::vector<geometry_msgs::Point> table_points;
     geometry_msgs::Point tableTopLeftCornerPt;
     tableTopLeftCornerPt.x = 0.5769190341781458; 
@@ -38,7 +44,7 @@ void RobotView::init() {
     table_points.push_back(tableBottomRightCornerPt); 
     table_points.push_back(tableBottomLeftCornerPt); 
 
-    createRvizMarker(table_points);
+    createRvizMarker(table_points, hand_color);
 
     std::vector<geometry_msgs::Point> shelf_points;
     geometry_msgs::Point shelfTopLeftCornerPt;
@@ -71,7 +77,9 @@ void RobotView::init() {
     shelf_points.push_back(shelfBottomRightCornerPt); 
     shelf_points.push_back(shelfBottomLeftCornerPt); 
 
-    createRvizMarker(shelf_points);
+    createRvizMarker(shelf_points, hand_color);
+
+
 
     ROS_INFO("RobotView init");
 }
@@ -79,7 +87,7 @@ void RobotView::init() {
 void RobotView::updateButtons(std::vector<std::shared_ptr<Button>> buttons) {
   for (auto& button: buttons){
       std::vector<geometry_msgs::Point> points(1, button->center.position);
-      createRvizMarker(points); 
+      createRvizMarker(points, button->ros_btn_color); 
   }
 }
 
@@ -91,20 +99,20 @@ void RobotView::updateBorders(std::vector<std::shared_ptr<StaticBorder>> borders
       points.push_back(border->topRightCornerPt);
       points.push_back(border->bottomRightCornerPt);
       points.push_back(border->bottomLeftCornerPt);
-
-      createRvizMarker(points); 
+      
+      createRvizMarker(points, border->border_color); 
   }
 }
 
 void RobotView::updateHands(std::vector<std::shared_ptr<Hand>> hands) {
   for (auto& hand: hands){
       std::vector<geometry_msgs::Point> points(1, hand->robot_frame_position);
-      createRvizMarker(points, 0); 
+      createRvizMarker(points, hand_color, 0); 
   }
 }
 
 
-void RobotView::createRvizMarker(std::vector<geometry_msgs::Point> points, int id) {
+void RobotView::createRvizMarker(std::vector<geometry_msgs::Point> points, std_msgs::ColorRGBA color, int id) {
   // Create Rviz marker
   visualization_msgs::Marker marker;
   marker.header.frame_id = "base";
@@ -112,9 +120,10 @@ void RobotView::createRvizMarker(std::vector<geometry_msgs::Point> points, int i
   marker.id = (id == 0) ? id : marker_counter;
   marker.action = visualization_msgs::Marker::ADD;
   marker.scale.x = 0.01; // Line width
-  marker.color.r = 0.0;
-  marker.color.g = 1.0;
-  marker.color.b = 0.0;
+
+  marker.color.r = color.r;
+  marker.color.g = color.g;
+  marker.color.b = color.b;
   marker.color.a = 1.0;
 
   if (points.size() == 1){
@@ -132,8 +141,6 @@ void RobotView::createRvizMarker(std::vector<geometry_msgs::Point> points, int i
     marker.points.push_back(points[0]); 
   }
   
-
- 
   vis_pub.publish(marker);
   marker_counter+=1;
 }

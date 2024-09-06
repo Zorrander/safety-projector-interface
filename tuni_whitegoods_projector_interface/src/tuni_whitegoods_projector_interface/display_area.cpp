@@ -54,12 +54,26 @@ void DisplayArea::checkForInteractions(std::string name,
   }
 
   for (auto &button : buttons_) {
+    integration::VirtualButtonEventArray events;
     if (button->checkForInteractions(name, cv_hand_position)){
-      integration::VirtualButtonEvent msg_event;
-      msg_event.virtual_button_id = button->get_name();
-      msg_event.event_type = msg_event.PRESSED;
-      //events.virtual_button_events.push_back(msg_event);
-      pub_button_event.publish(msg_event);
+      if (!button->isAlreadyPressed()){
+        button->setAlreadyPressed(true);
+        integration::VirtualButtonEvent msg_event;
+        msg_event.virtual_button_id = button->getId();
+        msg_event.event_type = msg_event.PRESSED;
+        events.virtual_button_events.push_back(msg_event);
+        pub_button_event.publish(events);
+      }
+    } else {
+      if (button->isAlreadyPressed()){
+        integration::VirtualButtonEvent msg_event;
+        msg_event.virtual_button_id = button->getId();
+        msg_event.event_type = msg_event.RELEASED;
+        events.virtual_button_events.push_back(msg_event);
+        pub_button_event.publish(events);
+
+        button->setAlreadyPressed(false);
+      }
     }
   }
 }
