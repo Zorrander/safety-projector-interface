@@ -104,7 +104,7 @@ void ProjectorInterfaceModel::addButton(std::string request_id, std::string zone
 
         modified_center.position.z = -0.40;
         float modified_radius = radius/2.5;
-        std::shared_ptr<Button> btn = std::make_shared<Button>(request_id, name, text, 
+        std::shared_ptr<Button> btn = std::make_shared<Button>(nh_, request_id, name, text, 
                                                               button_color, text_color, 
                                                               modified_center, modified_radius);
         geometry_msgs::PoseStamped in_point_stamped_center;
@@ -155,7 +155,7 @@ void ProjectorInterfaceModel::addBorder(std::string r_id, std::string z, int pos
                                          ros::Duration life, bool track) {
   for (auto &zone : zones) {
     if (zone->name == z){
-      std::shared_ptr<StaticBorder> sb = std::make_shared<StaticBorder>(r_id, pos_row, pos_col,
+      std::shared_ptr<StaticBorder> sb = std::make_shared<StaticBorder>(nh_, r_id, pos_row, pos_col,
                                                                         bord, b_topic,
                                                                         b_color, filling, thic,
                                                                         life, track);

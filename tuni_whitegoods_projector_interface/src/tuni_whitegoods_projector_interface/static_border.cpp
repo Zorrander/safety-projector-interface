@@ -13,30 +13,34 @@ Class to create StaticBorder
 // thic : thickness of the border
 // life : lifetime of the border. Not implemented here because not really useful
 // track : if we track the border (monitor any crossing)
-StaticBorder::StaticBorder(std::string r_id, int pos_row,
+StaticBorder::StaticBorder(ros::NodeHandle *nh, std::string r_id, int pos_row,
                            int pos_col, geometry_msgs::PolygonStamped bord,
                            std::string b_topic, std_msgs::ColorRGBA b_color,
                            bool filling, int thic, ros::Duration life,
                            bool track) {
+
+  ros::param::get("camera_resolution", camera_resolution);
+  ros::param::get("shelf_height", shelf_height);
+
   request_id = r_id;
   position_row = pos_row;
   position_col = pos_col;
 
-  topLeftCornerPt.x = bord.polygon.points[0].x-0.015;
-  topLeftCornerPt.y = bord.polygon.points[0].y-0.015;
-  topLeftCornerPt.z = 0.15;
+  topLeftCornerPt.x = bord.polygon.points[0].x;
+  topLeftCornerPt.y = bord.polygon.points[0].y;
+  topLeftCornerPt.z = shelf_height;
 
-  topRightCornerPt.x = bord.polygon.points[1].x-0.015;
-  topRightCornerPt.y = bord.polygon.points[1].y-0.015;
-  topRightCornerPt.z = 0.15;
+  topRightCornerPt.x = bord.polygon.points[1].x;
+  topRightCornerPt.y = bord.polygon.points[1].y;
+  topRightCornerPt.z = shelf_height;
 
-  bottomRightCornerPt.x = bord.polygon.points[2].x-0.015;
-  bottomRightCornerPt.y = bord.polygon.points[2].y-0.015;
-  bottomRightCornerPt.z = 0.15;
+  bottomRightCornerPt.x = bord.polygon.points[2].x;
+  bottomRightCornerPt.y = bord.polygon.points[2].y;
+  bottomRightCornerPt.z = shelf_height;
 
-  bottomLeftCornerPt.x = bord.polygon.points[3].x-0.015;
-  bottomLeftCornerPt.y = bord.polygon.points[3].y-0.015;
-  bottomLeftCornerPt.z = 0.15;
+  bottomLeftCornerPt.x = bord.polygon.points[3].x;
+  bottomLeftCornerPt.y = bord.polygon.points[3].y;
+  bottomLeftCornerPt.z = shelf_height;
 
   border_color = b_color;
   is_filled = filling;
@@ -51,8 +55,7 @@ StaticBorder::StaticBorder(std::string r_id, int pos_row,
 
 // draw a border
 cv::Mat StaticBorder::drawBorder() {
-
-  sf_line_colored = cv::Mat::zeros(1080, 1920, CV_8UC3);
+  sf_line_colored = cv::Mat::zeros(camera_resolution[1], camera_resolution[0], CV_8UC3);
   cv::rectangle(sf_line_colored, top_left_cam_point, bottom_right_cam_point,
                 cv::Scalar(border_color.b * 255, border_color.g * 255,
                            border_color.r * 255),

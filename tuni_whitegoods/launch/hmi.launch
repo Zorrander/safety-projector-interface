@@ -3,11 +3,14 @@
 	<arg name="use_camera" default="true"/>
 	<arg name="use_projector" default="true"/>
 
-    <rosparam file="$(find tuni_whitegoods)/config/parameters.yaml" />
+    <rosparam file="$(find tuni_whitegoods)/config/tuni_parameters.yaml" />
+
+    <rosparam file="$(find tuni_whitegoods_openflow_interface)/config/openflow_interface_params.yaml" /> 
+
 
     <include file="$(find tuni_whitegoods_transformations)/launch/transformation_servers.launch" />
 
-    <include file="$(find tuni_whitegoods_openflow_interface)/launch/projector_interface.launch" />
+     <!-- <include file="$(find tuni_whitegoods_openflow_interface)/launch/projector_interface.launch" /> --> 
 
     <group if="$(arg use_camera)">
     	<include file="$(find tuni_whitegoods_perception)/launch/whitegoods_perception.launch" />

@@ -12,7 +12,7 @@ private:
   int marker_counter;
   std_msgs::ColorRGBA hand_color;
 public:
-  RobotView();
+  RobotView(ros::NodeHandle *nh);
 
   void init() override;
   void updateButtons(std::vector<std::shared_ptr<Button>> buttons) override;

@@ -24,7 +24,7 @@ public:
   cv::Scalar btn_color, txt_color;
   cv::Scalar base_btn_color;
   float radius;
-  Button(std::string request_id, std::string name, std::string text, 
+  Button(ros::NodeHandle *nh, std::string request_id, std::string name, std::string text, 
          std_msgs::ColorRGBA button_color, std_msgs::ColorRGBA text_color, 
          geometry_msgs::Pose center, float radius);
   cv::Mat draw();
@@ -38,6 +38,7 @@ public:
   std::string getId(); 
   bool isAlreadyPressed();
   void setAlreadyPressed(bool alreadyPressed);
+  std::vector<int> camera_resolution;
 };
 
 #endif

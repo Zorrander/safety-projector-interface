@@ -4,6 +4,8 @@ project(tuni_whitegoods_transformations)
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")
+
 
 find_package(catkin REQUIRED
   roscpp

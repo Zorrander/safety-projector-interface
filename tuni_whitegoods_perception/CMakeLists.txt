@@ -4,6 +4,7 @@ project(tuni_whitegoods_perception)
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")
 
 find_package(catkin REQUIRED COMPONENTS
                    roscpp

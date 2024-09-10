@@ -1,6 +1,6 @@
 #include "tuni_whitegoods_projector_interface/button.h"
 
-Button::Button(std::string request_id, std::string name, std::string text, 
+Button::Button(ros::NodeHandle *nh, std::string request_id, std::string name, std::string text, 
                std_msgs::ColorRGBA button_color, std_msgs::ColorRGBA text_color, 
                geometry_msgs::Pose center, float radius) 
 			: name(name),
@@ -12,10 +12,11 @@ Button::Button(std::string request_id, std::string name, std::string text,
   set_button_color(button_color);
   set_text_color(text_color);
   button_already_pressed = false;
+  ros::param::get("camera_resolution", camera_resolution);
 }
 
 cv::Mat Button::draw() {
-  btn_img = cv::Mat::zeros(1080, 1920, CV_8UC3);
+  btn_img = cv::Mat::zeros(camera_resolution[1], camera_resolution[0], CV_8UC3);
 
   cv::circle(btn_img, center_cam_point, radius, btn_color, -1);
 

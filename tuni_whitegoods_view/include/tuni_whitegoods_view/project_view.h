@@ -16,11 +16,14 @@ class Projector : public View
 private:
   cv_bridge::CvImagePtr cv_ptr;
   int shift;
-  cv::Matx33d border_hom, button_hom;
+
   cv::Mat sum_img, button_img, border_img;
 
+  cv::Matx33d border_homography, button_homography;
+  std::vector<double> border_homography_array, button_homography_array;
+  std::vector<int> projector_resolution;
 public:
-    Projector();
+    Projector(ros::NodeHandle *nh);
     ~Projector();
 
     void init() override;

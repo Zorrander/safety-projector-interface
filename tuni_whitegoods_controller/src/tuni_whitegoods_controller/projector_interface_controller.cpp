@@ -45,9 +45,9 @@ ProjectorInterfaceController::ProjectorInterfaceController(ros::NodeHandle *nh)
 
   detector = std::make_shared<ObjectDetector>();
 
-  projector_view = std::make_shared<Projector>();
+  projector_view = std::make_shared<Projector>(nh_);
   camera_view = std::make_shared<CameraView>(nh_);
-  robot_view = std::make_shared<RobotView>();
+  robot_view = std::make_shared<RobotView>(nh_);
 
   // Initialize views
   views.push_back(projector_view);

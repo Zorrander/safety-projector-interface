@@ -3,7 +3,7 @@
 
 using namespace std;
 
-RobotView::RobotView() {
+RobotView::RobotView(ros::NodeHandle *nh) {
   vis_pub =
       nh_.advertise<visualization_msgs::Marker>("visualization_marker", 10);
   marker_counter = 1;
@@ -17,6 +17,32 @@ void RobotView::init() {
     hand_color.b = 0.0; 
     hand_color.a = 1.0;  
 
+    std::vector<geometry_msgs::Point> table_points;
+
+    geometry_msgs::Point tableTopLeftCornerPt;
+    tableTopLeftCornerPt.x = 1.0487210514766203; 
+    tableTopLeftCornerPt.y = 0.4651205344735724;
+
+    geometry_msgs::Point tableTopRightCornerPt;
+    tableTopRightCornerPt.x = 0.9794720649924923; 
+    tableTopRightCornerPt.y = -0.7313395459246643;
+
+    geometry_msgs::Point tableBottomRightCornerPt;
+    tableBottomRightCornerPt.x = 0.12127247533236307; 
+    tableBottomRightCornerPt.y = -0.6793050608740877;
+
+    geometry_msgs::Point tableBottomLeftCornerPt;
+    tableBottomLeftCornerPt.x = 0.1905214618164912; 
+    tableBottomLeftCornerPt.y = 0.5171550195241489;
+    
+    table_points.push_back(tableTopLeftCornerPt); 
+    table_points.push_back(tableTopRightCornerPt); 
+    table_points.push_back(tableBottomRightCornerPt); 
+    table_points.push_back(tableBottomLeftCornerPt); 
+
+    createRvizMarker(table_points, hand_color);
+
+    /*
     std::vector<geometry_msgs::Point> table_points;
     geometry_msgs::Point tableTopLeftCornerPt;
     tableTopLeftCornerPt.x = 0.5769190341781458; 
@@ -79,7 +105,7 @@ void RobotView::init() {
 
     createRvizMarker(shelf_points, hand_color);
 
-
+    */
 
     ROS_INFO("RobotView init");
 }

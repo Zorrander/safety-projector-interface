@@ -25,7 +25,7 @@ using namespace std;
 
 class StaticBorder {
 public:
-  StaticBorder(std::string r_id, int pos_row, int pos_col,
+  StaticBorder(ros::NodeHandle *nh, std::string r_id, int pos_row, int pos_col,
                geometry_msgs::PolygonStamped bord, std::string b_topic,
                std_msgs::ColorRGBA b_color, bool filling, int thic,
                ros::Duration life, bool track);
@@ -60,7 +60,8 @@ private:
   int position_row;
   int position_col;
 
-  
+  std::vector<int> camera_resolution;
+  float shelf_height;
   bool is_filled;
   
   ros::Duration lifetime;
