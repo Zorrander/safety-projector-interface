@@ -27,9 +27,9 @@ public:
     ~Projector();
 
     void init() override;
-    void updateButtons(std::vector<std::shared_ptr<Button>> buttons) override;
-    void updateBorders(std::vector<std::shared_ptr<StaticBorder>> borders) override;
-    void updateHands(std::vector<std::shared_ptr<Hand>> hands) override;
+    void updateButtons(const std::vector<std::shared_ptr<Button>>& buttons) override;
+    void updateBorders(const std::vector<std::shared_ptr<StaticBorder>>& borders) override;
+    void updateHands(const std::vector<std::shared_ptr<Hand>>& hands) override;
 };
 
 #endif

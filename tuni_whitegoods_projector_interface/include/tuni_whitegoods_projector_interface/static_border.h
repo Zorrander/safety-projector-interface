@@ -29,7 +29,7 @@ public:
                geometry_msgs::PolygonStamped bord, std::string b_topic,
                std_msgs::ColorRGBA b_color, bool filling, int thic,
                ros::Duration life, bool track);
-  bool checkForInteractions(std::string name, cv::Point hand_position);
+  bool checkForInteractions(const std::string& name, const cv::Point& hand_position);
   float getBorderDiagonal();
 
   cv::Mat drawMask();

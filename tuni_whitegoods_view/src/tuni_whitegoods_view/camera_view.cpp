@@ -20,14 +20,14 @@ void CameraView::init() {
   publish_image();
 }
 
-void CameraView::updateButtons(std::vector<std::shared_ptr<Button>> buttons) {
+void CameraView::updateButtons(const std::vector<std::shared_ptr<Button>>& buttons) {
   for (auto& button: buttons){
       cv::circle(depth_normalized, button->center_cam_point, button->radius, button->btn_color, -1); 
   }
   publish_image();
 }
 
-void CameraView::updateBorders(std::vector<std::shared_ptr<StaticBorder>> borders) {
+void CameraView::updateBorders(const std::vector<std::shared_ptr<StaticBorder>>& borders) {
   for (auto& border: borders){
     cv::rectangle(depth_normalized, border->top_left_cam_point, border->bottom_right_cam_point,
                   cv::Scalar(border->border_color.b * 255, border->border_color.g * 255,
@@ -37,7 +37,7 @@ void CameraView::updateBorders(std::vector<std::shared_ptr<StaticBorder>> border
   publish_image();
 }
 
-void CameraView::updateHands(std::vector<std::shared_ptr<Hand>> hands) {
+void CameraView::updateHands(const std::vector<std::shared_ptr<Hand>>& hands) {
   for (auto& hand: hands){
     cv::Point hand_position(hand->pixel_position.x, hand->pixel_position.y);
     cv::circle(depth_normalized, hand_position, 25, cv::Scalar(255,255,0), -1);     

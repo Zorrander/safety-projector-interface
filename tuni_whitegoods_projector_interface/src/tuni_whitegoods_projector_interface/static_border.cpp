@@ -106,8 +106,8 @@ cv::Point StaticBorder::getCenter() {
   return p;
 }
 
-bool StaticBorder::checkForInteractions(std::string name,
-                                        cv::Point hand_position) {
+bool StaticBorder::checkForInteractions(const std::string& name,
+                                        const cv::Point& hand_position) {
   bool result = false;
   float distance = cv::norm(hand_position - getCenter());
   bool is_crossed = distance < getBorderDiagonal() * 0.5;

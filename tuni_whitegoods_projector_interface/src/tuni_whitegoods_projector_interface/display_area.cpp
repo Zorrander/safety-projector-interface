@@ -23,8 +23,9 @@ void DisplayArea::create_border_layout(
   };
 }
 
-void DisplayArea::checkForInteractions(std::string name,
-                                       geometry_msgs::Point hand_position) {
+bool DisplayArea::checkForInteractions(const std::string& name,
+                                       const geometry_msgs::Point& hand_position) {
+  bool result = false;
   float distance;
   cv::Point cv_hand_position(static_cast<int>(hand_position.x),
                              static_cast<int>(hand_position.y));
@@ -32,6 +33,7 @@ void DisplayArea::checkForInteractions(std::string name,
   for (auto &border : borders_) {
     if (border->robot_booked || border->operator_booked){
       if (border->checkForInteractions(name, cv_hand_position)){
+          result = true;
           integration::SafetyBorderViolation msg_border;
           geometry_msgs::PolygonStamped initial_border;
           geometry_msgs::Pose target_location;
@@ -57,6 +59,7 @@ void DisplayArea::checkForInteractions(std::string name,
     integration::VirtualButtonEventArray events;
     if (button->checkForInteractions(name, cv_hand_position)){
       if (!button->isAlreadyPressed()){
+        result = true;
         button->setAlreadyPressed(true);
         integration::VirtualButtonEvent msg_event;
         msg_event.virtual_button_id = button->getId();
@@ -76,6 +79,8 @@ void DisplayArea::checkForInteractions(std::string name,
       }
     }
   }
+
+  return result;
 }
 
 void DisplayArea::resetInteractions() {

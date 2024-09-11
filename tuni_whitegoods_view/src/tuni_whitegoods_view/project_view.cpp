@@ -45,7 +45,7 @@ void Projector::init() {
   }
 }
 
-void Projector::updateButtons(std::vector<std::shared_ptr<Button>> buttons) {
+void Projector::updateButtons(const std::vector<std::shared_ptr<Button>>& buttons) {
   button_img = cv::Mat::zeros(projector_resolution[1], projector_resolution[0], CV_8UC3);
   for (auto &button: buttons)
   {
@@ -58,7 +58,7 @@ void Projector::updateButtons(std::vector<std::shared_ptr<Button>> buttons) {
   cv::waitKey(100);
 }
 
-void Projector::updateBorders(std::vector<std::shared_ptr<StaticBorder>> borders) {
+void Projector::updateBorders(const std::vector<std::shared_ptr<StaticBorder>>& borders) {
   border_img = cv::Mat::zeros(projector_resolution[1], projector_resolution[0], CV_8UC3);
   for (auto &border: borders)
   {
@@ -71,5 +71,5 @@ void Projector::updateBorders(std::vector<std::shared_ptr<StaticBorder>> borders
   cv::waitKey(100);
 }
 
-void Projector::updateHands(std::vector<std::shared_ptr<Hand>> hands) {}
+void Projector::updateHands(const std::vector<std::shared_ptr<Hand>>& hands) {}
 

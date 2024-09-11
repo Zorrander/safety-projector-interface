@@ -55,7 +55,7 @@ ProjectorInterfaceModel::ProjectorInterfaceModel(ros::NodeHandle *nh)
 
   // Create a timer 
   interaction_timer_ = nh->createTimer(ros::Duration(1.0), &ProjectorInterfaceModel::reset_interactions, this);
-
+  ros::param::get("hand_visualization", hand_visualization);
   hands_detected = false;
 }
 
@@ -265,43 +265,56 @@ void ProjectorInterfaceModel::notify() {
   pub_change_notification.publish(std_msgs::Empty());
 }
 
-void ProjectorInterfaceModel::updateHandPose(std::string name,
-                                               geometry_msgs::Point position) {
+void ProjectorInterfaceModel::updateHandPose(const std::string& name, const geometry_msgs::Point& position) {
   hands_detected = true;
   action_triggered = false; 
-  // Project pixel position to 3D
-  tuni_whitegoods_msgs::TransformPixelTo3D srv_pixel_to_3D;
-  srv_pixel_to_3D.request.u = position.x;
-  srv_pixel_to_3D.request.v = position.y;
-  srv_pixel_to_3D.request.depth = position.z;
-  client_pixel_to_3D.call(srv_pixel_to_3D);
 
-  geometry_msgs::Point projected;
-  projected.x = srv_pixel_to_3D.response.x;
-  projected.y = srv_pixel_to_3D.response.y;
-  projected.z = srv_pixel_to_3D.response.z;
-  // Transform to robot coordinates frame
-  geometry_msgs::PoseStamped in_point_stamped;
-  in_point_stamped.header.frame_id = "rgb_camera_link";
-  in_point_stamped.header.stamp = ros::Time(0);
-  in_point_stamped.pose.position = projected;
+  if (hand_visualization){  
+    // Project pixel position to 3D
+    tuni_whitegoods_msgs::TransformPixelTo3D srv_pixel_to_3D;
+    srv_pixel_to_3D.request.u = position.x;
+    srv_pixel_to_3D.request.v = position.y;
+    srv_pixel_to_3D.request.depth = position.z;
+    client_pixel_to_3D.call(srv_pixel_to_3D);
 
-  tuni_whitegoods_msgs::TransformRobotCameraCoordinates srv;
-  srv.request.in_point_stamped = in_point_stamped;
-  srv.request.target_frame = "base";
-  client_world_coordinates.call(srv);
+    geometry_msgs::Point projected;
+    projected.x = srv_pixel_to_3D.response.x;
+    projected.y = srv_pixel_to_3D.response.y;
+    projected.z = srv_pixel_to_3D.response.z;
+    // Transform to robot coordinates frame
+    geometry_msgs::PoseStamped in_point_stamped;
+    in_point_stamped.header.frame_id = "rgb_camera_link";
+    in_point_stamped.header.stamp = ros::Time(0);
+    in_point_stamped.pose.position = projected;
 
-  if (name == "left") {
-    left_hand->set_position(position, projected, srv.response.out_point_stamped.pose.position);
-  } else if (name == "right") {
-    right_hand->set_position(position, projected, srv.response.out_point_stamped.pose.position);
+    tuni_whitegoods_msgs::TransformRobotCameraCoordinates srv;
+    srv.request.in_point_stamped = in_point_stamped;
+    srv.request.target_frame = "base";
+    client_world_coordinates.call(srv);
+
+    if (name == "left") {
+      left_hand->set_position(position, projected, srv.response.out_point_stamped.pose.position);
+    } else if (name == "right") {
+      right_hand->set_position(position, projected, srv.response.out_point_stamped.pose.position);
+    }  
+
+    // Notify controller
+    notify();  
   }
+
+  bool interaction_detected = false;
   // Check for interaction
   for (auto &zone : zones) {
-    zone->checkForInteractions(name, position);
+    if (zone->checkForInteractions(name, position)){
+      interaction_detected = true;
+    }
   }
-  // Notify controller
-  notify();
+
+  if (interaction_detected){
+     // Notify controller
+     notify();    
+  }
+ 
 }
 
 std::vector<std::shared_ptr<Button>> ProjectorInterfaceModel::getButtons(){

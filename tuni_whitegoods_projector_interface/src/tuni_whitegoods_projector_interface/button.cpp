@@ -47,8 +47,7 @@ void Button::setAlreadyPressed(bool alreadyPressed){
   button_already_pressed = alreadyPressed;
 }
 
-bool Button::checkForInteractions(std::string name,
-                                        cv::Point hand_position) {
+bool Button::checkForInteractions(const std::string& name, const cv::Point& hand_position) {
   bool result = false;
   float distance = cv::norm(hand_position - center_cam_point);
   bool is_crossed = distance < radius*1.2;

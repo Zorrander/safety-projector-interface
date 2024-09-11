@@ -16,9 +16,9 @@ class View
 public:
     View();
     virtual void init();
-    virtual void updateButtons(std::vector<std::shared_ptr<Button>> buttons);
-    virtual void updateBorders(std::vector<std::shared_ptr<StaticBorder>> borders);
-    virtual void updateHands(std::vector<std::shared_ptr<Hand>> hands);
+    virtual void updateButtons(const std::vector<std::shared_ptr<Button>>& buttons);
+    virtual void updateBorders(const std::vector<std::shared_ptr<StaticBorder>>& borders);
+    virtual void updateHands(const std::vector<std::shared_ptr<Hand>>& hands);
 };
 
 #endif

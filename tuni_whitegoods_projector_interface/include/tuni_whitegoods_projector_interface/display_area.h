@@ -43,7 +43,7 @@ public:
     bool change_button_color(std::string resource_id, std_msgs::ColorRGBA button_color);
     void fetchButtons(std::vector<std::shared_ptr<Button>>& buttons);
     void fetchBorders(std::vector<std::shared_ptr<StaticBorder>>& borders);
-    void checkForInteractions(std::string name, geometry_msgs::Point hand_position);
+    bool checkForInteractions(const std::string& name, const geometry_msgs::Point& hand_position);
     void resetInteractions();
     void create_border_layout(int rows, int cols, float sf_factor, bool adjacent,
                                 std_msgs::ColorRGBA status_booked, std_msgs::ColorRGBA status_free,

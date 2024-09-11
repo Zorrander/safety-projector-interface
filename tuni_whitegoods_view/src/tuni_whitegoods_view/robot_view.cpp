@@ -110,14 +110,14 @@ void RobotView::init() {
     ROS_INFO("RobotView init");
 }
 
-void RobotView::updateButtons(std::vector<std::shared_ptr<Button>> buttons) {
+void RobotView::updateButtons(const std::vector<std::shared_ptr<Button>>& buttons) {
   for (auto& button: buttons){
       std::vector<geometry_msgs::Point> points(1, button->center.position);
       createRvizMarker(points, button->ros_btn_color); 
   }
 }
 
-void RobotView::updateBorders(std::vector<std::shared_ptr<StaticBorder>> borders) {
+void RobotView::updateBorders(const std::vector<std::shared_ptr<StaticBorder>>& borders) {
   for (auto& border: borders){
       std::vector<geometry_msgs::Point> points;
 
@@ -130,7 +130,7 @@ void RobotView::updateBorders(std::vector<std::shared_ptr<StaticBorder>> borders
   }
 }
 
-void RobotView::updateHands(std::vector<std::shared_ptr<Hand>> hands) {
+void RobotView::updateHands(const std::vector<std::shared_ptr<Hand>>& hands) {
   for (auto& hand: hands){
       std::vector<geometry_msgs::Point> points(1, hand->robot_frame_position);
       createRvizMarker(points, hand_color, 0); 

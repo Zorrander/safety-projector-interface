@@ -58,27 +58,25 @@ def main():
     p2 = Point32()
     p3 = Point32()
     p4 = Point32()
-    p.x = 0.3
-    p.y = -0.4
+    p.x = 0.5327723191197576
+    p.y = -0.3859754711165183
     p.z = 0.0
     border_projection_goal.border.polygon.points.append(p);
 
-    p2.x = 0.5
-    p2.y = -0.4 
+    p2.x = 0.52084058325318
+    p2.y = -0.5911370965189771
     p2.z = 0.0
     border_projection_goal.border.polygon.points.append(p2)
 
-    p3.x = 0.5
-    p3.y = -0.6 
+    p3.x = 0.31064085560322285
+    p3.y = -0.5752820995501067
     p3.z = 0.0
     border_projection_goal.border.polygon.points.append(p3)
 
-    p4.x = 0.3
-    p4.y = -0.6 
+    p4.x = 0.32227329926039167
+    p4.y = -0.37203207838239905
     p4.z = 0.0
     border_projection_goal.border.polygon.points.append(p4)
-
-
 
 
     border_projection_goal.border_topic = ""
@@ -95,48 +93,7 @@ def main():
     
     border_client.wait_for_result()
 
-    border_projection_goal.request_id = "1"
-    border_projection_goal.zone = "shelf"
-    border_projection_goal.position_row = 0
-    border_projection_goal.position_col = 2
-    border_projection_goal.border.polygon.points = []
-    border_projection_goal.border.header.frame_id = "base"
-    border_projection_goal.border.header.stamp = rospy.Time.now()
-    p = Point32()
-    p2 = Point32()
-    p3 = Point32()
-    p4 = Point32()
-    p.x = 0.3
-    p.y = 0.0
-    p.z = 0.0
-    border_projection_goal.border.polygon.points.append(p);
-    p2.x = 0.5
-    p2.y = 0.0
-    p2.z = 0.0
-    border_projection_goal.border.polygon.points.append(p2)
-    p3.x = 0.3
-    p3.y = -0.2
-    p3.z = 0.0
 
-    border_projection_goal.border.polygon.points.append(p3)
-    p4.x = 0.5
-    p4.y = -0.2
-    p4.z = 0.0
-
-    border_projection_goal.border.polygon.points.append(p4)
-    border_projection_goal.border_topic = ""
-    border_projection_goal.border_color.r = 0.0
-    border_projection_goal.border_color.g = 1.0
-    border_projection_goal.border_color.b = 0.0;
-    border_projection_goal.border_color.a = 0.0;
-    border_projection_goal.is_filled = False;
-    border_projection_goal.thickness = 1;
-    #border_projection_goal.lifetime.fromNSec(0);
-    border_projection_goal.track_violations = True;
-    print("Sending border goal.")
-    border_client.send_goal(border_projection_goal)
-    
-    border_client.wait_for_result()
 
     print("A static border should be visible.")
     print("----------------------------------")

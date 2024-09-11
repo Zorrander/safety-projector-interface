@@ -15,8 +15,8 @@ def select_zone():
 	transform_world_coordinates = rospy.ServiceProxy('transform_world_coordinates_frame', TransformRobotCameraCoordinates)
 	project_pixel_to_3D = rospy.ServiceProxy('transform_pixel_to_3D', TransformPixelTo3D)
 
-	rgb_img = cv2.imread('/home/odin-lms2/rgb_img.png', cv2.IMREAD_UNCHANGED)
-	depthmap = cv2.imread('/home/odin-lms2/depthmap.png', cv2.IMREAD_UNCHANGED)
+	rgb_img = cv2.imread('/home/odin3/rgb_img.png', cv2.IMREAD_UNCHANGED)
+	depthmap = cv2.imread('/home/odin3/depthmap.png', cv2.IMREAD_UNCHANGED)
 
 	roi = cv2.selectROI("Select ROI", rgb_img)
 	x1, y1, w, h = roi
