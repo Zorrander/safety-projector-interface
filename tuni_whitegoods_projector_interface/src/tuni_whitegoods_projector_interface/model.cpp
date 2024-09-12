@@ -149,7 +149,7 @@ void ProjectorInterfaceModel::change_button_color(std::string resource_id, std_m
     } 
 }
 
-void ProjectorInterfaceModel::addBorder(std::string r_id, std::string z, int pos_row, int pos_col,
+void ProjectorInterfaceModel::addStaticBorder(std::string r_id, std::string z, int pos_row, int pos_col,
                                          geometry_msgs::PolygonStamped bord, std::string b_topic,
                                          std_msgs::ColorRGBA b_color, bool filling, int thic,
                                          ros::Duration life, bool track) {
@@ -225,10 +225,16 @@ void ProjectorInterfaceModel::addBorder(std::string r_id, std::string z, int pos
   notify();
 }
 
+void ProjectorInterfaceModel::addDynamicBorder(std::string r_id, std::string z, std::string b_topic,
+               std_msgs::ColorRGBA b_color, bool filling, int thic,
+               ros::Duration life, bool track){
+
+}
+
 void ProjectorInterfaceModel::robot_book_border(std::string id) {
   for (auto &z : zones) {
     if (z->robot_book_border(id)){
-      notify();  // Notify controller
+      notify();  
       break;
     }
   } 
@@ -237,7 +243,7 @@ void ProjectorInterfaceModel::robot_book_border(std::string id) {
 void ProjectorInterfaceModel::robot_release_border(std::string id, int status) {
   for (auto &z : zones) {
     if (z->robot_release_border(id, status)){
-      notify();  // Notify controller
+      notify();  
       break;
     }
   } 
@@ -246,7 +252,7 @@ void ProjectorInterfaceModel::robot_release_border(std::string id, int status) {
 void ProjectorInterfaceModel::operator_book_border(std::string id) {
   for (auto &z : zones) {
     if (z->operator_book_border(id)){
-      notify();  // Notify controller
+      notify(); 
       break;
     }
   } 
@@ -255,7 +261,7 @@ void ProjectorInterfaceModel::operator_book_border(std::string id) {
 void ProjectorInterfaceModel::operator_release_border(std::string id, int status) {
   for (auto &z : zones) {
     if (z->operator_release_border(id, status)){
-      notify();  // Notify controller
+      notify(); 
       break;
     }
   } 
