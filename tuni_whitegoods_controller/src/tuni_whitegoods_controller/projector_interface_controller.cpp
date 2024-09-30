@@ -24,14 +24,14 @@ ProjectorInterfaceController::ProjectorInterfaceController(ros::NodeHandle *nh)
       &ProjectorInterfaceController::movingTableTrackerCallback, this);
 
   // Subscribe to robot coordinates if needed for dynamic border display
-  base_link.subscribe(nh, "/coords/base_link", 1);
+  /*base_link.subscribe(nh, "/coords/base_link", 1);
   link_4.subscribe(nh, "/coords/link_4", 1);
   link_5.subscribe(nh, "/coords/link_5", 1);
   tool_0.subscribe(nh, "/coords/tool0", 1);
   flange.subscribe(nh, "/coords/flange", 1);
   sync.reset(new Sync(MySyncPolicy(10), base_link, link_4, link_5, tool_0, flange));      
   sync->registerCallback(boost::bind(&DynamicBorder::callbackJoints3D, this, _1, _2, _3, _4, _5));
-
+  */ 
   // Subscribe to commands coming from OpenFlow or custom scheduler
   service_borders = nh->advertiseService(
       "/execution/projector_interface/integration/services/"
@@ -130,7 +130,7 @@ void ProjectorInterfaceController::addStaticBorder(std::string r_id, std::string
                                              bool filling, int thic,
                                              ros::Duration life, bool track) {
 
-  model_->addBorder(r_id, z,
+  model_->addStaticBorder(r_id, z,
                    pos_row, pos_col,
                    bord, b_topic,
                    b_color, filling, thic,

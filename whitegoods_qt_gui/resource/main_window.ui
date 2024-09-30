@@ -1,0 +1,731 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1280</width>
+    <height>760</height>
+   </rect>
+  </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
+  </property>
+  <property name="windowTitle">
+   <string>Projector Interface</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">background-color: rgb(238, 238, 236)</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
+   <widget class="QStackedWidget" name="mainPages">
+    <property name="geometry">
+     <rect>
+      <x>0</x>
+      <y>0</y>
+      <width>1281</width>
+      <height>751</height>
+     </rect>
+    </property>
+    <property name="sizePolicy">
+     <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+      <horstretch>0</horstretch>
+      <verstretch>0</verstretch>
+     </sizepolicy>
+    </property>
+    <property name="currentIndex">
+     <number>1</number>
+    </property>
+    <widget class="QWidget" name="startPage">
+     <widget class="QWidget" name="verticalLayoutWidget_2">
+      <property name="geometry">
+       <rect>
+        <x>100</x>
+        <y>40</y>
+        <width>1071</width>
+        <height>431</height>
+       </rect>
+      </property>
+      <layout class="QVBoxLayout" name="verticalLayout_2" stretch="1,1,2,1,1">
+       <item>
+        <widget class="QLabel" name="label">
+         <property name="styleSheet">
+          <string notr="true">font-weight: bold;</string>
+         </property>
+         <property name="text">
+          <string>Projector Interface Setup Assistant</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="label_2">
+         <property name="text">
+          <string>This assistant help you setup the projector interface by generating calibration files for the robot, camera, and projector.  </string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <spacer name="verticalSpacer">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>40</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item>
+        <widget class="QLabel" name="label_3">
+         <property name="styleSheet">
+          <string notr="true">font-weight: bold;</string>
+         </property>
+         <property name="text">
+          <string>Are you setting up a new workspace or editing an existing one?</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout" stretch="1,2,1,5">
+         <item>
+          <widget class="QPushButton" name="newCalibrationButton">
+           <property name="text">
+            <string>Create new</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <spacer name="horizontalSpacer_2">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item>
+          <widget class="QPushButton" name="editCalibrationButton">
+           <property name="text">
+            <string>Edit calibration</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <spacer name="horizontalSpacer">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+        </layout>
+       </item>
+      </layout>
+     </widget>
+    </widget>
+    <widget class="QWidget" name="newCalibration">
+     <widget class="QWidget" name="verticalLayoutWidget">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>10</y>
+        <width>1261</width>
+        <height>721</height>
+       </rect>
+      </property>
+      <layout class="QVBoxLayout" name="verticalLayout">
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_7">
+         <item>
+          <widget class="QPushButton" name="calibrateRobotButton">
+           <property name="text">
+            <string>Calibrate robot</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="calibrateCameraButton">
+           <property name="text">
+            <string>Calibrate camera</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="calibrateProjectorButton">
+           <property name="text">
+            <string>Calibrate projector</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_4" stretch="3,2">
+         <item>
+          <widget class="QStackedWidget" name="hmiPages">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">QTableWidget {
+border: 1px solid #d0d0d0;
+gridline-color: #d0d0d0;
+background-color: #f9f9f9;
+selection-background-color: #4caf50;
+selection-color: white;            
+}
+
+QHeaderView::section {
+    background-color: #f0f0f0;
+    color: #333;
+    font-weight: bold;
+    border: 1px solid #d0d0d0;
+    padding: 4px;
+}
+
+QTableWidget::item {
+     padding: 5px;
+}
+
+
+QTableWidget::item:hover {
+   background-color: #e0f7fa;
+}
+
+QTableWidget::item:alternate {
+  background-color: #f1f1f1;
+}
+
+QTableCornerButton::section {
+     background-color: #f0f0f0;         
+   border: 1px solid #d0d0d0;            
+}
+</string>
+           </property>
+           <property name="currentIndex">
+            <number>1</number>
+           </property>
+           <widget class="QWidget" name="calibrateRobot">
+            <property name="styleSheet">
+             <string notr="true">QRadioButton, QPushButton {
+    text-align: center; /* Centers the text inside the button */
+    padding: 10px 20px; /* Optional: Add padding for spacing */
+}
+
+/* Styling for the first radio button */
+#markerOnEEButton {
+    background-color: #f0f0f0;
+    border: 1px solid #d0d0d0;
+    border-top-left-radius: 5px;
+    border-bottom-left-radius: 5px;
+    padding: 10px 20px;
+    color: black;
+    border-right: none; /* No right border to merge with the second button */
+}
+
+#markerOnEEButton:hover {
+    background-color: #e0e0e0;
+}
+
+#markerOnEEButton:checked {
+    background-color: rgb(154, 154, 154);
+    color: white;
+}
+
+/* Styling for the second radio button */
+#markerOnTableButton {
+    background-color: #f0f0f0;
+    border: 1px solid #d0d0d0;
+    border-top-right-radius: 5px;
+    border-bottom-right-radius: 5px;
+    padding: 10px 20px;
+    color: black;
+    border-left: none; /* No left border to merge with the first button */
+}
+
+#markerOnTableButton:hover {
+    background-color: #e0e0e0;
+}
+
+#markerOnTableButton:checked {
+    background-color: rgb(154, 154, 154);
+    color: white;
+}
+
+/* Hides the default radio button circle */
+QRadioButton::indicator {
+    width: 0px;
+}
+</string>
+            </property>
+            <widget class="QWidget" name="layoutWidget">
+             <property name="geometry">
+              <rect>
+               <x>10</x>
+               <y>640</y>
+               <width>411</width>
+               <height>39</height>
+              </rect>
+             </property>
+             <layout class="QHBoxLayout" name="horizontalLayout_2" stretch="0,0">
+              <property name="spacing">
+               <number>0</number>
+              </property>
+              <item>
+               <widget class="QRadioButton" name="markerOnEEButton">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true"/>
+                </property>
+                <property name="text">
+                 <string>Marker on end effector</string>
+                </property>
+                <attribute name="buttonGroup">
+                 <string notr="true">robotCalibrationMethod</string>
+                </attribute>
+               </widget>
+              </item>
+              <item>
+               <widget class="QRadioButton" name="markerOnTableButton">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true"/>
+                </property>
+                <property name="text">
+                 <string>Marker on Table</string>
+                </property>
+                <attribute name="buttonGroup">
+                 <string notr="true">robotCalibrationMethod</string>
+                </attribute>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+            <widget class="QLabel" name="calibRobotTitle">
+             <property name="geometry">
+              <rect>
+               <x>60</x>
+               <y>30</y>
+               <width>121</width>
+               <height>31</height>
+              </rect>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">font-weight: bold;</string>
+             </property>
+             <property name="text">
+              <string>Calibrate Robot</string>
+             </property>
+            </widget>
+           </widget>
+           <widget class="QWidget" name="calibrateCamera">
+            <widget class="QLabel" name="calibCameraTitle">
+             <property name="geometry">
+              <rect>
+               <x>60</x>
+               <y>30</y>
+               <width>151</width>
+               <height>31</height>
+              </rect>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">font-weight: bold;</string>
+             </property>
+             <property name="text">
+              <string>Calibrate Camera</string>
+             </property>
+            </widget>
+            <widget class="QStackedWidget" name="cameraCalibrationWidget">
+             <property name="geometry">
+              <rect>
+               <x>50</x>
+               <y>120</y>
+               <width>641</width>
+               <height>511</height>
+              </rect>
+             </property>
+             <property name="currentIndex">
+              <number>1</number>
+             </property>
+             <widget class="QWidget" name="intro_camera_calibration">
+              <widget class="QLabel" name="cameraParameterExplanation">
+               <property name="geometry">
+                <rect>
+                 <x>60</x>
+                 <y>60</y>
+                 <width>541</width>
+                 <height>81</height>
+                </rect>
+               </property>
+               <property name="text">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;To perform transformations between coordinates frames &lt;/p&gt;&lt;p&gt;the central point and focal point of the camera are needed,&lt;/p&gt;&lt;p&gt;as well as the resolution of the camera. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
+              </widget>
+              <widget class="QPushButton" name="cameraParametersButton">
+               <property name="geometry">
+                <rect>
+                 <x>60</x>
+                 <y>210</y>
+                 <width>151</width>
+                 <height>51</height>
+                </rect>
+               </property>
+               <property name="text">
+                <string>Retrieve parameters</string>
+               </property>
+              </widget>
+             </widget>
+             <widget class="QWidget" name="result_camera_calibration">
+              <widget class="QWidget" name="formLayoutWidget_2">
+               <property name="geometry">
+                <rect>
+                 <x>130</x>
+                 <y>70</y>
+                 <width>391</width>
+                 <height>231</height>
+                </rect>
+               </property>
+               <layout class="QFormLayout" name="formLayout_2">
+                <item row="0" column="0">
+                 <widget class="QLabel" name="heightLabel">
+                  <property name="text">
+                   <string>Height </string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="1">
+                 <widget class="QSpinBox" name="heightSpinBox"/>
+                </item>
+                <item row="1" column="0">
+                 <widget class="QLabel" name="widthLabel">
+                  <property name="text">
+                   <string>Width</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="1">
+                 <widget class="QSpinBox" name="widthSpinBox"/>
+                </item>
+                <item row="2" column="0">
+                 <widget class="QLabel" name="cxLabel">
+                  <property name="text">
+                   <string>cx</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="1">
+                 <widget class="QDoubleSpinBox" name="cxDoubleSpinBox"/>
+                </item>
+                <item row="3" column="0">
+                 <widget class="QLabel" name="cyLabel">
+                  <property name="text">
+                   <string>cy</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="3" column="1">
+                 <widget class="QDoubleSpinBox" name="cyDoubleSpinBox"/>
+                </item>
+                <item row="4" column="0">
+                 <widget class="QLabel" name="fxLabel">
+                  <property name="text">
+                   <string>fx</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="4" column="1">
+                 <widget class="QDoubleSpinBox" name="fxDoubleSpinBox"/>
+                </item>
+                <item row="5" column="0">
+                 <widget class="QLabel" name="fyLabel">
+                  <property name="text">
+                   <string>fy</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="5" column="1">
+                 <widget class="QDoubleSpinBox" name="fyDoubleSpinBox"/>
+                </item>
+               </layout>
+              </widget>
+              <widget class="QPushButton" name="confirmCameraCalibrationButton">
+               <property name="geometry">
+                <rect>
+                 <x>130</x>
+                 <y>330</y>
+                 <width>391</width>
+                 <height>51</height>
+                </rect>
+               </property>
+               <property name="text">
+                <string>Confirm parameters</string>
+               </property>
+              </widget>
+             </widget>
+            </widget>
+           </widget>
+           <widget class="QWidget" name="calibrateProjector">
+            <widget class="QLabel" name="calibProjectorTitle">
+             <property name="geometry">
+              <rect>
+               <x>60</x>
+               <y>30</y>
+               <width>141</width>
+               <height>31</height>
+              </rect>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">font-weight: bold;</string>
+             </property>
+             <property name="text">
+              <string>Calibrate Projector</string>
+             </property>
+            </widget>
+            <widget class="QWidget" name="formLayoutWidget">
+             <property name="geometry">
+              <rect>
+               <x>150</x>
+               <y>130</y>
+               <width>361</width>
+               <height>201</height>
+              </rect>
+             </property>
+             <layout class="QFormLayout" name="formLayout">
+              <item row="0" column="0">
+               <widget class="QLabel" name="tagHeightLabel">
+                <property name="text">
+                 <string>Marker height</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="1">
+               <widget class="QSpinBox" name="tagHeightSpinBox"/>
+              </item>
+              <item row="1" column="0">
+               <widget class="QLabel" name="tagWidthLabel">
+                <property name="text">
+                 <string>Marker width</string>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="1">
+               <widget class="QSpinBox" name="tagWidthSpinBox"/>
+              </item>
+              <item row="2" column="0">
+               <widget class="QLabel" name="marginRightLabel">
+                <property name="text">
+                 <string>Margin right</string>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="1">
+               <widget class="QSpinBox" name="marginRightSpinBox"/>
+              </item>
+              <item row="3" column="0">
+               <widget class="QLabel" name="marginBottomLabel">
+                <property name="text">
+                 <string>Margin bottom</string>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="1">
+               <widget class="QSpinBox" name="marginBottomSpinBox"/>
+              </item>
+             </layout>
+            </widget>
+            <widget class="QPushButton" name="pushButton">
+             <property name="geometry">
+              <rect>
+               <x>150</x>
+               <y>360</y>
+               <width>361</width>
+               <height>31</height>
+              </rect>
+             </property>
+             <property name="text">
+              <string>Project Markers</string>
+             </property>
+            </widget>
+           </widget>
+          </widget>
+         </item>
+         <item>
+          <layout class="QVBoxLayout" name="verticalLayout_3" stretch="1,1">
+           <item>
+            <widget class="QStackedWidget" name="RGBWidget">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="currentIndex">
+              <number>0</number>
+             </property>
+             <widget class="QWidget" name="captureRGB">
+              <widget class="QPushButton" name="captureRGBButton">
+               <property name="geometry">
+                <rect>
+                 <x>210</x>
+                 <y>150</y>
+                 <width>91</width>
+                 <height>31</height>
+                </rect>
+               </property>
+               <property name="text">
+                <string>Capture RGB</string>
+               </property>
+               <property name="flat">
+                <bool>false</bool>
+               </property>
+              </widget>
+             </widget>
+             <widget class="QWidget" name="visualizeRGB">
+              <widget class="QLabel" name="RGBLabel">
+               <property name="geometry">
+                <rect>
+                 <x>6</x>
+                 <y>3</y>
+                 <width>491</width>
+                 <height>341</height>
+                </rect>
+               </property>
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="text">
+                <string/>
+               </property>
+              </widget>
+             </widget>
+            </widget>
+           </item>
+           <item>
+            <widget class="QStackedWidget" name="DepthWidget">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <widget class="QWidget" name="captureDepth">
+              <widget class="QPushButton" name="captureDepthButton">
+               <property name="geometry">
+                <rect>
+                 <x>200</x>
+                 <y>130</y>
+                 <width>101</width>
+                 <height>31</height>
+                </rect>
+               </property>
+               <property name="text">
+                <string>Capture Depth</string>
+               </property>
+              </widget>
+             </widget>
+             <widget class="QWidget" name="visualizeDepth">
+              <widget class="QLabel" name="depthLabel">
+               <property name="geometry">
+                <rect>
+                 <x>0</x>
+                 <y>3</y>
+                 <width>498</width>
+                 <height>331</height>
+                </rect>
+               </property>
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="text">
+                <string/>
+               </property>
+              </widget>
+             </widget>
+            </widget>
+           </item>
+          </layout>
+         </item>
+        </layout>
+       </item>
+      </layout>
+     </widget>
+    </widget>
+    <widget class="QWidget" name="editCalibration">
+     <widget class="QLabel" name="label_4">
+      <property name="geometry">
+       <rect>
+        <x>510</x>
+        <y>270</y>
+        <width>421</width>
+        <height>171</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Not available yet.</string>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="cancelButton">
+      <property name="geometry">
+       <rect>
+        <x>1100</x>
+        <y>710</y>
+        <width>80</width>
+        <height>22</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Cancel</string>
+      </property>
+     </widget>
+    </widget>
+   </widget>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+ </widget>
+ <resources/>
+ <connections/>
+ <buttongroups>
+  <buttongroup name="robotCalibrationMethod"/>
+ </buttongroups>
+</ui>
