@@ -34,6 +34,8 @@ private slots:
     void on_captureDepthButton_clicked();
     void on_cameraParametersButton_clicked();
     void on_confirmCameraCalibrationButton_clicked();
+    void readNodeOutput();
+    void on_projectMarkersButton_clicked();
 
 private:
     QWidget *centralWidget;
@@ -46,6 +48,9 @@ private:
     cv::Mat cv_rgb, cv_depth;
     cv::Mat depth_normalized, depth_colormap;
 
+    QTextEdit *outputCameraTerminal;
+    QProcess *process;
+
     void rgbCallback(const sensor_msgs::ImageConstPtr& msg);
     void depthCallback(const sensor_msgs::ImageConstPtr& msg);
     void cameraInfoCallback(const sensor_msgs::CameraInfo::ConstPtr& msg);
@@ -53,7 +58,9 @@ private:
     int camera_width, camera_height;
     double fx, fy, cx, cy;
 
-    QSpinBox *q_cam_width, *q_cam_height;
+    QSpinBox *q_cam_width, *q_cam_height, *marker_size,
+            *marginRightSpinBox, *marginBottomSpinBox, *originXSpinBox,
+            *originYSpinBox, *endXSpinBox, *endYSpinBox;
     QDoubleSpinBox *q_fx, *q_fy, *q_cx, *q_cy;
 };
 
