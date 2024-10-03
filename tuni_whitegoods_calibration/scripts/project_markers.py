@@ -23,7 +23,6 @@ if __name__ == "__main__":
 	size = 50
 	aruc_id = 0
 
-
 	for y in range(300,800,100):
 		for x in range(300,1500,100):
 			print(x, y)

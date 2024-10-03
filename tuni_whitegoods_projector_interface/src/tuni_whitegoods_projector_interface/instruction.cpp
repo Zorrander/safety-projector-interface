@@ -6,22 +6,27 @@ using namespace cv;
 using namespace std;
 
 class Instruction {
-private:
+ private:
   int _id;
   int _zone;
-  Point _target; // Assuming target is a point; adjust if needed
+  Point _target;  // Assuming target is a point; adjust if needed
   string _title;
   Scalar _title_c;
   string _desc;
   Scalar _desc_c;
   int _lifetime;
 
-public:
+ public:
   Instruction(int id_, int zone, const Point &target, const string &title,
               const Scalar &title_c, const string &description,
               const Scalar &desc_c, int lifetime)
-      : _id(id_), _zone(zone), _target(target), _title(title),
-        _title_c(title_c * 255), _desc(description), _desc_c(desc_c * 255),
+      : _id(id_),
+        _zone(zone),
+        _target(target),
+        _title(title),
+        _title_c(title_c * 255),
+        _desc(description),
+        _desc_c(desc_c * 255),
         _lifetime(lifetime) {}
 
   Mat draw_instruction(Mat &img) const {
@@ -52,12 +57,12 @@ public:
 
     // img = rectangle(img, tl_corner, br_corner, _title_c, 2);
     img = draw_border(img, tl_corner, br_corner, _title_c, 2, 10,
-                      20); // 80 bracket style
+                      20);  // 80 bracket style
 
     return img;
   }
 
-private:
+ private:
   Mat draw_border(Mat &img, const Point &pt1, const Point &pt2,
                   const Scalar &color, int thickness, int r, int d) const {
     int x1 = pt1.x, y1 = pt1.y;

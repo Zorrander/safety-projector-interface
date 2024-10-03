@@ -1,0 +1,55 @@
+name: Clang-Tidy CI
+
+on: 
+  push:
+    branches:
+      - main
+      - test
+
+jobs:
+  clang-tidy:
+    runs-on: ubuntu-latest  # Use the latest Ubuntu environment
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up ROS
+        run: |
+          sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -cs) main" > /etc/apt/sources.list.d/ros-latest.list'
+          sudo apt-key adv --keyserver 'hkp://keyserver.ubuntu.com:80' --recv-key 421C365BD9FF1F17
+          sudo apt-get update
+          sudo apt-get install -y ros-noetic-desktop-full  # Adjust ROS version as needed
+
+      - name: Initialize rosdep
+        run: |
+          sudo rosdep init
+          rosdep update
+
+      - name: Create Catkin workspace
+        run: |
+          mkdir -p ~/catkin_ws/src  # Create the Catkin workspace and src directory
+          cp -R ${{ github.workspace }} ~/catkin_ws/src 
+
+      - name: Install dependencies
+        run: |
+          cd ~/catkin_ws
+          rosdep install --from-paths src --ignore-src -r -y
+
+      - name: Build the project
+        run: |
+          cd ~/catkin_ws
+          catkin_make
+
+      - name: Run Clang-Tidy
+        run: |
+          cd ~/catkin_ws/src
+          for package in $(ls); do
+            echo "Running Clang-Tidy for package: $package"
+            cd $package
+            # Run Clang-Tidy on all .cpp files in the package
+            for file in $(find . -name '*.cpp'); do
+              clang-tidy "$file" -- -I/opt/ros/noetic/include -std=c++14  # Adjust paths and flags as necessary
+            done
+            cd ..
+          done

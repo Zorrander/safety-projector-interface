@@ -13,12 +13,11 @@ Class to create StaticBorder
 // thic : thickness of the border
 // life : lifetime of the border. Not implemented here because not really useful
 // track : if we track the border (monitor any crossing)
-StaticBorder::StaticBorder(ros::NodeHandle *nh, std::string r_id, int pos_row,
+StaticBorder::StaticBorder(ros::NodeHandle* nh, std::string r_id, int pos_row,
                            int pos_col, geometry_msgs::PolygonStamped bord,
                            std::string b_topic, std_msgs::ColorRGBA b_color,
                            bool filling, int thic, ros::Duration life,
                            bool track) {
-
   ros::param::get("camera_resolution", camera_resolution);
   ros::param::get("shelf_height", shelf_height);
 
@@ -55,7 +54,8 @@ StaticBorder::StaticBorder(ros::NodeHandle *nh, std::string r_id, int pos_row,
 
 // draw a border
 cv::Mat StaticBorder::drawBorder() {
-  sf_line_colored = cv::Mat::zeros(camera_resolution[1], camera_resolution[0], CV_8UC3);
+  sf_line_colored =
+      cv::Mat::zeros(camera_resolution[1], camera_resolution[0], CV_8UC3);
   cv::rectangle(sf_line_colored, top_left_cam_point, bottom_right_cam_point,
                 cv::Scalar(border_color.b * 255, border_color.g * 255,
                            border_color.r * 255),
@@ -73,19 +73,19 @@ void StaticBorder::changeBorderColor(std_msgs::ColorRGBA col) {
 
 void StaticBorder::changeThickness(int thic) { thickness = thic; }
 
-void StaticBorder::robot_book(std_msgs::ColorRGBA col) { 
-  robot_booked = true; 
+void StaticBorder::robot_book(std_msgs::ColorRGBA col) {
+  robot_booked = true;
   changeBorderColor(col);
 }
 
-void StaticBorder::operator_book(std_msgs::ColorRGBA col) { 
-  operator_booked = true; 
+void StaticBorder::operator_book(std_msgs::ColorRGBA col) {
+  operator_booked = true;
   changeBorderColor(col);
 }
 
-void StaticBorder::release(std_msgs::ColorRGBA col) { 
-  robot_booked = false; 
-  operator_booked = false; 
+void StaticBorder::release(std_msgs::ColorRGBA col) {
+  robot_booked = false;
+  operator_booked = false;
   changeBorderColor(col);
 }
 
@@ -119,15 +119,15 @@ bool StaticBorder::checkForInteractions(const std::string& name,
 
   border_violated = (right_hand_crossed || left_hand_crossed);
 
-  if (!border_violated){
+  if (!border_violated) {
     thickness = 1;
   } else {
-      if (robot_booked){
-        result = true;
-        thickness = -1;
-      } else if (operator_booked){
-        thickness = 3;
-      } 
+    if (robot_booked) {
+      result = true;
+      thickness = -1;
+    } else if (operator_booked) {
+      thickness = 3;
+    }
   }
   return result;
 }
@@ -141,7 +141,7 @@ void StaticBorder::resetInteractions() {
 
 bool StaticBorder::isAdjacent(std::shared_ptr<StaticBorder> sb) {
   bool result = false;
-  if (sb->getCol() == position_col + 1 || sb->getCol() == position_col - 1){
+  if (sb->getCol() == position_col + 1 || sb->getCol() == position_col - 1) {
     result = true;
   }
   return result;

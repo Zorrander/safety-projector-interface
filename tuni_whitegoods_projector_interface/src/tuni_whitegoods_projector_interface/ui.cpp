@@ -1,16 +1,21 @@
-#include "button.h"
-#include "instruction.h"
 #include <iostream>
 #include <opencv2/opencv.hpp>
 #include <vector>
 
+#include "button.h"
+#include "instruction.h"
+
 class InterfaceUI {
-public:
+ public:
   InterfaceUI(const std::string &resource_id, const std::string &zone,
               const std::string &name, const std::string &description,
               const std::vector<Button> &buttons)
-      : resource_id(resource_id), zone(zone), name(name),
-        description(description), hidden(false), modified_interface(true) {
+      : resource_id(resource_id),
+        zone(zone),
+        name(name),
+        description(description),
+        hidden(false),
+        modified_interface(true) {
     if (!buttons.empty()) {
       list_buttons = buttons;
     }
@@ -64,7 +69,7 @@ public:
     }
   }
 
-private:
+ private:
   std::string resource_id;
   std::string zone;
   std::string name;

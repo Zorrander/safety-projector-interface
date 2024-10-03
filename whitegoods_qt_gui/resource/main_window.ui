@@ -228,7 +228,7 @@ QTableCornerButton::section {
 </string>
            </property>
            <property name="currentIndex">
-            <number>2</number>
+            <number>1</number>
            </property>
            <widget class="QWidget" name="calibrateRobot">
             <property name="styleSheet">
@@ -483,11 +483,24 @@ QRadioButton::indicator {
                 </item>
                </layout>
               </widget>
-              <widget class="QPushButton" name="confirmCameraCalibrationButton">
+              <widget class="QPushButton" name="updateCameraCalibrationButton">
                <property name="geometry">
                 <rect>
                  <x>130</x>
                  <y>330</y>
+                 <width>391</width>
+                 <height>51</height>
+                </rect>
+               </property>
+               <property name="text">
+                <string>Update parameters</string>
+               </property>
+              </widget>
+              <widget class="QPushButton" name="confirmCameraCalibrationButton">
+               <property name="geometry">
+                <rect>
+                 <x>130</x>
+                 <y>400</y>
                  <width>391</width>
                  <height>51</height>
                 </rect>
