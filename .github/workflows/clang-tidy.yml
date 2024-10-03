@@ -23,6 +23,9 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y ros-noetic-desktop-full
 
+      - name: Source ROS environment
+        run: echo "source /opt/ros/noetic/setup.bash" >> $GITHUB_ENV
+        
       - name: Initialize rosdep
         run: |
           sudo rosdep init
