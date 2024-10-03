@@ -23,11 +23,9 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y ros-noetic-desktop-full
 
-      - name: Source ROS environment
-        run: echo "source /opt/ros/noetic/setup.bash" >> $GITHUB_ENV
-        
       - name: Initialize rosdep
         run: |
+          source /opt/ros/noetic/setup.bash
           sudo rosdep init
           rosdep update
 
@@ -38,16 +36,19 @@ jobs:
 
       - name: Install dependencies
         run: |
+          source /opt/ros/noetic/setup.bash
           cd ~/catkin_ws
           rosdep install --from-paths src --ignore-src -r -y
 
       - name: Build the project
         run: |
+          source /opt/ros/noetic/setup.bash
           cd ~/catkin_ws
           catkin_make
 
       - name: Run Clang-Tidy
         run: |
+          source /opt/ros/noetic/setup.bash
           cd ~/catkin_ws/src
           for package in $(ls); do
             echo "Running Clang-Tidy for package: $package"
