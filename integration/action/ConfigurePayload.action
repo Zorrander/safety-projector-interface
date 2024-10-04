@@ -1,0 +1,15 @@
+##Description: Action that controls the payload configuration
+
+#goal definition
+string arm_id #used in multiarm robots
+float32 tool_weight_grams #define the weight of the tool. 0 Zero means no tool.
+float32 object_weight_grams #define the weight of the object. 0 Zero means no object.
+integration/ActionRequest action_request
+---
+#result definition
+integration/ToolsConfiguration current_configuration
+integration/ActionResult action_result
+---
+#feedback
+integration/ToolsConfiguration current_configuration
+integration/ActionFeedback action_feedback

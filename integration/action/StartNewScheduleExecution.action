@@ -1,0 +1,20 @@
+##Description: Starts executing an new schedule
+
+#goal definition
+string schedule_json #Not required, if not present an attempt will be made to retrieve it from memory.
+string schedule_id   #Required.If different from the scheduleId inside the scheduleJson, then it is an error.
+##If a schedule with the given id is already running then all requests to start a schedule with this id will fail.
+
+integration/ActionRequest action_request
+---
+#result definition
+string execution_id
+integration/ScheduleRuntimeStatus schedule_runtime_status
+integration/ActionResult action_result
+---
+#feedback
+string executionId
+integration/ScheduleRuntimeStatus schedule_runtime_status
+integration/ActionFeedback action_feedback
+
+

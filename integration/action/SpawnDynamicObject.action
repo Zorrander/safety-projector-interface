@@ -1,0 +1,36 @@
+##Description: Requests spawning some dynamic objects to a specific scene.
+
+#The id of the related Scene
+string scene_id
+
+#The id of the applicable simulation instance
+string simulation_id
+
+#Spawn dynamic objects at the specific poses
+integration/DynamicObjectPlacement[] dynamic_objects
+
+---
+#result definition
+
+#The id of the related Scene
+string scene_id
+
+#The id of the applicable simulation instance
+string simulation_id
+
+##Cumulative instances placed OK, the list contains the instance_id. 
+string[] successes
+##Cumulative instances that cannot be placed, the list contains the instance_id. 
+string[] errors
+---
+#feedback
+##Feedback provision is optional, implementations may return only the result.
+#The id of the related Scene
+string scene_id
+#The id of the applicable simulation instance
+string simulation_id
+
+##Cumulative instances placed OK, the list contains the instance_id.
+string[] successes
+##Cumulative instances that cannot be placed, the list contains the instance_id.
+string[] errors

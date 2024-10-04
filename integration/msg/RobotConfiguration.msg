@@ -1,0 +1,3 @@
+##Description: Configures a cobot
+float32 move_group_max_velocity_scaling_factor
+float32 move_group_max_acceleration_scaling_factor

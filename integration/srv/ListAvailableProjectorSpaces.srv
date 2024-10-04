@@ -1,0 +1,7 @@
+##Description: returns available projection spaces
+
+#input definition
+#no input needed
+---
+#result definition
+integration/ProjectorSpace[] projector_spaces #the available projection spaces

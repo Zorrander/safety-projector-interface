@@ -1,0 +1,14 @@
+#This action changes the control mode of a resource.
+#Each resource implementing this interface should define its own modes
+#goal definition
+string mode
+---
+#result definition
+string current_mode
+bool mode_achieved #true if the requested mode was achieved, false otherwise
+---
+#feedback
+string current_mode
+
+
+

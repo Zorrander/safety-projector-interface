@@ -1,0 +1,18 @@
+##Description: Remove the an asyncronous task from the Task list
+#Optionaly showing a message
+
+#goal definition
+string taskId
+#See HumanActionPurposes.msg MODES
+string mode
+#An optional message to show while removing task
+string removalMessage
+integration/ActionRequest action_request
+---
+#result definition
+string taskId
+integration/ActionResult action_result
+---
+#feedback
+string taskId
+integration/ActionFeedback action_feedback

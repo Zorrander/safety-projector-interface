@@ -1,0 +1,20 @@
+##Description: Add an asyncronous task to the Task list
+
+#goal definition
+integration/OperatorInstructions operator_instructions
+string task_id
+#See HumanActionPurposes.msg MODES
+string mode
+#The priority of the task
+int32 priority
+#An optional message to show while removing task
+string removalMessage
+integration/ActionRequest action_request
+---
+#result definition
+string task_id
+integration/ActionResult action_result
+---
+#feedback
+string task_id
+integration/ActionFeedback action_feedback

@@ -1,0 +1,13 @@
+##Description: Parameterizes a skil
+
+#goal definition
+string xml_skill_Parameters #skill parameters in XML format
+float32 timeout
+integration/ActionRequest action_request
+---
+#result definition
+integration/ActionResult action_result
+---
+#feedback
+integration/ActionFeedback action_feedback
+

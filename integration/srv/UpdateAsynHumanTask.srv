@@ -1,0 +1,11 @@
+##Can be called to notify that an async human task need to be removed from an async list.
+## The reference id of the task
+string reference_id
+
+## if the task has been completed or no
+bool task_completed
+
+---
+bool success
+##If possible try to provide a debug comment
+string debug_comment

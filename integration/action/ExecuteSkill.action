@@ -1,0 +1,13 @@
+##Description: Executes a SKILL that is provided in a serialized format.
+
+#goal definition
+string skill
+integration/ActionRequest action_request
+---
+#result definition
+integration/ActionResult action_result
+---
+#feedback
+#An int that represent an overview of the completion. 0 -> not at all completed, 100 -> All completed.
+uint32 completion_percentage
+integration/ActionFeedback action_feedback

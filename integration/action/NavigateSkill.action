@@ -1,0 +1,13 @@
+#This action invokes an easy robot programming tool skill, that moves the robot to a specific position in the map.
+
+#goal definition
+#A unique request id provided per request, provided in goal and repeated in feedback&result
+string request_id
+geometry_msgs/Pose2D destination
+---
+#A unique request id provided per request, provided in goal and repeated in feedback&result
+string request_id
+---
+#feedback
+#A unique request id provided per request, provided in goal and repeated in feedback&result
+string request_id

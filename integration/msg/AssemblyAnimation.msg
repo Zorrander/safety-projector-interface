@@ -1,0 +1,3 @@
+string axis_of_installation
+float32 distance_for_instructions
+int32 animation_order

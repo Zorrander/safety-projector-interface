@@ -1,0 +1,7 @@
+##Description: returns the supported predefined UIs
+
+#input definition
+#no input needed
+---
+#result definition
+integration/ProjectorUI[] predefined_uis #the supported predefined UIs

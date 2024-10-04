@@ -1,0 +1,13 @@
+##Description: Action that controls the AR configuration
+
+#goal definition
+integration/ARConfiguration new_configuration
+integration/ActionRequest action_request
+---
+#result definition
+integration/ARConfiguration current_configuration
+integration/ActionResult action_result
+---
+#feedback
+integration/ARConfiguration current_configuration
+integration/ActionFeedback action_feedback
