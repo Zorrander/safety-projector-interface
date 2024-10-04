@@ -2,7 +2,6 @@
 #define SafetyBorderServer_H
 
 #include <actionlib/server/simple_action_server.h>
-#include <integration/SetSafetyBorderProjectionAction.h>
 #include <ros/callback_queue.h>
 #include <ros/ros.h>
 #include <ros/spinner.h>
@@ -13,6 +12,7 @@
 #include <string>
 #include <thread>
 
+#include "integration/SetSafetyBorderProjectionAction.h"
 #include "tuni_whitegoods_controller/projector_interface_controller.h"
 
 using namespace integration;

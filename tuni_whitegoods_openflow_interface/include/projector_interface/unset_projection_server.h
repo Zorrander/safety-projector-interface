@@ -2,9 +2,6 @@
 #define UnsetProjectionServer_H
 
 #include <actionlib/server/simple_action_server.h>
-#include <integration/ProjectorUI.h>
-#include <integration/UnsetProjectionAction.h>
-#include <integration/VirtualButtonReference.h>
 #include <ros/callback_queue.h>
 #include <ros/ros.h>
 #include <ros/spinner.h>
@@ -14,6 +11,9 @@
 #include <memory>
 #include <string>
 
+#include "integration/ProjectorUI.h"
+#include "integration/UnsetProjectionAction.h"
+#include "integration/VirtualButtonReference.h"
 #include "tuni_whitegoods_controller/projector_interface_controller.h"
 
 using namespace integration;

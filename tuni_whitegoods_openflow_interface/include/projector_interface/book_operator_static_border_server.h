@@ -2,7 +2,6 @@
 #define BookOperatorStaticBorderServer_H
 
 #include <actionlib/server/simple_action_server.h>
-#include <integration/BookOperatorStaticBorderAction.h>
 #include <ros/ros.h>
 #include <std_msgs/Bool.h>
 #include <std_msgs/String.h>
@@ -10,6 +9,7 @@
 #include <memory>
 #include <string>
 
+#include "integration/BookOperatorStaticBorderAction.h"
 #include "tuni_whitegoods_controller/projector_interface_controller.h"
 
 using namespace integration;
