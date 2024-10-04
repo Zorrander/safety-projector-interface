@@ -25,6 +25,7 @@ jobs:
 
       - name: Initialize rosdep
         run: |
+          sudo apt install python3-rosdep python3-rosinstall python3-rosinstall-generator python3-wstool build-essential
           sudo rosdep init
           rosdep update
 
@@ -35,16 +36,19 @@ jobs:
 
       - name: Install dependencies
         run: |
+          source /opt/ros/noetic/setup.bash
           cd ~/catkin_ws
           rosdep install --from-paths src --ignore-src -r -y
 
       - name: Build the project
         run: |
+          source /opt/ros/noetic/setup.bash
           cd ~/catkin_ws
           catkin_make
 
       - name: Run Clang-Tidy
         run: |
+          source /opt/ros/noetic/setup.bash
           cd ~/catkin_ws/src
           for package in $(ls); do
             echo "Running Clang-Tidy for package: $package"
