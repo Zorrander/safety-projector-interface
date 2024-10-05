@@ -41,7 +41,13 @@ file(GLOB PROJECTOR_INTERFACE_SOURCES "src/projector_interface/*.cpp")
 file(GLOB ROBOT_INTERFACE_SOURCES "src/robot_interface/*.cpp")
 
 add_library(projector_interface ${PROJECTOR_INTERFACE_SOURCES})
-# add_library(robot_interface ${ROBOT_INTERFACE_SOURCES})
+add_dependencies(projector_interface
+  ${catkin_EXPORTED_TARGETS}
+)
+
+target_link_libraries(projector_interface
+  ${catkin_LIBRARIES}
+)
 
 
 add_executable(smart_interface_node src/smart_interface_node.cpp)
@@ -51,6 +57,7 @@ target_link_libraries(smart_interface_node
                       )
 add_dependencies(smart_interface_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
+# add_library(robot_interface ${ROBOT_INTERFACE_SOURCES})
 # add_executable(robot_motion_node src/robot_motion_node.cpp)
 # target_link_libraries(robot_motion_node
 #                        robot_interface 
