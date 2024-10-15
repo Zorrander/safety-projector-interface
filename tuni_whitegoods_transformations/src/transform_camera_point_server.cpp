@@ -1,8 +1,10 @@
 #include <ros/ros.h>
+#include <yaml-cpp/yaml.h>
+
+#include <string>
 
 #include "tuni_whitegoods_msgs/Transform3DToPixel.h"
 #include "tuni_whitegoods_msgs/TransformPixelTo3D.h"
-#include "tuni_whitegoods_transformations/pinhole_camera.h"
 
 /**
  * @brief      Camera points transformation.
@@ -26,10 +28,37 @@ class TransformCameraPointServer {
     pixel_to_3D_service_ = nh_->advertiseService(
         "transform_pixel_to_3D",
         &TransformCameraPointServer::transformPixelTo3DCallback, this);
-    ros::param::get("fx", fx);
-    ros::param::get("fy", fy);
-    ros::param::get("cx", cx);
-    ros::param::get("cy", cy);
+
+    std::string calibration_file;
+    if (!nh->getParam("camera_calibration_file", calibration_file)) {
+      ROS_ERROR("Camera calibration file is missing from configuration.");
+    }
+
+    YAML::Node calibration = YAML::LoadFile(calibration_file);
+
+    if (calibration["fx"]) {
+      fx = calibration["fx"].as<double>();
+    } else {
+      ROS_ERROR("Missing camera calibration parameters.");
+    }
+
+    if (calibration["fy"]) {
+      fy = calibration["fy"].as<double>();
+    } else {
+      ROS_ERROR("Missing camera calibration parameters.");
+    }
+
+    if (calibration["cx"]) {
+      cx = calibration["cx"].as<double>();
+    } else {
+      ROS_ERROR("Missing camera calibration parameters.");
+    }
+
+    if (calibration["cy"]) {
+      cy = calibration["cy"].as<double>();
+    } else {
+      ROS_ERROR("Missing camera calibration parameters.");
+    }
   }
 
  private:
@@ -76,7 +105,10 @@ class TransformCameraPointServer {
 
   ros::NodeHandle *nh_;
   ros::ServiceServer pixel_to_3D_service_, world_to_pixel_service_;
-  float fx, fy, cx, cy;
+  double fx;
+  double fy;
+  double cx;
+  double cy;
 };
 
 /**

@@ -14,9 +14,9 @@ find_package(catkin REQUIRED
 )
 
 find_package(OpenCV 4 REQUIRED)
+find_package(yaml-cpp REQUIRED)
 
 catkin_package(
-   INCLUDE_DIRS include
    CATKIN_DEPENDS roscpp 
                   tuni_whitegoods_msgs 
                   tf2_ros
@@ -25,18 +25,15 @@ catkin_package(
 
 
 include_directories(
-  include
   ${catkin_INCLUDE_DIRS}
   ${OpenCV_INCLUDE_DIRS}
 )
 
-add_library(pinhole_camera src/tuni_whitegoods_transformations/pinhole_camera.cpp)
-
 
 add_executable(transform_camera_point_server src/transform_camera_point_server.cpp)
 target_link_libraries(transform_camera_point_server 
-      pinhole_camera
       ${catkin_LIBRARIES}
+      yaml-cpp
 )
 add_dependencies(transform_camera_point_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
@@ -52,18 +49,3 @@ target_link_libraries(transform_robot_point_server
       ${catkin_LIBRARIES}
 )
 add_dependencies(transform_robot_point_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-
-
-install(TARGETS pinhole_camera
-  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
-
-install(DIRECTORY include/${PROJECT_NAME}/
-    DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-    FILES_MATCHING PATTERN "*.h"
-)
-
-
-

@@ -5,14 +5,19 @@
 #include "tuni_whitegoods_msgs/TransformPixelToProjection.h"
 
 /**
- * @brief      This class describes a transform projector point server.
+ * @brief      Projector pixels transformations.
+ *
+ * This class holds two service definitions. One to project pixel from the
+ * camera to the projector and the other to project projected pixel to
+ * their equivalent on the camera screen.
  */
 class TransformProjectorPointServer {
  public:
   /**
-   * @brief      Constructs a new instance.
+   * @brief      Instantiates two service servers.
    *
-   * @param      nh    { parameter_description }
+   * Instantiates the transformation servers and loads the necessary homography
+   * matrices.
    */
   TransformProjectorPointServer(ros::NodeHandle* nh) : nh_(nh) {
     projector_point_transform_service_ = nh_->advertiseService(
@@ -22,20 +27,29 @@ class TransformProjectorPointServer {
         "reverse_transform_point_to_project",
         &TransformProjectorPointServer::reverseTransformProjectorPointCallback,
         this);
-    // ros::param::get("border_homography", border_homography_array);
-    ros::param::get("button_homography", button_homography_array);
-    // border_homography =  cv::Matx33d(border_homography_array.data());
-    border_homography = loadHomography("/home/odin3/Desktop/hmg.yaml");
-    button_homography = cv::Matx33d(button_homography_array.data());
+
+    std::string border_calibration_file;
+    if (!nh->getParam("border_calibration_file", border_calibration_file)) {
+      ROS_ERROR("Camera calibration file is missing from configuration.");
+    }
+    border_homography = loadHomography(border_calibration_file);
+
+    std::string button_calibration_file;
+    if (!nh->getParam("button_calibration_file", button_calibration_file)) {
+      ROS_ERROR("Camera calibration file is missing from configuration.");
+    }
+
+    button_homography = loadHomography(button_calibration_file);
   }
 
  private:
   /**
    * @brief      Loads a homography.
    *
-   * @param[in]  filename  The filename
+   * @param[in]  filename  The file in which the homography was saved during
+   * calibration.
    *
-   * @return     { description_of_the_return_value }
+   * @return     The homography matrix ready to used by openCV.
    */
   cv::Mat loadHomography(const std::string& filename) {
     cv::Mat homography;
@@ -57,17 +71,21 @@ class TransformProjectorPointServer {
   }
 
   /**
-   * @brief      { function_description }
+   * @brief      Service for transforming 3D points to 2D.
    *
-   * @param      req   The request
-   * @param      res   The resource
+   * This service takes a 3D point in the camera coordinates frame and projects
+   * it onto its equivalent in a 2D image.
    *
-   * @return     { description_of_the_return_value }
+   * @param      req   Request object containing (x, y, z) world coordinates.
+   * @param      res   Response object containing (u, v) pixel coordinates
+   *
+   * @return     true if the service call was successful, false otherwise.
    */
   bool transformProjectorPointCallback(
       tuni_whitegoods_msgs::TransformPixelToProjection::Request& req,
       tuni_whitegoods_msgs::TransformPixelToProjection::Response& res) {
-    std::vector<cv::Point2f> cameraPoint, projectorPoint;
+    std::vector<cv::Point2f> cameraPoint;
+    std::vector<cv::Point2f> projectorPoint;
 
     cv::Point2f input_point(req.u, req.v);
     cameraPoint.push_back(input_point);
@@ -89,7 +107,8 @@ class TransformProjectorPointServer {
   bool reverseTransformProjectorPointCallback(
       tuni_whitegoods_msgs::TransformPixelToProjection::Request& req,
       tuni_whitegoods_msgs::TransformPixelToProjection::Response& res) {
-    std::vector<cv::Point2f> cameraPoint, projectorPoint;
+    std::vector<cv::Point2f> cameraPoint;
+    std::vector<cv::Point2f> projectorPoint;
 
     cv::Point2f input_point(req.u, req.v);
     projectorPoint.push_back(input_point);
