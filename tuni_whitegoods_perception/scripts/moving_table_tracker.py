@@ -10,8 +10,9 @@ from visualization_msgs.msg import Marker
 from geometry_msgs.msg import Point
 from tuni_whitegoods_msgs.srv import TransformRobotCameraCoordinates
 from tuni_whitegoods_msgs.srv import TransformPixelTo3D
+from tuni_whitegoods_msgs.srv import TransformMovingTable
 from tuni_whitegoods_msgs.msg import DynamicArea
-from geometry_msgs.msg import PoseStamped
+from geometry_msgs.msg import PoseStamped, Transform
 from sensor_msgs.msg import Image
 
 
@@ -40,7 +41,10 @@ class TableTracker(object):
 
         self.zone_msg = DynamicArea()
         self.zone_pub = rospy.Publisher(
-            "/odin/projector_interface/moving_table", DynamicArea, queue_size=10)
+            "/odin/projector_interface/moving_table/transform", Transform, queue_size=10)
+
+        self.transform_moving_table = rospy.ServiceProxy(
+            'transform_table_server', TransformMovingTable)
 
         self.transform_world_coordinates = rospy.ServiceProxy(
             'transform_world_coordinates_frame', TransformRobotCameraCoordinates)
@@ -158,16 +162,19 @@ class TableTracker(object):
                 top_left_robot_coordinates.out_point_stamped.pose.position)
 
             self.vis_pub.publish(marker)
-            self.zone_msg.top_left = [top_left_robot_coordinates.out_point_stamped.pose.position.x,
-                                      top_left_robot_coordinates.out_point_stamped.pose.position.y]
-            self.zone_msg.top_right = [top_right_robot_coordinates.out_point_stamped.pose.position.x,
-                                       top_right_robot_coordinates.out_point_stamped.pose.position.y]
-            self.zone_msg.bottom_right = [bottom_right_robot_coordinates.out_point_stamped.pose.position.x,
-                                          bottom_right_robot_coordinates.out_point_stamped.pose.position.y]
-            self.zone_msg.bottom_left = [bottom_left_robot_coordinates.out_point_stamped.pose.position.x,
-                                         bottom_left_robot_coordinates.out_point_stamped.pose.position.y]
 
-            self.zone_pub.publish(self.zone_msg)
+
+            self.zone_msg.top_left = [topLeft[0],
+                                         topLeft[1]]
+            self.zone_msg.top_right = [topRight[0],
+                                      topRight[1]]
+            self.zone_msg.bottom_right = [bottomRight[0],
+                                       bottomRight[1]]
+            self.zone_msg.bottom_left = [bottomLeft[0],
+                                          bottomLeft[1]]
+
+            transformation = self.transform_moving_table(self.zone_msg)
+            self.zone_pub.publish(transformation.transform)
 
 
 if __name__ == '__main__':

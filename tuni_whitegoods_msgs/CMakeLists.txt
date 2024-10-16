@@ -22,6 +22,7 @@ add_service_files(
   FILES
   Transform3DToPixel.srv
   TransformPixelTo3D.srv
+  TransformMovingTable.srv
   TransformPixelToProjection.srv
   TransformRobotCameraCoordinates.srv
 )

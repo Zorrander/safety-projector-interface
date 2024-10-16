@@ -19,7 +19,11 @@ BookRobotStaticBorderServer::BookRobotStaticBorderServer(
   std::cout << "BookRobotStaticBorderServer running\n";
 }
 
-// book robot border
+/**
+ * @brief      { function_description }
+ *
+ * @param[in]  goal  The goal
+ */
 void BookRobotStaticBorderServer::executeBookRobot(
     const BookRobotStaticBorderGoalConstPtr& goal) {
   controller->robot_book_border(goal->id);
@@ -37,13 +41,21 @@ void BookRobotStaticBorderServer::executeBookRobot(
     sendResultBookRobot(goal->request_id);
   }
 }
-// send feedback
+/**
+ * @brief      Sends a feedback book robot.
+ *
+ * @param[in]  req_id  The request identifier
+ */
 void BookRobotStaticBorderServer::sendFeedbackBookRobot(std::string req_id) {
   feedback_book_robot_.feedback.displayed_request_ids.clear();
   feedback_book_robot_.feedback.displayed_request_ids.push_back(req_id);
   as_book_robot.publishFeedback(feedback_book_robot_.feedback);
 }
-// send result
+/**
+ * @brief      Sends a result book robot.
+ *
+ * @param[in]  req_id  The request identifier
+ */
 void BookRobotStaticBorderServer::sendResultBookRobot(std::string req_id) {
   result_book_robot_.displayed_request_ids.clear();
   result_book_robot_.displayed_request_ids.push_back(req_id);

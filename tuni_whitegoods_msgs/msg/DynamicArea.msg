@@ -1,4 +1,4 @@
-float32[2] top_left
-float32[2] top_right
-float32[2] bottom_right
-float32[2] bottom_left
+uint16[2] top_left
+uint16[2] top_right
+uint16[2] bottom_right
+uint16[2] bottom_left

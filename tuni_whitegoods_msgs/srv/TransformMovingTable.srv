@@ -1,0 +1,3 @@
+tuni_whitegoods_msgs/DynamicArea table
+---
+geometry_msgs/Transform transform
