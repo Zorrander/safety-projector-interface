@@ -1,6 +1,6 @@
 <launch>
 	<arg name="use_robot" default="false"/>
-	<arg name="use_camera" default="false"/>
+	<arg name="use_camera" default="true"/>
 	<arg name="use_projector" default="true"/>
 
     <rosparam file="$(find tuni_whitegoods)/config/tuni_parameters.yaml" />

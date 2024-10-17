@@ -77,7 +77,7 @@ class TableTracker(object):
         else:
             markerCorner = corners[0].reshape((4, 2))
             (topLeft, topRight, bottomRight, bottomLeft) = markerCorner
-
+            
             topRight = (int(topRight[0]), int(topRight[1]))
             bottomRight = (int(bottomRight[0]), int(bottomRight[1]))
             bottomLeft = (int(bottomLeft[0]), int(bottomLeft[1]))
@@ -86,8 +86,6 @@ class TableTracker(object):
             width = abs(bottomLeft[0] - topLeft[0])
             height = abs(topLeft[1] - topRight[1])
 
-            print("width: ", width)
-            print("height: ", height)
             scale_long = width*3.85
             scale_short = height*2.72
 
@@ -98,13 +96,7 @@ class TableTracker(object):
             y2 = topLeft[1] + int(scale_long) if (topLeft[1] +
                                                   int(scale_long)) > 0 else 0
 
-            print("x1: ", x1)
-            print("x2: ", x2)
-            print("y1: ", y1)
-            print("y2: ", y2)
-
             table_z = depth_image[y1, x1]/1000
-            print("z: ", table_z)
 
             tr_point_t = (x2, y1)
             br_point_t = (x2, y2)

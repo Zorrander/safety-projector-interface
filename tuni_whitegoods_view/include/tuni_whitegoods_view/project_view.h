@@ -14,12 +14,14 @@ class Projector : public View {
  private:
   cv_bridge::CvImagePtr cv_ptr;
   int shift;
-
+  bool is_moving;
   cv::Mat sum_img, button_img, border_img;
-
+  cv::Mat affineMatrix;
   cv::Matx33d border_homography, button_homography;
   std::vector<double> border_homography_array, button_homography_array;
   std::vector<int> projector_resolution;
+  ros::Subscriber transform_callback;
+  void transformCallback(const geometry_msgs::Transform::ConstPtr& msg);
 
  public:
   Projector(ros::NodeHandle* nh);

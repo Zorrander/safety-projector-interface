@@ -1,6 +1,6 @@
 projector_resolution: [1920, 1080]
 shiftX: 2560
-is_moving: false
+is_moving: true
 hand_visualization: false
 camera_resolution: [1920, 1080]
 robot_frame: base
@@ -12,6 +12,6 @@ cy: 544.41552734375
 shelf_height: 0.0
 border_homography: [-2.15507712e+00,  1.91967042e-01,  2.86695078e+03, 5.92436261e-03, -2.16676604e+00,  1.75534894e+03, 1.69314309e-05,  2.45548501e-04,  1.00000000e+00]
 button_homography: [-2.15507712e+00,  1.91967042e-01,  2.86695078e+03, 5.92436261e-03, -2.16676604e+00,  1.75534894e+03, 1.69314309e-05,  2.45548501e-04,  1.00000000e+00]
-camera_calibration_file: "/calibration/test_calib.yaml"
-border_calibration_file: "/calibration/test_homography.yaml"
-button_calibration_file: "/calibration/test_homography.yaml"
+camera_calibration_file: "/home/odin3/Desktop/test_calib.yaml"
+border_calibration_file: "/home/odin3/Desktop/test_homography.yaml"
+button_calibration_file: "/home/odin3/Desktop/test_homography.yaml"

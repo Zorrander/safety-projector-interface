@@ -1,6 +1,9 @@
 #include "tuni_whitegoods_view/project_view.h"
 
 #include <sensor_msgs/image_encodings.h>
+#include <tf2/LinearMath/Quaternion.h>
+
+#include "tf2/utils.h"
 
 using namespace std;
 
@@ -11,6 +14,15 @@ Projector::Projector(ros::NodeHandle *nh) {
     shift = 0;  // Default value
     ROS_WARN("Parameter 'shiftX' not found, using default value 0.");
   }
+
+  if (!ros::param::get("is_moving", is_moving)) {
+    is_moving = false;  // Default value
+    ROS_WARN("Parameter 'is_moving' not found, using default value false.");
+  }
+
+  transform_callback =
+      nh->subscribe("/odin/projector_interface/moving_table/transform", 10,
+                    &Projector::transformCallback, this);
 
   ros::param::get("projector_resolution", projector_resolution);
 
@@ -23,6 +35,9 @@ Projector::Projector(ros::NodeHandle *nh) {
       ROS_INFO("%f", border_homography(i, j));
     }
   }
+
+  affineMatrix = cv::Mat::zeros(2, 3, CV_64F);
+
   ROS_INFO("ProjectorView running");
 }
 
@@ -56,6 +71,10 @@ void Projector::updateButtons(
                             CV_8UC3, cv::Scalar(0, 0, 0));
     cv::warpPerspective(button->draw(), img_transformed, button_homography,
                         sum_img.size());
+    if (is_moving) {
+      cv::warpAffine(img_transformed, img_transformed, affineMatrix,
+                     sum_img.size());
+    }
     button_img = button_img + img_transformed;
   }
   sum_img = border_img + button_img;
@@ -80,3 +99,21 @@ void Projector::updateBorders(
 }
 
 void Projector::updateHands(const std::vector<std::shared_ptr<Hand>> &hands) {}
+
+void Projector::transformCallback(
+    const geometry_msgs::Transform::ConstPtr &msg) {
+  // Set the translation
+  affineMatrix.at<double>(0, 2) = msg->translation.x;  // t_x
+  affineMatrix.at<double>(1, 2) = msg->translation.y;  // t_y
+
+  // Set the rotation from the quaternion
+  tf2::Quaternion q(msg->rotation.x, msg->rotation.y, msg->rotation.z,
+                    msg->rotation.w);
+  double theta = tf2::getYaw(q);  // Get the yaw angle
+
+  // Fill the affine matrix
+  affineMatrix.at<double>(0, 0) = cos(theta);
+  affineMatrix.at<double>(0, 1) = -sin(theta);
+  affineMatrix.at<double>(1, 0) = sin(theta);
+  affineMatrix.at<double>(1, 1) = cos(theta);
+}

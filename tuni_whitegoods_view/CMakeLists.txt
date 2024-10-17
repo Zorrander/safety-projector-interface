@@ -14,6 +14,7 @@ find_package(catkin REQUIRED COMPONENTS
   cv_bridge
   image_transport
   integration
+  tf2
   tf2_ros
   tf2_geometry_msgs
   tuni_whitegoods_msgs
@@ -32,6 +33,7 @@ catkin_package(
                  cv_bridge
                  image_transport
                  integration
+                 tf2
                  tf2_ros
                  tf2_geometry_msgs
                  tuni_whitegoods_msgs
