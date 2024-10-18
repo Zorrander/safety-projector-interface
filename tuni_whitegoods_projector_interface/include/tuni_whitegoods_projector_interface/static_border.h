@@ -56,6 +56,8 @@ class StaticBorder {
       bottomRightCornerPt;
   std_msgs::ColorRGBA border_color;
   int thickness;
+  cv::Mat baseline;
+  cv::Rect roi_rect;
 
  private:
   cv::Mat border_mask;

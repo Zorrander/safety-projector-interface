@@ -29,12 +29,12 @@ class ProjectorInterfaceController {
   std::unique_ptr<ProjectorInterfaceModel> model_;
 
   ros::Subscriber hand_pose_sub, moving_table_pose_sub, model_update_sub,
-      rgb_sub;
+      depth_sub;
 
   ros::Publisher pub_button_event;
 
   ros::ServiceServer service_borders;
-  cv::Mat cv_rgb;
+  cv::Mat cv_depth;
 
  public:
   ProjectorInterfaceController(ros::NodeHandle *nh);
@@ -67,7 +67,7 @@ class ProjectorInterfaceController {
   bool getBordersService(integration::ListStaticBordersStatus::Request &req,
                          integration::ListStaticBordersStatus::Response &res);
   void modelUpdateCallback(const std_msgs::Empty &msg);
-  void rgbImageCallback(const sensor_msgs::ImageConstPtr &rgb_msg);
+  void depthImageCallback(const sensor_msgs::ImageConstPtr &depth_msg);
   // void callback_button(const unity_msgs::ElementUI::ConstPtr &msg);
   // void process_button(double center_x, double center_y, const
   // unity_msgs::ElementUI &msg); void callback_button_color(const

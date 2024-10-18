@@ -1,6 +1,6 @@
 projector_resolution: [1920, 1080]
 shiftX: 2560
-is_moving: true
+is_moving: false
 hand_visualization: false
 camera_resolution: [1920, 1080]
 robot_frame: base

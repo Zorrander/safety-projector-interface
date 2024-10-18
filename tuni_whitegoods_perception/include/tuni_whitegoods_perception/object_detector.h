@@ -19,7 +19,7 @@ class StaticBorder;  // Forward declaration for StaticBorder class
 class ObjectDetector {
  public:
   ObjectDetector();  // Constructor
-  bool scan(cv::Mat image, cv::Rect roi);
+  bool scan(cv::Mat depth_image, cv::Mat baseline);
 
  private:
   ros::NodeHandle* nh_;

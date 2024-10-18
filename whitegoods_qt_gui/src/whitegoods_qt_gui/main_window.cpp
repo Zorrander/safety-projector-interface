@@ -27,7 +27,7 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
   QUiLoader loader;
 
   QFile file(
-      "/home/odin3//catkin_ws/src/safety-projector-interface/whitegoods_qt_gui/"
+      "/home/odin3//catkin_ws/src/whitegoods_qt_gui/"
       "resource/main_window.ui");
   file.open(QFile::ReadOnly);
   QWidget* formWidget = loader.load(&file, this);

@@ -48,11 +48,9 @@ ProjectorInterfaceController::ProjectorInterfaceController(ros::NodeHandle *nh)
       nh_->subscribe("/odin/internal/model_changed", 10,
                      &ProjectorInterfaceController::modelUpdateCallback, this);
 
-  rgb_sub =
-      nh_->subscribe("/rgb/image_raw", 20,
-                     &ProjectorInterfaceController::rgbImageCallback, this);
-  // rgb_sub = nh_->subscribe("/depth_to_rgb/image_raw", 20,
-  // &ProjectorInterfaceController::rgbImageCallback, this);
+  depth_sub =
+      nh_->subscribe("/depth_to_rgb/image_raw", 20,
+                     &ProjectorInterfaceController::depthImageCallback, this);
 
   detector = std::make_shared<ObjectDetector>();
 
@@ -74,11 +72,11 @@ ProjectorInterfaceController::ProjectorInterfaceController(ros::NodeHandle *nh)
   ROS_INFO("ProjectorInterfaceController running");
 }
 
-void ProjectorInterfaceController::rgbImageCallback(
-    const sensor_msgs::ImageConstPtr &rgb_msg) {
-  cv_bridge::CvImagePtr cv_bridge_rgb =
-      cv_bridge::toCvCopy(rgb_msg, sensor_msgs::image_encodings::BGR8);
-  cv_rgb = cv_bridge_rgb->image;
+void ProjectorInterfaceController::depthImageCallback(
+    const sensor_msgs::ImageConstPtr &depth_msg) {
+  cv_bridge::CvImagePtr cv_bridge_depth =
+      cv_bridge::toCvCopy(depth_msg, sensor_msgs::image_encodings::TYPE_16UC1);
+  cv_depth = cv_bridge_depth->image;
 }
 
 /**
@@ -174,8 +172,8 @@ void ProjectorInterfaceController::addStaticBorder(
     geometry_msgs::PolygonStamped bord, std::string b_topic,
     std_msgs::ColorRGBA b_color, bool filling, int thic, ros::Duration life,
     bool track) {
-  model_->addStaticBorder(r_id, z, pos_row, pos_col, bord, b_topic, b_color,
-                          filling, thic, life, track);
+  model_->addStaticBorder(cv_depth, r_id, z, pos_row, pos_col, bord, b_topic,
+                          b_color, filling, thic, life, track);
 }
 
 /**
@@ -253,16 +251,16 @@ bool ProjectorInterfaceController::getBordersService(
   for (auto &border : model_->getBorders()) {
     integration::StaticBorderStatus sbs;
     sbs.id = border->getId();
-    cv::Rect roi_rect(border->top_left_cam_point,
-                      border->bottom_right_cam_point);
 
-    if (detector->scan(cv_rgb, roi_rect) || border->operator_booked) {
+    if (detector->scan(cv_depth(border->roi_rect), border->baseline) ||
+        border->operator_booked) {
       sbs.status = 2;
     } else if (border->robot_booked) {
       sbs.status = 1;
     } else {
       sbs.status = 0;
     }
+
     ROS_INFO("border %s status: %d", sbs.id.c_str(), sbs.status);
     res.status_borders.push_back(sbs);
   }

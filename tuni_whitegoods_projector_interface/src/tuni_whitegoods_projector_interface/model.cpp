@@ -161,8 +161,8 @@ void ProjectorInterfaceModel::change_button_color(
 }
 
 void ProjectorInterfaceModel::addStaticBorder(
-    std::string r_id, std::string z, int pos_row, int pos_col,
-    geometry_msgs::PolygonStamped bord, std::string b_topic,
+    cv::Mat depth_img, std::string r_id, std::string z, int pos_row,
+    int pos_col, geometry_msgs::PolygonStamped bord, std::string b_topic,
     std_msgs::ColorRGBA b_color, bool filling, int thic, ros::Duration life,
     bool track) {
   for (auto &zone : zones) {
@@ -204,6 +204,10 @@ void ProjectorInterfaceModel::addStaticBorder(
 
       sb->top_left_cam_point.x = srv_3D_to_pixel.response.u;
       sb->top_left_cam_point.y = srv_3D_to_pixel.response.v;
+
+      sb->roi_rect =
+          cv::Rect(sb->top_left_cam_point, sb->bottom_right_cam_point);
+      sb->baseline = depth_img(sb->roi_rect);
 
       // BOTTOM RIGHT
       geometry_msgs::PoseStamped in_point_stamped_bottom_right;

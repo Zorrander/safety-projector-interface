@@ -45,10 +45,11 @@ class ProjectorInterfaceModel {
   void change_button_color(std::string resource_id,
                            std_msgs::ColorRGBA button_color);
 
-  void addStaticBorder(std::string r_id, std::string z, int pos_row,
-                       int pos_col, geometry_msgs::PolygonStamped bord,
-                       std::string b_topic, std_msgs::ColorRGBA b_color,
-                       bool filling, int thic, ros::Duration life, bool track);
+  void addStaticBorder(cv::Mat depth_img, std::string r_id, std::string z,
+                       int pos_row, int pos_col,
+                       geometry_msgs::PolygonStamped bord, std::string b_topic,
+                       std_msgs::ColorRGBA b_color, bool filling, int thic,
+                       ros::Duration life, bool track);
   void addDynamicBorder(std::string r_id, std::string z, std::string b_topic,
                         std_msgs::ColorRGBA b_color, bool filling, int thic,
                         ros::Duration life, bool track);

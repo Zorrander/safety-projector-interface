@@ -37,6 +37,7 @@ void CameraView::updateBorders(
                    border->border_color.r * 255),
         border->thickness * 2, cv::LINE_8);
   }
+
   publish_image();
 }
 
