@@ -205,10 +205,6 @@ void ProjectorInterfaceModel::addStaticBorder(
       sb->top_left_cam_point.x = srv_3D_to_pixel.response.u;
       sb->top_left_cam_point.y = srv_3D_to_pixel.response.v;
 
-      sb->roi_rect =
-          cv::Rect(sb->top_left_cam_point, sb->bottom_right_cam_point);
-      sb->baseline = depth_img(sb->roi_rect);
-
       // BOTTOM RIGHT
       geometry_msgs::PoseStamped in_point_stamped_bottom_right;
       in_point_stamped_bottom_right.header.frame_id = "base";
@@ -235,6 +231,10 @@ void ProjectorInterfaceModel::addStaticBorder(
 
       sb->bottom_right_cam_point.x = srv_3D_to_pixel.response.u;
       sb->bottom_right_cam_point.y = srv_3D_to_pixel.response.v;
+
+      sb->roi_rect =
+          cv::Rect(sb->top_left_cam_point, sb->bottom_right_cam_point);
+      sb->baseline = depth_img(sb->roi_rect);
 
       zone->addBorder(sb);
 

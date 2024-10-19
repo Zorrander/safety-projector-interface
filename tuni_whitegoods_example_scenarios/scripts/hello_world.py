@@ -52,9 +52,11 @@ def main():
     goal.virtual_button.text_color.g = 1.0
     goal.virtual_button.text_color.b = 1.0
     goal.virtual_button.text_color.a = 1.0
-    goal.virtual_button.center.position.x = 0.6347894913928517-0.075
-    goal.virtual_button.center.position.y = 1.4488399414350095-0.05
-    goal.virtual_button.center.position.z = 0.4233126879551239
+
+    goal.virtual_button.center.position.x = 1.2544027518210814
+    goal.virtual_button.center.position.y = 0.3572678561494941
+    goal.virtual_button.center.position.z = 0
+
     goal.virtual_button.radius = 30.0
     goal.virtual_button.hidden = False
 
@@ -65,7 +67,8 @@ def main():
     project_client.wait_for_result()
 
     ## Project button 2
-
+    
+    '''
     goal = SetVirtualButtonsProjectionGoal()
     goal.request_id = "stop_button"
     goal.zone = "shelf"
@@ -89,10 +92,8 @@ def main():
     goal.virtual_button.radius = 30.0
     goal.virtual_button.hidden = False
 
-    # Sends the goal to the action server.
     project_client.send_goal(goal)
 
-    # Waits for the server to finish performing the action.
     project_client.wait_for_result()
 
 
@@ -104,14 +105,9 @@ def main():
     color_goal.button_color.g = 1.0
     color_goal.button_color.b = 0.0
     color_goal.button_color.a = 0.0
+    '''
 
-    # Change color
-    while not rospy.is_shutdown():
-        if interaction:
-            print("Hello world!")
-            #color_client.send_goal(color_goal)
-            #color_client.wait_for_result()
-            break
+    rospy.spin()
 
 
 if __name__ == "__main__":

@@ -47,7 +47,11 @@ class TransformTablePointServer {
     cv::Mat homography_matrix =
         cv::findHomography(original_position, new_position);
 
-    // res.transform = ;
+    for (int i = 0; i < homography_matrix.rows; ++i) {
+      for (int j = 0; j < homography_matrix.cols; ++j) {
+        res.transform.push_back(homography_matrix.at<double>(i, j));
+      }
+    }
 
     return true;
   }

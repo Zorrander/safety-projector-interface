@@ -36,7 +36,7 @@ Projector::Projector(ros::NodeHandle *nh) {
     }
   }
 
-  affineMatrix = cv::Mat::zeros(2, 3, CV_64F);
+  homography_matrix = cv::Mat::zeros(3, 3, CV_64F);
 
   ROS_INFO("ProjectorView running");
 }
@@ -72,8 +72,8 @@ void Projector::updateButtons(
     cv::warpPerspective(button->draw(), img_transformed, button_homography,
                         sum_img.size());
     if (is_moving) {
-      cv::warpAffine(img_transformed, img_transformed, affineMatrix,
-                     sum_img.size());
+      cv::warpPerspective(img_transformed, img_transformed, homography_matrix,
+                          sum_img.size());
     }
     button_img = button_img + img_transformed;
   }
@@ -101,19 +101,8 @@ void Projector::updateBorders(
 void Projector::updateHands(const std::vector<std::shared_ptr<Hand>> &hands) {}
 
 void Projector::transformCallback(
-    const geometry_msgs::Transform::ConstPtr &msg) {
-  // Set the translation
-  affineMatrix.at<double>(0, 2) = msg->translation.x;  // t_x
-  affineMatrix.at<double>(1, 2) = msg->translation.y;  // t_y
-
-  // Set the rotation from the quaternion
-  tf2::Quaternion q(msg->rotation.x, msg->rotation.y, msg->rotation.z,
-                    msg->rotation.w);
-  double theta = tf2::getYaw(q);  // Get the yaw angle
-
-  // Fill the affine matrix
-  affineMatrix.at<double>(0, 0) = cos(theta);
-  affineMatrix.at<double>(0, 1) = -sin(theta);
-  affineMatrix.at<double>(1, 0) = sin(theta);
-  affineMatrix.at<double>(1, 1) = cos(theta);
+    const std_msgs::Float64MultiArray::ConstPtr &msg) {
+  for (size_t i = 0; i < 9; ++i) {
+    homography_matrix.at<double>(i / 3, i % 3) = msg->data[i];
+  }
 }

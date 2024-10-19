@@ -2,6 +2,7 @@
 #define Projector_H
 
 #include <cv_bridge/cv_bridge.h>
+#include <std_msgs/Float64MultiArray.h>
 #include <tuni_whitegoods_msgs/Projection.h>
 
 #include <opencv2/highgui/highgui.hpp>
@@ -16,12 +17,12 @@ class Projector : public View {
   int shift;
   bool is_moving;
   cv::Mat sum_img, button_img, border_img;
-  cv::Mat affineMatrix;
+  cv::Mat homography_matrix;
   cv::Matx33d border_homography, button_homography;
   std::vector<double> border_homography_array, button_homography_array;
   std::vector<int> projector_resolution;
   ros::Subscriber transform_callback;
-  void transformCallback(const geometry_msgs::Transform::ConstPtr& msg);
+  void transformCallback(const std_msgs::Float64MultiArray::ConstPtr& msg);
 
  public:
   Projector(ros::NodeHandle* nh);

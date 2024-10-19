@@ -14,7 +14,7 @@ from tuni_whitegoods_msgs.srv import TransformMovingTable
 from tuni_whitegoods_msgs.msg import DynamicArea
 from geometry_msgs.msg import PoseStamped, Transform
 from sensor_msgs.msg import Image
-
+from std_msgs.msg import Float64MultiArray
 
 class TableTracker(object):
     def __init__(self):
@@ -41,7 +41,7 @@ class TableTracker(object):
 
         self.zone_msg = DynamicArea()
         self.zone_pub = rospy.Publisher(
-            "/odin/projector_interface/moving_table/transform", Transform, queue_size=10)
+            "/odin/projector_interface/moving_table/transform", Float64MultiArray, queue_size=10)
 
         self.transform_moving_table = rospy.ServiceProxy(
             'transform_table_server', TransformMovingTable)
@@ -91,7 +91,9 @@ class TableTracker(object):
 
             # TODO: need to add cases to infer table orientation
             x1 = topLeft[0]
-            x2 = topLeft[0] - int(scale_short)
+            x2 = topLeft[0] - int(scale_short) 
+            if x2<0:
+                x2=0
             y1 = topLeft[1]
             y2 = topLeft[1] + int(scale_long) if (topLeft[1] +
                                                   int(scale_long)) > 0 else 0
@@ -166,7 +168,9 @@ class TableTracker(object):
                                           bottomLeft[1]]
 
             transformation = self.transform_moving_table(self.zone_msg)
-            self.zone_pub.publish(transformation.transform)
+            matrix_msg = Float64MultiArray()
+            matrix_msg.data = transformation.transform
+            self.zone_pub.publish(matrix_msg)
 
 
 if __name__ == '__main__':
