@@ -200,3 +200,16 @@ void DisplayArea::fetchBorders(
     borders.push_back(border);
   }
 }
+
+void DisplayArea::setRobotFrame(
+    std::vector<geometry_msgs::Point> robot_frame_points) {
+  robot_frame_area = robot_frame;
+}
+
+void DisplayArea::setCameraFrame(cv::Rect camera_frame) {
+  camera_frame_area = camera_frame;
+}
+
+void DisplayArea::setProjectorFrame(cv::Rect projector_frame) {
+  projector_frame_area = projector_frame;
+}

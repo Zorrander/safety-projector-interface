@@ -4,19 +4,17 @@
 
 using namespace std;
 
-static const std::string OPENCV_WINDOW = "Image window";
-
 CameraView::CameraView(ros::NodeHandle* nh) : it_(*nh), nh_(nh) {
   img_callback = it_.subscribe("/depth_to_rgb/image_raw", 10,
                                &CameraView::depthSceneCallback, this);
   viz_pub = it_.advertise("/odin/visualization/camera_view", 10);
-  cv::namedWindow(OPENCV_WINDOW);
+
   ROS_INFO("CameraView running");
 }
 
-CameraView::~CameraView() { cv::destroyWindow(OPENCV_WINDOW); }
-
-void CameraView::init() { publish_image(); }
+void CameraView::init(std::vector<std::shared_ptr<DisplayArea>> zones) {
+  publish_image();
+}
 
 void CameraView::updateButtons(
     const std::vector<std::shared_ptr<Button>>& buttons) {

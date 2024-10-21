@@ -12,9 +12,8 @@ class Hand {
  public:
   Hand(std::string name);
   void set_position(geometry_msgs::Point pixel_position,
-                    geometry_msgs::Point projected_position,
                     geometry_msgs::Point robot_frame_position);
-  geometry_msgs::Point pixel_position, projected_position, robot_frame_position;
+  geometry_msgs::Point pixel_position, robot_frame_position;
 };
 
 #endif

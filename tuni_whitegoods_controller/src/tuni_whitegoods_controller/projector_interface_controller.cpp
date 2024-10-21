@@ -3,6 +3,7 @@
 #include <tuni_whitegoods_view/camera_view.h>
 #include <tuni_whitegoods_view/project_view.h>
 #include <tuni_whitegoods_view/robot_view.h>
+#include <yaml-cpp/yaml.h>
 
 /**
  * @brief      Controller class for the %projector interface.
@@ -23,16 +24,23 @@ ProjectorInterfaceController::ProjectorInterfaceController(ros::NodeHandle *nh)
       "/odin/projector_interface/moving_table", 10,
       &ProjectorInterfaceController::movingTableTrackerCallback, this);
 
+  std::string display_areas_calibration_file;
+  if (!nh->getParam("display_areas_calibration_file",
+                    display_areas_calibration_file)) {
+    ROS_ERROR("display_areas calibration file is missing from configuration.");
+  }
+
+  ros::param::get("projector_resolution", projector_resolution);
+  ros::param::get("camera_resolution", camera_resolution);
+
+  YAML::Node display_areas_calibration =
+      YAML::LoadFile(display_areas_calibration_file);
+
   // Subscribe to robot coordinates if needed for dynamic border display
-  /*base_link.subscribe(nh, "/coords/base_link", 1);
-  link_4.subscribe(nh, "/coords/link_4", 1);
-  link_5.subscribe(nh, "/coords/link_5", 1);
-  tool_0.subscribe(nh, "/coords/tool0", 1);
-  flange.subscribe(nh, "/coords/flange", 1);
-  sync.reset(new Sync(MySyncPolicy(10), base_link, link_4, link_5, tool_0,
-  flange)); sync->registerCallback(boost::bind(&DynamicBorder::callbackJoints3D,
-  this, _1, _2, _3, _4, _5));
+  /*
+  TODO
   */
+
   // Subscribe to commands coming from OpenFlow or custom scheduler
   service_borders = nh->advertiseService(
       "/execution/projector_interface/integration/services/"
@@ -41,8 +49,126 @@ ProjectorInterfaceController::ProjectorInterfaceController(ros::NodeHandle *nh)
 
   // Initialize model
   model_ = std::make_unique<ProjectorInterfaceModel>(nh_);
-  model_->add_zone("shelf");
-  model_->add_zone("table");
+
+  for (YAML::const_iterator it = display_areas_calibration.begin();
+       it != display_areas_calibration.end(); ++it) {
+    std::string area_name = it->first.as<std::string>();
+    YAML::Node area_node = it->second;
+
+    std::vector<geometry_msgs::Point> points;
+    geometry_msgs::Point tl;
+    geometry_msgs::Point tr;
+    geometry_msgs::Point br;
+    geometry_msgs::Point bl;
+
+    tl.x = area_node["top_left"]["x"].as<double>();
+    tl.y = area_node["top_left"]["y"].as<double>();
+    tl.z = area_node["top_left"]["z"].as<double>();
+
+    tr.x = area_node["top_right"]["x"].as<double>();
+    tr.y = area_node["top_right"]["y"].as<double>();
+    tr.z = area_node["top_right"]["z"].as<double>();
+
+    br.x = area_node["bottom_right"]["x"].as<double>();
+    br.y = area_node["bottom_right"]["y"].as<double>();
+    br.z = area_node["bottom_right"]["z"].as<double>();
+
+    bl.x = area_node["bottom_left"]["x"].as<double>();
+    bl.y = area_node["bottom_left"]["y"].as<double>();
+    bl.z = area_node["bottom_left"]["z"].as<double>();
+
+    points.push_back(tl);
+    points.push_back(tr);
+    points.push_back(br);
+    points.push_back(bl);
+
+    std::shared_ptr<DisplayArea> display_area =
+        std::make_shared<DisplayArea>(nh_, area_name);
+
+    model_->add_zone(display_area, points);
+  }
+
+  // Add the camera field of view (for visualization only)
+
+  std::vector<geometry_msgs::Point> camera_corners;
+  geometry_msgs::Point camera_tl;
+  geometry_msgs::Point camera_tr;
+  geometry_msgs::Point camera_br;
+  geometry_msgs::Point camera_bl;
+
+  camera_tl.x = 0;
+  camera_tl.y = 0;
+  camera_tl.z = cv_depth.at<uint16_t>(camera_tl.y, camera_tl.x) / 1000;
+
+  camera_tr.x = 0;
+  camera_tr.y = camera_resolution[1];
+  camera_tr.z = cv_depth.at<uint16_t>(camera_tr.y, camera_tr.x) / 1000;
+
+  camera_br.x = camera_resolution[0];
+  camera_br.y = camera_resolution[1];
+  camera_br.z = cv_depth.at<uint16_t>(camera_br.y, camera_br.x) / 1000;
+
+  camera_bl.x = camera_resolution[0];
+  camera_bl.y = 0;
+  camera_bl.z = cv_depth.at<uint16_t>(camera_bl.y, camera_bl.x) / 1000;
+
+  camera_corners.push_back(tl);
+  camera_corners.push_back(tr);
+  camera_corners.push_back(br);
+  camera_corners.push_back(bl);
+
+  std::shared_ptr<DisplayArea> camera_area =
+      std::make_shared<DisplayArea>(nh_, "camera");
+  model_->add_zone(camera_area, camera_corners);
+
+  // Add the projection area (for visualization only)
+
+  cv::Point projector_top_left(0, 0);
+  cv::Point projector_top_right(0, projector_resolution[1]);
+  cv::Point projector_bottom_right(projector_resolution[0],
+                                   projector_resolution[1]);
+  cv::Point projector_bottom_left(projector_resolution[0], 0);
+
+  cv::Point transformed_projector_top_left =
+      model_->fromProjector2Camera(projector_top_left);
+  cv::Point transformed_projector_top_right =
+      model_->fromProjector2Camera(projector_top_right);
+  cv::Point transformed_projector_bottom_right =
+      model_->fromProjector2Camera(projector_bottom_right);
+  cv::Point transformed_projector_bottom_left =
+      model_->fromProjector2Camera(projector_bottom_left);
+
+  std::vector<geometry_msgs::Point> projector_corners;
+  geometry_msgs::Point projector_tl;
+  geometry_msgs::Point projector_tr;
+  geometry_msgs::Point projector_br;
+  geometry_msgs::Point projector_bl;
+
+  projector_tl.x = transformed_projector_top_left.x;
+  projector_tl.y = transformed_projector_top_left.y;
+  projector_tl.z = cv_depth.at<uint16_t>(projector_tl.y, projector_tl.x) / 1000;
+
+  projector_tr.x = transformed_projector_top_right.x;
+  projector_tr.y = transformed_projector_top_right.y;
+  projector_tr.z = cv_depth.at<uint16_t>(projector_tr.y, projector_tr.x) / 1000;
+
+  projector_br.x = transformed_projector_bottom_right.x;
+  projector_br.y = transformed_projector_bottom_right.y;
+  projector_br.z = cv_depth.at<uint16_t>(projector_br.y, projector_br.x) / 1000;
+
+  projector_bl.x = transformed_projector_bottom_left.x;
+  projector_bl.y = transformed_projector_bottom_left.y;
+  projector_bl.z = cv_depth.at<uint16_t>(projector_bl.y, projector_bl.x) / 1000;
+
+  projector_corners.push_back(tl);
+  projector_corners.push_back(tr);
+  projector_corners.push_back(br);
+  projector_corners.push_back(bl);
+
+  std::shared_ptr<DisplayArea> projector_area =
+      std::make_shared<DisplayArea>(nh_, "projector");
+  model_->add_zone(projector_area, projector_corners);
+
   // Subscribe to model updates
   model_update_sub =
       nh_->subscribe("/odin/internal/model_changed", 10,
@@ -66,7 +192,7 @@ ProjectorInterfaceController::ProjectorInterfaceController(ros::NodeHandle *nh)
   ros::Duration(3.0).sleep();
 
   for (auto &view : views) {
-    view->init();
+    view->init(model_->zones);
   }
 
   ROS_INFO("ProjectorInterfaceController running");

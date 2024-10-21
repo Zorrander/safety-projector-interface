@@ -36,6 +36,9 @@ class ProjectorInterfaceController {
   ros::ServiceServer service_borders;
   cv::Mat cv_depth;
 
+  std::vector<int> projector_resolution;
+  std::vector<int> camera_resolution;
+
  public:
   ProjectorInterfaceController(ros::NodeHandle *nh);
   void notify();

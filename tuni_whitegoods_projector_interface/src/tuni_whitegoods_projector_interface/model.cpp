@@ -93,8 +93,20 @@ void ProjectorInterfaceModel::reset_interactions(const ros::TimerEvent &) {
   }
 }
 
-void ProjectorInterfaceModel::add_zone(std::string name) {
-  zones.push_back(std::make_shared<DisplayArea>(nh_, name));
+void ProjectorInterfaceModel::add_zone(
+    std::shared_ptr<DisplayArea> display_area,
+    geometry_msgs::Point camera_frame) {
+  display_area->setCameraFrame(camera_frame);
+  cv::Rect(fromCamera2Projector(camera_frame.tl()),
+           fromCamera2Projector(camera_frame.br()));
+  display_area->setProjectorFrame(projector_frame);
+
+  std::vector<geometry_msgs::Point> robot_frame_points;
+  geometry_msgs::Point top_left_r;
+  geometry_msgs::Point top_right_r;
+  geometry_msgs::Point bottom_right_r;
+  geometry_msgs::Point bottom_left_r;
+  zones.push_back(display_area);
 }
 
 void ProjectorInterfaceModel::addButton(
@@ -103,6 +115,7 @@ void ProjectorInterfaceModel::addButton(
     std_msgs::ColorRGBA text_color, geometry_msgs::Pose center, float radius) {
   for (auto &z : zones) {
     if (z->name == zone) {
+      /*
       geometry_msgs::Pose modified_center;
       modified_center.position.x = center.position.x + 0.1;
       modified_center.position.y = (request_id == "goButton")
@@ -111,38 +124,11 @@ void ProjectorInterfaceModel::addButton(
 
       modified_center.position.z = -0.40;
       float modified_radius = radius / 2.5;
-      std::shared_ptr<Button> btn = std::make_shared<Button>(
-          nh_, request_id, name, text, button_color, text_color,
-          modified_center, modified_radius);
-      geometry_msgs::PoseStamped in_point_stamped_center;
-      tuni_whitegoods_msgs::TransformRobotCameraCoordinates srv_center;
-      tuni_whitegoods_msgs::Transform3DToPixel srv_3D_to_pixel;
-
-      in_point_stamped_center.header.frame_id = "base";
-      in_point_stamped_center.header.stamp = ros::Time(0);
-      in_point_stamped_center.pose = modified_center;
-
-      srv_center.request.in_point_stamped = in_point_stamped_center;
-      srv_center.request.target_frame = "rgb_camera_link";
-
-      if (!client_world_coordinates.call(srv_center)) {
-        ROS_ERROR("Failed to call service");
-      }
-
-      // Project to 2D image coordinates
-      srv_3D_to_pixel.request.x =
-          srv_center.response.out_point_stamped.pose.position.x;
-      srv_3D_to_pixel.request.y =
-          srv_center.response.out_point_stamped.pose.position.y;
-      srv_3D_to_pixel.request.z =
-          srv_center.response.out_point_stamped.pose.position.z;
-      if (!client_3D_to_pixel.call(srv_3D_to_pixel)) {
-        ROS_ERROR("Failed to call service");
-      }
-
-      btn->center_cam_point.x = srv_3D_to_pixel.response.u;
-      btn->center_cam_point.y = srv_3D_to_pixel.response.v;
-
+      */
+      std::shared_ptr<Button> btn =
+          std::make_shared<Button>(nh_, request_id, name, text, button_color,
+                                   text_color, center, radius);
+      btn->center_cam_point = fromRobot2Pixel(center);
       z->addButton(btn);
       break;
     }
@@ -170,67 +156,17 @@ void ProjectorInterfaceModel::addStaticBorder(
       std::shared_ptr<StaticBorder> sb = std::make_shared<StaticBorder>(
           nh_, r_id, pos_row, pos_col, bord, b_topic, b_color, filling, thic,
           life, track);
+
       // Also compute camera coordinates for detections
       // TOP LEFT
-      // Convert to 3D camera coordinates frame
-      geometry_msgs::PoseStamped in_point_stamped_top_left;
-      tuni_whitegoods_msgs::TransformRobotCameraCoordinates srv_top_left,
-          srv_bottom_right;
-      tuni_whitegoods_msgs::Transform3DToPixel srv_3D_to_pixel;
-
-      in_point_stamped_top_left.header.frame_id = "base";
-      in_point_stamped_top_left.header.stamp = ros::Time(0);
-      in_point_stamped_top_left.pose.position.x = sb->topLeftCornerPt.x;
-      in_point_stamped_top_left.pose.position.y = sb->topLeftCornerPt.y;
-      in_point_stamped_top_left.pose.position.z = sb->topLeftCornerPt.z;
-
-      srv_top_left.request.in_point_stamped = in_point_stamped_top_left;
-      srv_top_left.request.target_frame = "rgb_camera_link";
-
-      if (!client_world_coordinates.call(srv_top_left)) {
-        ROS_ERROR("Failed to call service");
-      }
-
-      // Project to 2D image coordinates
-      srv_3D_to_pixel.request.x =
-          srv_top_left.response.out_point_stamped.pose.position.x;
-      srv_3D_to_pixel.request.y =
-          srv_top_left.response.out_point_stamped.pose.position.y;
-      srv_3D_to_pixel.request.z =
-          srv_top_left.response.out_point_stamped.pose.position.z;
-      if (!client_3D_to_pixel.call(srv_3D_to_pixel)) {
-        ROS_ERROR("Failed to call service");
-      }
-
-      sb->top_left_cam_point.x = srv_3D_to_pixel.response.u;
-      sb->top_left_cam_point.y = srv_3D_to_pixel.response.v;
+      geometry_msgs::Pose border_top_left_pose;
+      border_top_left_pose.position = sb->topLeftCornerPt;
+      sb->top_left_cam_point = fromRobot2Pixel(border_top_left_pose);
 
       // BOTTOM RIGHT
-      geometry_msgs::PoseStamped in_point_stamped_bottom_right;
-      in_point_stamped_bottom_right.header.frame_id = "base";
-      in_point_stamped_bottom_right.header.stamp = ros::Time(0);
-      in_point_stamped_bottom_right.pose.position.x = sb->bottomRightCornerPt.x;
-      in_point_stamped_bottom_right.pose.position.y = sb->bottomRightCornerPt.y;
-      in_point_stamped_bottom_right.pose.position.z = sb->bottomRightCornerPt.z;
-
-      srv_bottom_right.request.in_point_stamped = in_point_stamped_bottom_right;
-      srv_bottom_right.request.target_frame = "rgb_camera_link";
-      if (!client_world_coordinates.call(srv_bottom_right)) {
-        ROS_ERROR("Failed to call service");
-      }
-
-      srv_3D_to_pixel.request.x =
-          srv_bottom_right.response.out_point_stamped.pose.position.x;
-      srv_3D_to_pixel.request.y =
-          srv_bottom_right.response.out_point_stamped.pose.position.y;
-      srv_3D_to_pixel.request.z =
-          srv_bottom_right.response.out_point_stamped.pose.position.z;
-      if (!client_3D_to_pixel.call(srv_3D_to_pixel)) {
-        ROS_ERROR("Failed to call service");
-      }
-
-      sb->bottom_right_cam_point.x = srv_3D_to_pixel.response.u;
-      sb->bottom_right_cam_point.y = srv_3D_to_pixel.response.v;
+      geometry_msgs::Pose border_bottom_right_pose;
+      border_bottom_right_pose.position = sb->bottomRightCornerPt;
+      sb->bottom_right_cam_point = fromRobot2Pixel(border_top_left_pose);
 
       sb->roi_rect =
           cv::Rect(sb->top_left_cam_point, sb->bottom_right_cam_point);
@@ -300,34 +236,12 @@ void ProjectorInterfaceModel::updateHandPose(
   action_triggered = false;
 
   if (hand_visualization) {
-    // Project pixel position to 3D
-    tuni_whitegoods_msgs::TransformPixelTo3D srv_pixel_to_3D;
-    srv_pixel_to_3D.request.u = position.x;
-    srv_pixel_to_3D.request.v = position.y;
-    srv_pixel_to_3D.request.depth = position.z;
-    client_pixel_to_3D.call(srv_pixel_to_3D);
-
-    geometry_msgs::Point projected;
-    projected.x = srv_pixel_to_3D.response.x;
-    projected.y = srv_pixel_to_3D.response.y;
-    projected.z = srv_pixel_to_3D.response.z;
-    // Transform to robot coordinates frame
-    geometry_msgs::PoseStamped in_point_stamped;
-    in_point_stamped.header.frame_id = "rgb_camera_link";
-    in_point_stamped.header.stamp = ros::Time(0);
-    in_point_stamped.pose.position = projected;
-
-    tuni_whitegoods_msgs::TransformRobotCameraCoordinates srv;
-    srv.request.in_point_stamped = in_point_stamped;
-    srv.request.target_frame = "base";
-    client_world_coordinates.call(srv);
+    geometry_msgs::Pose hand_pose = fromPixel2Robot(position);
 
     if (name == "left") {
-      left_hand->set_position(position, projected,
-                              srv.response.out_point_stamped.pose.position);
+      left_hand->set_position(position, hand_pose.position);
     } else if (name == "right") {
-      right_hand->set_position(position, projected,
-                               srv.response.out_point_stamped.pose.position);
+      right_hand->set_position(position, hand_pose.position);
     }
 
     // Notify controller
@@ -370,4 +284,89 @@ std::vector<std::shared_ptr<Hand>> ProjectorInterfaceModel::getHands() {
   hands.push_back(left_hand);
   hands.push_back(right_hand);
   return hands;
+}
+
+cv::Point ProjectorInterfaceModel::fromRobot2Pixel(geometry_msgs::Pose pose) {
+  geometry_msgs::PoseStamped in_point_stamped;
+  tuni_whitegoods_msgs::TransformRobotCameraCoordinates srv_pose;
+  tuni_whitegoods_msgs::Transform3DToPixel srv_3D_to_pixel;
+  // Convert to 3D camera coordinates frame
+  in_point_stamped.header.frame_id = "base";
+  in_point_stamped.header.stamp = ros::Time(0);
+  in_point_stamped.pose = pose;
+
+  srv_pose.request.in_point_stamped = in_point_stamped;
+  srv_pose.request.target_frame = "rgb_camera_link";
+
+  if (!client_world_coordinates.call(srv_pose)) {
+    ROS_ERROR("Failed to call service");
+  }
+
+  // Project to 2D image coordinates
+  srv_3D_to_pixel.request.x =
+      srv_pose.response.out_point_stamped.pose.position.x;
+  srv_3D_to_pixel.request.y =
+      srv_pose.response.out_point_stamped.pose.position.y;
+  srv_3D_to_pixel.request.z =
+      srv_pose.response.out_point_stamped.pose.position.z;
+  if (!client_3D_to_pixel.call(srv_3D_to_pixel)) {
+    ROS_ERROR("Failed to call service");
+  }
+
+  cv::Point result(srv_3D_to_pixel.response.u, srv_3D_to_pixel.response.v);
+
+  return result;
+}
+
+geometry_msgs::Pose ProjectorInterfaceModel::fromPixel2Robot(
+    geometry_msgs::Point pixel) {
+  // Project pixel position to 3D
+  tuni_whitegoods_msgs::TransformPixelTo3D srv_pixel_to_3D;
+  srv_pixel_to_3D.request.u = pixel.x;
+  srv_pixel_to_3D.request.v = pixel.y;
+  srv_pixel_to_3D.request.depth = pixel.z;
+  client_pixel_to_3D.call(srv_pixel_to_3D);
+
+  geometry_msgs::Point projected;
+  projected.x = srv_pixel_to_3D.response.x;
+  projected.y = srv_pixel_to_3D.response.y;
+  projected.z = srv_pixel_to_3D.response.z;
+  // Transform to robot coordinates frame
+  geometry_msgs::PoseStamped in_point_stamped;
+  in_point_stamped.header.frame_id = "rgb_camera_link";
+  in_point_stamped.header.stamp = ros::Time(0);
+  in_point_stamped.pose.position = projected;
+
+  tuni_whitegoods_msgs::TransformRobotCameraCoordinates srv;
+  srv.request.in_point_stamped = in_point_stamped;
+  srv.request.target_frame = "base";
+  client_world_coordinates.call(srv);
+
+  return srv.response.out_point_stamped.pose;
+}
+
+cv::Point ProjectorInterfaceModel::fromProjector2Camera(cv::Point pixel) {
+  tuni_whitegoods_msgs::TransformPixelToProjection srv_projector_to_camera;
+  srv_projector_to_camera.request.u = pixel.x;
+  srv_projector_to_camera.request.v = pixel.y;
+  client_reverse_projector_point.call(srv_projector_to_camera);
+
+  cv::Point result;
+  result.x = srv_projector_to_camera.response.u_prime;
+  result.y = srv_projector_to_camera.response.v_prime;
+
+  return result;
+}
+
+cv::Point ProjectorInterfaceModel::fromCamera2Projector(cv::Point pixel) {
+  tuni_whitegoods_msgs::TransformPixelToProjection srv_camera_to_projector;
+  srv_camera_to_projector.request.u = pixel.x;
+  srv_camera_to_projector.request.v = pixel.y;
+  client_projector_point.call(srv_camera_to_projector);
+
+  cv::Point result;
+  result.x = srv_camera_to_projector.response.u_prime;
+  result.y = srv_camera_to_projector.response.v_prime;
+
+  return result;
 }

@@ -13,6 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
   tuni_whitegoods_view
   tuni_whitegoods_perception
 )
+find_package(yaml-cpp REQUIRED)
 
 
 catkin_package(
@@ -39,6 +40,7 @@ add_library(projector_interface_controller
 ## Specify libraries to link a library or executable target against
  target_link_libraries(projector_interface_controller
    ${catkin_LIBRARIES}
+   yaml-cpp
  )
 
 

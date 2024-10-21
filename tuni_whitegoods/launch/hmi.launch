@@ -4,7 +4,7 @@
 	<arg name="use_projector" default="true"/>
 
     <rosparam file="$(find tuni_whitegoods)/config/tuni_parameters.yaml" />
-
+    <rosparam file="$(find tuni_whitegoods)/config/tuni_display_areas.yaml" />
     <rosparam file="$(find tuni_whitegoods_openflow_interface)/config/openflow_interface_params.yaml" /> 
 
 

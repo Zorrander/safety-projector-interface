@@ -28,7 +28,7 @@ class Projector : public View {
   Projector(ros::NodeHandle* nh);
   ~Projector();
 
-  void init() override;
+  void init(std::vector<std::shared_ptr<DisplayArea>> zones) override;
   void updateButtons(
       const std::vector<std::shared_ptr<Button>>& buttons) override;
   void updateBorders(

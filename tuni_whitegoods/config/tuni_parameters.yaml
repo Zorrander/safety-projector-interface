@@ -15,3 +15,4 @@ button_homography: [-2.15507712e+00,  1.91967042e-01,  2.86695078e+03, 5.9243626
 camera_calibration_file: "/home/odin3/Desktop/test_calib.yaml"
 border_calibration_file: "/home/odin3/Desktop/test_homography.yaml"
 button_calibration_file: "/home/odin3/Desktop/test_homography.yaml"
+display_areas_calibration_file: "/home/odin3/Desktop/tuni_display_areas.yaml"

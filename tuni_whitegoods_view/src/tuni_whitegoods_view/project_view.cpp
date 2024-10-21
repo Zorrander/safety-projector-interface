@@ -43,7 +43,7 @@ Projector::Projector(ros::NodeHandle *nh) {
 
 Projector::~Projector() { cv::destroyWindow(OPENCV_WINDOW); }
 
-void Projector::init() {
+void Projector::init(std::vector<std::shared_ptr<DisplayArea>> zones) {
   cv::namedWindow(OPENCV_WINDOW, cv::WINDOW_NORMAL);
   cv::moveWindow(OPENCV_WINDOW, shift, 0);
   sum_img = cv::Mat::zeros(projector_resolution[1], projector_resolution[0],
@@ -52,8 +52,8 @@ void Projector::init() {
       cv::Mat::zeros(projector_resolution[1], projector_resolution[0], CV_8UC3);
   border_img =
       cv::Mat::zeros(projector_resolution[1], projector_resolution[0], CV_8UC3);
-  // cv::setWindowProperty(OPENCV_WINDOW, cv::WND_PROP_FULLSCREEN,
-  //                      cv::WINDOW_FULLSCREEN);
+  cv::setWindowProperty(OPENCV_WINDOW, cv::WND_PROP_FULLSCREEN,
+                        cv::WINDOW_FULLSCREEN);
   try {
     cv::imshow(OPENCV_WINDOW, sum_img);
     cv::waitKey(100);

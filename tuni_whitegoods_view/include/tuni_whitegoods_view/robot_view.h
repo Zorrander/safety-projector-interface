@@ -14,7 +14,7 @@ class RobotView : public View {
  public:
   RobotView(ros::NodeHandle* nh);
 
-  void init() override;
+  void init(std::vector<std::shared_ptr<DisplayArea>> zones) override;
   void updateButtons(
       const std::vector<std::shared_ptr<Button>>& buttons) override;
   void updateBorders(

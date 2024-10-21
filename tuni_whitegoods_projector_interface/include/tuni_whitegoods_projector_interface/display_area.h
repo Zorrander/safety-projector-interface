@@ -22,7 +22,9 @@ struct BorderLayout {
 
 class DisplayArea {
  private:
+  std::vector<geometry_msgs::Point> robot_frame_area;
   cv::Rect camera_frame_area;
+  cv::Rect projector_frame_area;
 
   std::vector<std::shared_ptr<StaticBorder>> borders_;
   std::vector<std::shared_ptr<Button>> buttons_;
@@ -55,6 +57,9 @@ class DisplayArea {
   bool robot_release_border(std::string id, int status);
   bool operator_book_border(std::string id);
   bool operator_release_border(std::string id, int status);
+  void setRobotFrame(std::vector<geometry_msgs::Point> robot_frame_points);
+  void setCameraFrame(cv::Rect camera_frame);
+  void setProjectorFrame(cv::Rect projector_frame);
 };
 
 #endif
