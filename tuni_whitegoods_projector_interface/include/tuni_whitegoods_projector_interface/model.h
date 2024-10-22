@@ -36,7 +36,7 @@ class ProjectorInterfaceModel {
                             std_msgs::ColorRGBA status_free,
                             std_msgs::ColorRGBA status_operator);
   void add_zone(std::shared_ptr<DisplayArea> display_area,
-                geometry_msgs::Point camera_frame);
+                std::vector<geometry_msgs::Point> camera_frame);
 
   void addButton(std::string request_id, std::string zone, std::string name,
                  std::string text, std_msgs::ColorRGBA button_color,
@@ -73,7 +73,7 @@ class ProjectorInterfaceModel {
   cv::Point fromRobot2Pixel(geometry_msgs::Pose pose);
   geometry_msgs::Pose fromPixel2Robot(geometry_msgs::Point pixel);
   cv::Point fromProjector2Camera(cv::Point pixel);
-  cv::Point fromCamera2Projector(cv::Point pixel);
+  cv::Point fromCamera2Projector(geometry_msgs::Point pixel);
   std::vector<std::shared_ptr<DisplayArea>> zones;
 };
 #endif

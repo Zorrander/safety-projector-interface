@@ -203,13 +203,14 @@ void DisplayArea::fetchBorders(
 
 void DisplayArea::setRobotFrame(
     std::vector<geometry_msgs::Point> robot_frame_points) {
-  robot_frame_area = robot_frame;
+  robot_frame_area = robot_frame_points;
 }
 
-void DisplayArea::setCameraFrame(cv::Rect camera_frame) {
+void DisplayArea::setCameraFrame(
+    std::vector<geometry_msgs::Point> camera_frame) {
   camera_frame_area = camera_frame;
 }
 
-void DisplayArea::setProjectorFrame(cv::Rect projector_frame) {
+void DisplayArea::setProjectorFrame(std::vector<cv::Point> projector_frame) {
   projector_frame_area = projector_frame;
 }

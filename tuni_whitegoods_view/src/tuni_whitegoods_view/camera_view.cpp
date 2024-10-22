@@ -13,6 +13,20 @@ CameraView::CameraView(ros::NodeHandle* nh) : it_(*nh), nh_(nh) {
 }
 
 void CameraView::init(std::vector<std::shared_ptr<DisplayArea>> zones) {
+  for (auto& zone : zones) {
+    cv::Point tl(zone->camera_frame_area[0].x, zone->camera_frame_area[0].y);
+    cv::Point tr(zone->camera_frame_area[1].x, zone->camera_frame_area[1].y);
+    cv::Point br(zone->camera_frame_area[2].x, zone->camera_frame_area[2].y);
+    cv::Point bl(zone->camera_frame_area[3].x, zone->camera_frame_area[3].y);
+
+    std::vector<cv::Point> rectanglePoints = {tl, tr, br, bl};
+
+    const cv::Scalar color(255, 0, 0);
+    const int thickness = 10;
+
+    cv::polylines(depth_normalized, rectanglePoints, true, color, thickness,
+                  cv::LINE_8);
+  }
   publish_image();
 }
 

@@ -34,6 +34,9 @@ class TransformProjectorPointServer {
     }
     border_homography = loadHomography(border_calibration_file);
 
+    // ros::param::get("/border_homography", border_homography_array);
+    // border_homography = cv::Matx33d(border_homography_array.data());
+
     std::string button_calibration_file;
     if (!nh->getParam("button_calibration_file", button_calibration_file)) {
       ROS_ERROR("Camera calibration file is missing from configuration.");

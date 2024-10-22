@@ -30,7 +30,7 @@ class ProjectorInterfaceController {
 
   ros::Subscriber hand_pose_sub, moving_table_pose_sub, model_update_sub,
       depth_sub;
-
+  ros::Subscriber init_sub;
   ros::Publisher pub_button_event;
 
   ros::ServiceServer service_borders;
@@ -38,10 +38,14 @@ class ProjectorInterfaceController {
 
   std::vector<int> projector_resolution;
   std::vector<int> camera_resolution;
+  bool init_done;
 
  public:
   ProjectorInterfaceController(ros::NodeHandle *nh);
+  static int inboundPixel(int value, int min_val, int max_val);
   void notify();
+  void initCallback(const std_msgs::Empty::ConstPtr &msg);
+  void init();
   void createBorderLayout(int rows, int cols, float sf_factor, bool adjacent,
                           std_msgs::ColorRGBA status_booked,
                           std_msgs::ColorRGBA status_free,

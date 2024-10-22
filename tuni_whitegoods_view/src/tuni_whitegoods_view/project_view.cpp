@@ -24,18 +24,6 @@ Projector::Projector(ros::NodeHandle *nh) {
       nh->subscribe("/odin/projector_interface/moving_table/transform", 10,
                     &Projector::transformCallback, this);
 
-  ros::param::get("projector_resolution", projector_resolution);
-
-  ros::param::get("border_homography", border_homography_array);
-  ros::param::get("button_homography", button_homography_array);
-  border_homography = cv::Matx33d(border_homography_array.data());
-  button_homography = cv::Matx33d(button_homography_array.data());
-  for (int i = 0; i < 3; ++i) {
-    for (int j = 0; j < 3; ++j) {
-      ROS_INFO("%f", border_homography(i, j));
-    }
-  }
-
   homography_matrix = cv::Mat::zeros(3, 3, CV_64F);
 
   ROS_INFO("ProjectorView running");
@@ -44,16 +32,51 @@ Projector::Projector(ros::NodeHandle *nh) {
 Projector::~Projector() { cv::destroyWindow(OPENCV_WINDOW); }
 
 void Projector::init(std::vector<std::shared_ptr<DisplayArea>> zones) {
+  ros::param::get("projector_resolution", projector_resolution);
+
+  ros::param::get("/border_homography", border_homography_array);
+  ros::param::get("/button_homography", button_homography_array);
+  border_homography = cv::Matx33d(border_homography_array.data());
+  button_homography = cv::Matx33d(button_homography_array.data());
+  for (int i = 0; i < 3; ++i) {
+    for (int j = 0; j < 3; ++j) {
+      ROS_INFO("%f", border_homography(i, j));
+    }
+  }
+
   cv::namedWindow(OPENCV_WINDOW, cv::WINDOW_NORMAL);
   cv::moveWindow(OPENCV_WINDOW, shift, 0);
+  cv::setWindowProperty(OPENCV_WINDOW, cv::WND_PROP_FULLSCREEN,
+                        cv::WINDOW_FULLSCREEN);
   sum_img = cv::Mat::zeros(projector_resolution[1], projector_resolution[0],
                            CV_8UC3);  // Black image
   button_img =
       cv::Mat::zeros(projector_resolution[1], projector_resolution[0], CV_8UC3);
   border_img =
       cv::Mat::zeros(projector_resolution[1], projector_resolution[0], CV_8UC3);
-  cv::setWindowProperty(OPENCV_WINDOW, cv::WND_PROP_FULLSCREEN,
-                        cv::WINDOW_FULLSCREEN);
+
+  for (auto &zone : zones) {
+    if (!(zone->name == "projector" || zone->name == "camera")) {
+      const cv::Scalar color(255, 255, 255);
+      const int thickness = 10;
+      for (size_t i = 0; i < zone->projector_frame_area.size(); ++i) {
+        ROS_INFO_STREAM("Point " << i << ": ("
+                                 << zone->projector_frame_area[i].x << ", "
+                                 << zone->projector_frame_area[i].y << ")");
+      }
+      cv::polylines(sum_img, zone->projector_frame_area, true, color, thickness,
+                    cv::LINE_8);
+
+      const int fontFace = cv::FONT_HERSHEY_SIMPLEX;
+      const double fontScale = 1.0;  // Adjust for text size
+      const int textThickness = 2;
+      const cv::Scalar textColor(255, 255, 255);  // Green color in BGR
+
+      cv::putText(sum_img, zone->name, zone->projector_frame_area[0], fontFace,
+                  fontScale, textColor, textThickness);
+    }
+  }
+
   try {
     cv::imshow(OPENCV_WINDOW, sum_img);
     cv::waitKey(100);

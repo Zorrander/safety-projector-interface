@@ -90,6 +90,7 @@ int main(int argc, char** argv) {
   SafetyBorderServer safety_border_server(&nh, safety_border_server_name,
                                           controller);
 
+  ROS_INFO("PROJECTOR INTERFACE NODE RUNNING");
   ros::spin();
 
   return 0;

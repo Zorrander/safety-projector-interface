@@ -95,10 +95,25 @@ void ProjectorInterfaceModel::reset_interactions(const ros::TimerEvent &) {
 
 void ProjectorInterfaceModel::add_zone(
     std::shared_ptr<DisplayArea> display_area,
-    geometry_msgs::Point camera_frame) {
+    std::vector<geometry_msgs::Point> camera_frame) {
   display_area->setCameraFrame(camera_frame);
-  cv::Rect(fromCamera2Projector(camera_frame.tl()),
-           fromCamera2Projector(camera_frame.br()));
+
+  std::vector<cv::Point> projector_frame;
+  cv::Point top_left_p;
+  cv::Point top_right_p;
+  cv::Point bottom_right_p;
+  cv::Point bottom_left_p;
+
+  top_left_p = fromCamera2Projector(camera_frame[0]);
+  top_right_p = fromCamera2Projector(camera_frame[1]);
+  bottom_right_p = fromCamera2Projector(camera_frame[2]);
+  bottom_left_p = fromCamera2Projector(camera_frame[3]);
+
+  projector_frame.push_back(top_left_p);
+  projector_frame.push_back(top_right_p);
+  projector_frame.push_back(bottom_right_p);
+  projector_frame.push_back(bottom_left_p);
+
   display_area->setProjectorFrame(projector_frame);
 
   std::vector<geometry_msgs::Point> robot_frame_points;
@@ -358,7 +373,8 @@ cv::Point ProjectorInterfaceModel::fromProjector2Camera(cv::Point pixel) {
   return result;
 }
 
-cv::Point ProjectorInterfaceModel::fromCamera2Projector(cv::Point pixel) {
+cv::Point ProjectorInterfaceModel::fromCamera2Projector(
+    geometry_msgs::Point pixel) {
   tuni_whitegoods_msgs::TransformPixelToProjection srv_camera_to_projector;
   srv_camera_to_projector.request.u = pixel.x;
   srv_camera_to_projector.request.v = pixel.y;

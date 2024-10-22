@@ -1,10 +1,15 @@
 #include "tuni_whitegoods_controller/projector_interface_controller.h"
 
+#include <std_msgs/Empty.h>
 #include <tuni_whitegoods_view/camera_view.h>
 #include <tuni_whitegoods_view/project_view.h>
 #include <tuni_whitegoods_view/robot_view.h>
 #include <yaml-cpp/yaml.h>
 
+int ProjectorInterfaceController::inboundPixel(int value, int min_val,
+                                               int max_val) {
+  return std::max(min_val, std::min(value, max_val));
+}
 /**
  * @brief      Controller class for the %projector interface.
  *
@@ -15,31 +20,42 @@
  */
 ProjectorInterfaceController::ProjectorInterfaceController(ros::NodeHandle *nh)
     : nh_(nh) {
+  init_done = false;
+  // Initialize model
+  model_ = std::make_unique<ProjectorInterfaceModel>(nh_);
+
+  detector = std::make_shared<ObjectDetector>();
+
+  projector_view = std::make_shared<Projector>(nh_);
+  camera_view = std::make_shared<CameraView>(nh_);
+  robot_view = std::make_shared<RobotView>(nh_);
+
+  // Initialize views
+  views.push_back(projector_view);
+  views.push_back(camera_view);
+  views.push_back(robot_view);
+
+  init_sub = nh_->subscribe("/odin/start", 1,
+                            &ProjectorInterfaceController::initCallback, this);
+
+  // Subscribe to model updates
+  model_update_sub =
+      nh_->subscribe("/odin/internal/model_changed", 10,
+                     &ProjectorInterfaceController::modelUpdateCallback, this);
+
+  depth_sub =
+      nh_->subscribe("/depth_to_rgb/image_raw", 10,
+                     &ProjectorInterfaceController::depthImageCallback, this);
+
   // Subscribe to hand detections
   hand_pose_sub =
       nh_->subscribe("/odin/internal/hand_detection", 10,
                      &ProjectorInterfaceController::handTrackerCallback, this);
+
   // Subscribe to moving table detections
   moving_table_pose_sub = nh_->subscribe(
       "/odin/projector_interface/moving_table", 10,
       &ProjectorInterfaceController::movingTableTrackerCallback, this);
-
-  std::string display_areas_calibration_file;
-  if (!nh->getParam("display_areas_calibration_file",
-                    display_areas_calibration_file)) {
-    ROS_ERROR("display_areas calibration file is missing from configuration.");
-  }
-
-  ros::param::get("projector_resolution", projector_resolution);
-  ros::param::get("camera_resolution", camera_resolution);
-
-  YAML::Node display_areas_calibration =
-      YAML::LoadFile(display_areas_calibration_file);
-
-  // Subscribe to robot coordinates if needed for dynamic border display
-  /*
-  TODO
-  */
 
   // Subscribe to commands coming from OpenFlow or custom scheduler
   service_borders = nh->advertiseService(
@@ -47,8 +63,33 @@ ProjectorInterfaceController::ProjectorInterfaceController(ros::NodeHandle *nh)
       "list_static_border_status",
       &ProjectorInterfaceController::getBordersService, this);
 
-  // Initialize model
-  model_ = std::make_unique<ProjectorInterfaceModel>(nh_);
+  // Subscribe to robot coordinates if needed for dynamic border display
+  /*
+  TODO
+  */
+
+  ros::param::get("projector_resolution", projector_resolution);
+  ros::param::get("camera_resolution", camera_resolution);
+
+  ROS_INFO("ProjectorInterfaceController running");
+}
+
+void ProjectorInterfaceController::initCallback(
+    const std_msgs::Empty::ConstPtr &msg) {
+  init();
+}
+
+void ProjectorInterfaceController::init() {
+  std::string display_areas_calibration_file;
+  if (!nh_->getParam("display_areas_calibration_file",
+                     display_areas_calibration_file)) {
+    ROS_ERROR("display_areas calibration file is missing from configuration.");
+  }
+
+  YAML::Node display_areas_calibration =
+      YAML::LoadFile(display_areas_calibration_file);
+
+  ros::Duration(2.0).sleep();
 
   for (YAML::const_iterator it = display_areas_calibration.begin();
        it != display_areas_calibration.end(); ++it) {
@@ -88,6 +129,10 @@ ProjectorInterfaceController::ProjectorInterfaceController(ros::NodeHandle *nh)
     model_->add_zone(display_area, points);
   }
 
+  ROS_INFO("Registered display areas");
+
+  ros::Duration(1.0).sleep();
+
   // Add the camera field of view (for visualization only)
 
   std::vector<geometry_msgs::Point> camera_corners;
@@ -98,28 +143,30 @@ ProjectorInterfaceController::ProjectorInterfaceController(ros::NodeHandle *nh)
 
   camera_tl.x = 0;
   camera_tl.y = 0;
-  camera_tl.z = cv_depth.at<uint16_t>(camera_tl.y, camera_tl.x) / 1000;
+  camera_tl.z = cv_depth.at<uint16_t>(camera_tl.y, camera_tl.x) / 1000.0;
 
   camera_tr.x = 0;
   camera_tr.y = camera_resolution[1];
-  camera_tr.z = cv_depth.at<uint16_t>(camera_tr.y, camera_tr.x) / 1000;
+  camera_tr.z = cv_depth.at<uint16_t>(camera_tr.y, camera_tr.x) / 1000.0;
 
   camera_br.x = camera_resolution[0];
   camera_br.y = camera_resolution[1];
-  camera_br.z = cv_depth.at<uint16_t>(camera_br.y, camera_br.x) / 1000;
+  camera_br.z = cv_depth.at<uint16_t>(camera_br.y, camera_br.x) / 1000.0;
 
   camera_bl.x = camera_resolution[0];
   camera_bl.y = 0;
-  camera_bl.z = cv_depth.at<uint16_t>(camera_bl.y, camera_bl.x) / 1000;
+  camera_bl.z = cv_depth.at<uint16_t>(camera_bl.y, camera_bl.x) / 1000.0;
 
-  camera_corners.push_back(tl);
-  camera_corners.push_back(tr);
-  camera_corners.push_back(br);
-  camera_corners.push_back(bl);
+  camera_corners.push_back(camera_tl);
+  camera_corners.push_back(camera_tr);
+  camera_corners.push_back(camera_br);
+  camera_corners.push_back(camera_bl);
 
   std::shared_ptr<DisplayArea> camera_area =
       std::make_shared<DisplayArea>(nh_, "camera");
   model_->add_zone(camera_area, camera_corners);
+
+  ROS_INFO("Registered camera field of view");
 
   // Add the projection area (for visualization only)
 
@@ -128,6 +175,8 @@ ProjectorInterfaceController::ProjectorInterfaceController(ros::NodeHandle *nh)
   cv::Point projector_bottom_right(projector_resolution[0],
                                    projector_resolution[1]);
   cv::Point projector_bottom_left(projector_resolution[0], 0);
+
+  ROS_INFO("Found projector calibration");
 
   cv::Point transformed_projector_top_left =
       model_->fromProjector2Camera(projector_top_left);
@@ -138,73 +187,84 @@ ProjectorInterfaceController::ProjectorInterfaceController(ros::NodeHandle *nh)
   cv::Point transformed_projector_bottom_left =
       model_->fromProjector2Camera(projector_bottom_left);
 
+  ROS_INFO("Processed projector calibration");
+
   std::vector<geometry_msgs::Point> projector_corners;
   geometry_msgs::Point projector_tl;
   geometry_msgs::Point projector_tr;
   geometry_msgs::Point projector_br;
   geometry_msgs::Point projector_bl;
 
-  projector_tl.x = transformed_projector_top_left.x;
-  projector_tl.y = transformed_projector_top_left.y;
-  projector_tl.z = cv_depth.at<uint16_t>(projector_tl.y, projector_tl.x) / 1000;
+  projector_tl.x =
+      inboundPixel(transformed_projector_top_left.x, 0, camera_resolution[0]);
+  projector_tl.y =
+      inboundPixel(transformed_projector_top_left.y, 0, camera_resolution[1]);
+  projector_tl.z =
+      cv_depth.at<uint16_t>(projector_tl.y, projector_tl.x) / 1000.0;
 
-  projector_tr.x = transformed_projector_top_right.x;
-  projector_tr.y = transformed_projector_top_right.y;
-  projector_tr.z = cv_depth.at<uint16_t>(projector_tr.y, projector_tr.x) / 1000;
+  projector_tr.x =
+      inboundPixel(transformed_projector_top_right.x, 0, camera_resolution[0]);
+  projector_tr.y =
+      inboundPixel(transformed_projector_top_right.y, 0, camera_resolution[1]);
+  projector_tr.z =
+      cv_depth.at<uint16_t>(projector_tr.y, projector_tr.x) / 1000.0;
 
-  projector_br.x = transformed_projector_bottom_right.x;
-  projector_br.y = transformed_projector_bottom_right.y;
-  projector_br.z = cv_depth.at<uint16_t>(projector_br.y, projector_br.x) / 1000;
+  projector_br.x = inboundPixel(transformed_projector_bottom_right.x, 0,
+                                camera_resolution[0]);
+  projector_br.y = inboundPixel(transformed_projector_bottom_right.y, 0,
+                                camera_resolution[1]);
+  projector_br.z =
+      cv_depth.at<uint16_t>(projector_br.y, projector_br.x) / 1000.0;
 
-  projector_bl.x = transformed_projector_bottom_left.x;
-  projector_bl.y = transformed_projector_bottom_left.y;
-  projector_bl.z = cv_depth.at<uint16_t>(projector_bl.y, projector_bl.x) / 1000;
+  projector_bl.x = inboundPixel(transformed_projector_bottom_left.x, 0,
+                                camera_resolution[0]);
+  projector_bl.y = inboundPixel(transformed_projector_bottom_left.y, 0,
+                                camera_resolution[1]);
+  projector_bl.z =
+      cv_depth.at<uint16_t>(projector_bl.y, projector_bl.x) / 1000.0;
 
-  projector_corners.push_back(tl);
-  projector_corners.push_back(tr);
-  projector_corners.push_back(br);
-  projector_corners.push_back(bl);
+  projector_corners.push_back(projector_tl);
+  projector_corners.push_back(projector_tr);
+  projector_corners.push_back(projector_br);
+  projector_corners.push_back(projector_bl);
 
   std::shared_ptr<DisplayArea> projector_area =
       std::make_shared<DisplayArea>(nh_, "projector");
   model_->add_zone(projector_area, projector_corners);
 
-  // Subscribe to model updates
-  model_update_sub =
-      nh_->subscribe("/odin/internal/model_changed", 10,
-                     &ProjectorInterfaceController::modelUpdateCallback, this);
+  ROS_INFO("Registered projection area");
 
-  depth_sub =
-      nh_->subscribe("/depth_to_rgb/image_raw", 20,
-                     &ProjectorInterfaceController::depthImageCallback, this);
-
-  detector = std::make_shared<ObjectDetector>();
-
-  projector_view = std::make_shared<Projector>(nh_);
-  camera_view = std::make_shared<CameraView>(nh_);
-  robot_view = std::make_shared<RobotView>(nh_);
-
-  // Initialize views
-  views.push_back(projector_view);
-  views.push_back(camera_view);
-  views.push_back(robot_view);
-
-  ros::Duration(3.0).sleep();
+  ros::Duration(1.0).sleep();
 
   for (auto &view : views) {
     view->init(model_->zones);
   }
-
-  ROS_INFO("ProjectorInterfaceController running");
+  init_done = true;
 }
 
 void ProjectorInterfaceController::depthImageCallback(
     const sensor_msgs::ImageConstPtr &depth_msg) {
-  cv_bridge::CvImagePtr cv_bridge_depth =
-      cv_bridge::toCvCopy(depth_msg, sensor_msgs::image_encodings::TYPE_16UC1);
-  cv_depth = cv_bridge_depth->image;
-}
+  // Check if the received image is empty
+  if (depth_msg->data.empty()) {
+    ROS_ERROR("Received an empty depth image!");
+    return;
+  }
 
+  cv_bridge::CvImagePtr cv_bridge_depth;
+  try {
+    cv_bridge_depth = cv_bridge::toCvCopy(
+        depth_msg, sensor_msgs::image_encodings::TYPE_16UC1);
+  } catch (cv_bridge::Exception &e) {
+    ROS_ERROR("cv_bridge exception: %s", e.what());
+    return;
+  }
+
+  cv_depth = cv_bridge_depth->image;
+  if (cv_depth.empty()) {
+    ROS_ERROR("Converted depth image is empty!");
+    return;
+  }
+}
 /**
  * @brief      Creates a border layout.
  *
@@ -240,10 +300,12 @@ void ProjectorInterfaceController::handTrackerCallback(
 
 void ProjectorInterfaceController::modelUpdateCallback(
     const std_msgs::Empty &msg) {
-  for (auto &view : views) {
-    view->updateButtons(model_->getButtons());
-    view->updateBorders(model_->getBorders());
-    view->updateHands(model_->getHands());
+  if (init_done) {
+    for (auto &view : views) {
+      view->updateButtons(model_->getButtons());
+      view->updateBorders(model_->getBorders());
+      view->updateHands(model_->getHands());
+    }
   }
 }
 

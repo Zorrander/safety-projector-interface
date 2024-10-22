@@ -6,7 +6,7 @@ using namespace std;
 
 RobotView::RobotView(ros::NodeHandle* nh) {
   vis_pub =
-      nh_.advertise<visualization_msgs::Marker>("visualization_marker", 10);
+      nh->advertise<visualization_msgs::Marker>("visualization_marker", 10);
   marker_counter = 1;
   ROS_INFO("RobotView running");
 }
