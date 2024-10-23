@@ -54,5 +54,6 @@ add_executable(transform_table_point_server src/transform_table_point_server.cpp
 target_link_libraries(transform_table_point_server 
       ${catkin_LIBRARIES}
       ${OpenCV_LIBRARIES}
+      yaml-cpp
 )
 add_dependencies(transform_table_point_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})

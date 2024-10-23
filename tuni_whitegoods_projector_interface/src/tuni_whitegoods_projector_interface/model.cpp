@@ -96,31 +96,38 @@ void ProjectorInterfaceModel::reset_interactions(const ros::TimerEvent &) {
 void ProjectorInterfaceModel::add_zone(
     std::shared_ptr<DisplayArea> display_area,
     std::vector<geometry_msgs::Point> camera_frame) {
+  ROS_INFO("[MODEL: conversion -- %s]", display_area->name.c_str());
+  for (size_t i = 0; i < camera_frame.size(); ++i) {
+    ROS_INFO("geometry_msgs::Point[%zu]: (x: %f, y: %f, z: %f)", i,
+             camera_frame[i].x, camera_frame[i].y, camera_frame[i].z);
+  }
   display_area->setCameraFrame(camera_frame);
 
   std::vector<cv::Point> projector_frame;
-  cv::Point top_left_p;
-  cv::Point top_right_p;
-  cv::Point bottom_right_p;
-  cv::Point bottom_left_p;
 
-  top_left_p = fromCamera2Projector(camera_frame[0]);
-  top_right_p = fromCamera2Projector(camera_frame[1]);
-  bottom_right_p = fromCamera2Projector(camera_frame[2]);
-  bottom_left_p = fromCamera2Projector(camera_frame[3]);
-
-  projector_frame.push_back(top_left_p);
-  projector_frame.push_back(top_right_p);
-  projector_frame.push_back(bottom_right_p);
-  projector_frame.push_back(bottom_left_p);
-
+  projector_frame.push_back(fromCamera2Projector(camera_frame[0]));
+  projector_frame.push_back(fromCamera2Projector(camera_frame[1]));
+  projector_frame.push_back(fromCamera2Projector(camera_frame[2]));
+  projector_frame.push_back(fromCamera2Projector(camera_frame[3]));
+  for (size_t i = 0; i < projector_frame.size(); ++i) {
+    ROS_INFO("cv::Point[%zu]: (x: %d, y: %d)", i, projector_frame[i].x,
+             projector_frame[i].y);
+  }
   display_area->setProjectorFrame(projector_frame);
 
   std::vector<geometry_msgs::Point> robot_frame_points;
-  geometry_msgs::Point top_left_r;
-  geometry_msgs::Point top_right_r;
-  geometry_msgs::Point bottom_right_r;
-  geometry_msgs::Point bottom_left_r;
+
+  robot_frame_points.push_back(fromPixel2Robot(camera_frame[0]).position);
+  robot_frame_points.push_back(fromPixel2Robot(camera_frame[1]).position);
+  robot_frame_points.push_back(fromPixel2Robot(camera_frame[2]).position);
+  robot_frame_points.push_back(fromPixel2Robot(camera_frame[3]).position);
+  for (size_t i = 0; i < robot_frame_points.size(); ++i) {
+    ROS_INFO("geometry_msgs::Point[%zu]: (x: %f, y: %f, z: %f)", i,
+             robot_frame_points[i].x, robot_frame_points[i].y,
+             robot_frame_points[i].z);
+  }
+  display_area->setRobotFrame(robot_frame_points);
+
   zones.push_back(display_area);
 }
 
@@ -245,6 +252,56 @@ void ProjectorInterfaceModel::notify() {
   pub_change_notification.publish(std_msgs::Empty());
 }
 
+void ProjectorInterfaceModel::updateMovingTable(
+    const tuni_whitegoods_msgs::DynamicArea &moving_table) {
+  for (auto &zone : zones) {
+    if (zone->name == "moving_table") {
+      auto convertToPoint =
+          [](const boost::array<double, 2> &arr) -> geometry_msgs::Point {
+        geometry_msgs::Point point;
+        point.x = arr[0];
+        point.y = arr[1];
+        point.z = 1.3;
+        return point;
+      };
+
+      std::vector<geometry_msgs::Point> camera_frame;
+      // Convert each corner and add to camera_frame
+      camera_frame.push_back(convertToPoint(moving_table.top_left));
+      camera_frame.push_back(convertToPoint(moving_table.top_right));
+      camera_frame.push_back(convertToPoint(moving_table.bottom_right));
+      camera_frame.push_back(convertToPoint(moving_table.bottom_left));
+
+      zone->setCameraFrame(camera_frame);
+
+      std::vector<cv::Point> projector_frame;
+
+      projector_frame.push_back(fromCamera2Projector(camera_frame[0]));
+      projector_frame.push_back(fromCamera2Projector(camera_frame[1]));
+      projector_frame.push_back(fromCamera2Projector(camera_frame[2]));
+      projector_frame.push_back(fromCamera2Projector(camera_frame[3]));
+      for (size_t i = 0; i < projector_frame.size(); ++i) {
+        ROS_INFO("cv::Point[%zu]: (x: %d, y: %d)", i, projector_frame[i].x,
+                 projector_frame[i].y);
+      }
+      zone->setProjectorFrame(projector_frame);
+
+      std::vector<geometry_msgs::Point> robot_frame_points;
+
+      robot_frame_points.push_back(fromPixel2Robot(camera_frame[0]).position);
+      robot_frame_points.push_back(fromPixel2Robot(camera_frame[1]).position);
+      robot_frame_points.push_back(fromPixel2Robot(camera_frame[2]).position);
+      robot_frame_points.push_back(fromPixel2Robot(camera_frame[3]).position);
+      for (size_t i = 0; i < robot_frame_points.size(); ++i) {
+        ROS_INFO("geometry_msgs::Point[%zu]: (x: %f, y: %f, z: %f)", i,
+                 robot_frame_points[i].x, robot_frame_points[i].y,
+                 robot_frame_points[i].z);
+      }
+      zone->setRobotFrame(robot_frame_points);
+    }
+  }
+}
+
 void ProjectorInterfaceModel::updateHandPose(
     const std::string &name, const geometry_msgs::Point &position) {
   hands_detected = true;
@@ -299,6 +356,11 @@ std::vector<std::shared_ptr<Hand>> ProjectorInterfaceModel::getHands() {
   hands.push_back(left_hand);
   hands.push_back(right_hand);
   return hands;
+}
+
+std::vector<std::shared_ptr<DisplayArea>>
+ProjectorInterfaceModel::getDisplayAreas() {
+  return zones;
 }
 
 cv::Point ProjectorInterfaceModel::fromRobot2Pixel(geometry_msgs::Pose pose) {

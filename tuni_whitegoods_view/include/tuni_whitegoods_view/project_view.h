@@ -34,6 +34,8 @@ class Projector : public View {
   void updateBorders(
       const std::vector<std::shared_ptr<StaticBorder>>& borders) override;
   void updateHands(const std::vector<std::shared_ptr<Hand>>& hands) override;
+  void updateDisplayAreas(
+      const std::vector<std::shared_ptr<DisplayArea>>& zones) override;
 };
 
 #endif

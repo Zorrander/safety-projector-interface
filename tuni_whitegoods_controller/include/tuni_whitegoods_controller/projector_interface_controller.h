@@ -6,6 +6,7 @@
 #include <ros/ros.h>
 #include <std_msgs/ColorRGBA.h>
 #include <std_msgs/Empty.h>
+#include <std_msgs/Float64MultiArray.h>
 #include <tuni_whitegoods_view/view.h>
 
 #include <memory>
@@ -29,7 +30,7 @@ class ProjectorInterfaceController {
   std::unique_ptr<ProjectorInterfaceModel> model_;
 
   ros::Subscriber hand_pose_sub, moving_table_pose_sub, model_update_sub,
-      depth_sub;
+      depth_sub, transform_callback;
   ros::Subscriber init_sub;
   ros::Publisher pub_button_event;
 
@@ -39,10 +40,10 @@ class ProjectorInterfaceController {
   std::vector<int> projector_resolution;
   std::vector<int> camera_resolution;
   bool init_done;
+  cv::Matx33d moving_table_homography;
 
  public:
   ProjectorInterfaceController(ros::NodeHandle *nh);
-  static int inboundPixel(int value, int min_val, int max_val);
   void notify();
   void initCallback(const std_msgs::Empty::ConstPtr &msg);
   void init();
@@ -75,6 +76,8 @@ class ProjectorInterfaceController {
                          integration::ListStaticBordersStatus::Response &res);
   void modelUpdateCallback(const std_msgs::Empty &msg);
   void depthImageCallback(const sensor_msgs::ImageConstPtr &depth_msg);
+  void transformCallback(
+      const tuni_whitegoods_msgs::DynamicArea::ConstPtr &msg);
   // void callback_button(const unity_msgs::ElementUI::ConstPtr &msg);
   // void process_button(double center_x, double center_y, const
   // unity_msgs::ElementUI &msg); void callback_button_color(const

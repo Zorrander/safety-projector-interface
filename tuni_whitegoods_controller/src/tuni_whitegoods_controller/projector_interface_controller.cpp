@@ -6,10 +6,6 @@
 #include <tuni_whitegoods_view/robot_view.h>
 #include <yaml-cpp/yaml.h>
 
-int ProjectorInterfaceController::inboundPixel(int value, int min_val,
-                                               int max_val) {
-  return std::max(min_val, std::min(value, max_val));
-}
 /**
  * @brief      Controller class for the %projector interface.
  *
@@ -63,6 +59,10 @@ ProjectorInterfaceController::ProjectorInterfaceController(ros::NodeHandle *nh)
       "list_static_border_status",
       &ProjectorInterfaceController::getBordersService, this);
 
+  transform_callback =
+      nh->subscribe("/odin/projector_interface/moving_table/transform", 10,
+                    &ProjectorInterfaceController::transformCallback, this);
+
   // Subscribe to robot coordinates if needed for dynamic border display
   /*
   TODO
@@ -104,19 +104,19 @@ void ProjectorInterfaceController::init() {
 
     tl.x = area_node["top_left"]["x"].as<double>();
     tl.y = area_node["top_left"]["y"].as<double>();
-    tl.z = area_node["top_left"]["z"].as<double>();
+    tl.z = area_node["top_left"]["z"].as<double>() / 1000.0;
 
     tr.x = area_node["top_right"]["x"].as<double>();
     tr.y = area_node["top_right"]["y"].as<double>();
-    tr.z = area_node["top_right"]["z"].as<double>();
+    tr.z = area_node["top_right"]["z"].as<double>() / 1000.0;
 
     br.x = area_node["bottom_right"]["x"].as<double>();
     br.y = area_node["bottom_right"]["y"].as<double>();
-    br.z = area_node["bottom_right"]["z"].as<double>();
+    br.z = area_node["bottom_right"]["z"].as<double>() / 1000.0;
 
     bl.x = area_node["bottom_left"]["x"].as<double>();
     bl.y = area_node["bottom_left"]["y"].as<double>();
-    bl.z = area_node["bottom_left"]["z"].as<double>();
+    bl.z = area_node["bottom_left"]["z"].as<double>() / 1000.0;
 
     points.push_back(tl);
     points.push_back(tr);
@@ -143,19 +143,19 @@ void ProjectorInterfaceController::init() {
 
   camera_tl.x = 0;
   camera_tl.y = 0;
-  camera_tl.z = cv_depth.at<uint16_t>(camera_tl.y, camera_tl.x) / 1000.0;
+  camera_tl.z = 1.361;
 
   camera_tr.x = 0;
   camera_tr.y = camera_resolution[1];
-  camera_tr.z = cv_depth.at<uint16_t>(camera_tr.y, camera_tr.x) / 1000.0;
+  camera_tr.z = 1.361;
 
   camera_br.x = camera_resolution[0];
   camera_br.y = camera_resolution[1];
-  camera_br.z = cv_depth.at<uint16_t>(camera_br.y, camera_br.x) / 1000.0;
+  camera_br.z = 1.361;
 
   camera_bl.x = camera_resolution[0];
   camera_bl.y = 0;
-  camera_bl.z = cv_depth.at<uint16_t>(camera_bl.y, camera_bl.x) / 1000.0;
+  camera_bl.z = 1.361;
 
   camera_corners.push_back(camera_tl);
   camera_corners.push_back(camera_tr);
@@ -195,33 +195,21 @@ void ProjectorInterfaceController::init() {
   geometry_msgs::Point projector_br;
   geometry_msgs::Point projector_bl;
 
-  projector_tl.x =
-      inboundPixel(transformed_projector_top_left.x, 0, camera_resolution[0]);
-  projector_tl.y =
-      inboundPixel(transformed_projector_top_left.y, 0, camera_resolution[1]);
-  projector_tl.z =
-      cv_depth.at<uint16_t>(projector_tl.y, projector_tl.x) / 1000.0;
+  projector_tl.x = transformed_projector_top_left.x;
+  projector_tl.y = transformed_projector_top_left.y;
+  projector_tl.z = 1.361;
 
-  projector_tr.x =
-      inboundPixel(transformed_projector_top_right.x, 0, camera_resolution[0]);
-  projector_tr.y =
-      inboundPixel(transformed_projector_top_right.y, 0, camera_resolution[1]);
-  projector_tr.z =
-      cv_depth.at<uint16_t>(projector_tr.y, projector_tr.x) / 1000.0;
+  projector_tr.x = transformed_projector_top_right.x;
+  projector_tr.y = transformed_projector_top_right.y;
+  projector_tr.z = 1.361;
 
-  projector_br.x = inboundPixel(transformed_projector_bottom_right.x, 0,
-                                camera_resolution[0]);
-  projector_br.y = inboundPixel(transformed_projector_bottom_right.y, 0,
-                                camera_resolution[1]);
-  projector_br.z =
-      cv_depth.at<uint16_t>(projector_br.y, projector_br.x) / 1000.0;
+  projector_br.x = transformed_projector_bottom_right.x;
+  projector_br.y = transformed_projector_bottom_right.y;
+  projector_br.z = 1.361;
 
-  projector_bl.x = inboundPixel(transformed_projector_bottom_left.x, 0,
-                                camera_resolution[0]);
-  projector_bl.y = inboundPixel(transformed_projector_bottom_left.y, 0,
-                                camera_resolution[1]);
-  projector_bl.z =
-      cv_depth.at<uint16_t>(projector_bl.y, projector_bl.x) / 1000.0;
+  projector_bl.x = transformed_projector_bottom_left.x;
+  projector_bl.y = transformed_projector_bottom_left.y;
+  projector_bl.z = 1.361;
 
   projector_corners.push_back(projector_tl);
   projector_corners.push_back(projector_tr);
@@ -237,9 +225,18 @@ void ProjectorInterfaceController::init() {
   ros::Duration(1.0).sleep();
 
   for (auto &view : views) {
-    view->init(model_->zones);
+    view->init(model_->getDisplayAreas());
   }
   init_done = true;
+}
+
+void ProjectorInterfaceController::transformCallback(
+    const tuni_whitegoods_msgs::DynamicArea::ConstPtr &msg) {
+  model_->updateMovingTable(*msg);
+
+  for (auto &view : views) {
+    view->updateDisplayAreas(model_->getDisplayAreas());
+  }
 }
 
 void ProjectorInterfaceController::depthImageCallback(
@@ -302,9 +299,10 @@ void ProjectorInterfaceController::modelUpdateCallback(
     const std_msgs::Empty &msg) {
   if (init_done) {
     for (auto &view : views) {
-      view->updateButtons(model_->getButtons());
-      view->updateBorders(model_->getBorders());
-      view->updateHands(model_->getHands());
+      // view->updateButtons(model_->getButtons());
+      // view->updateBorders(model_->getBorders());
+      // view->updateHands(model_->getHands());
+      view->updateDisplayAreas(model_->getDisplayAreas());
     }
   }
 }

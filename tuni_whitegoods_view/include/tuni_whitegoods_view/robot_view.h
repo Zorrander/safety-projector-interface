@@ -20,9 +20,11 @@ class RobotView : public View {
   void updateBorders(
       const std::vector<std::shared_ptr<StaticBorder>>& borders) override;
   void updateHands(const std::vector<std::shared_ptr<Hand>>& hands) override;
-
+  void updateDisplayAreas(
+      const std::vector<std::shared_ptr<DisplayArea>>& zones) override;
   void createRvizMarker(std::vector<geometry_msgs::Point> points,
-                        std_msgs::ColorRGBA color, int id = 1);
+                        std_msgs::ColorRGBA color, std::string description,
+                        int id = 1);
 };
 
 #endif

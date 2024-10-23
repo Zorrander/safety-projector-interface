@@ -21,6 +21,8 @@ class View {
   virtual void updateBorders(
       const std::vector<std::shared_ptr<StaticBorder>>& borders);
   virtual void updateHands(const std::vector<std::shared_ptr<Hand>>& hands);
+  virtual void updateDisplayAreas(
+      const std::vector<std::shared_ptr<DisplayArea>>& zones);
 };
 
 #endif

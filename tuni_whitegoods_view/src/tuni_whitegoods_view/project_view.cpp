@@ -15,17 +15,6 @@ Projector::Projector(ros::NodeHandle *nh) {
     ROS_WARN("Parameter 'shiftX' not found, using default value 0.");
   }
 
-  if (!ros::param::get("is_moving", is_moving)) {
-    is_moving = false;  // Default value
-    ROS_WARN("Parameter 'is_moving' not found, using default value false.");
-  }
-
-  transform_callback =
-      nh->subscribe("/odin/projector_interface/moving_table/transform", 10,
-                    &Projector::transformCallback, this);
-
-  homography_matrix = cv::Mat::zeros(3, 3, CV_64F);
-
   ROS_INFO("ProjectorView running");
 }
 
@@ -94,10 +83,6 @@ void Projector::updateButtons(
                             CV_8UC3, cv::Scalar(0, 0, 0));
     cv::warpPerspective(button->draw(), img_transformed, button_homography,
                         sum_img.size());
-    if (is_moving) {
-      cv::warpPerspective(img_transformed, img_transformed, homography_matrix,
-                          sum_img.size());
-    }
     button_img = button_img + img_transformed;
   }
   sum_img = border_img + button_img;
@@ -123,9 +108,7 @@ void Projector::updateBorders(
 
 void Projector::updateHands(const std::vector<std::shared_ptr<Hand>> &hands) {}
 
-void Projector::transformCallback(
-    const std_msgs::Float64MultiArray::ConstPtr &msg) {
-  for (size_t i = 0; i < 9; ++i) {
-    homography_matrix.at<double>(i / 3, i % 3) = msg->data[i];
-  }
+void Projector::updateDisplayAreas(
+    const std::vector<std::shared_ptr<DisplayArea>> &zones) {
+  ROS_INFO("No view to update");
 }

@@ -16,3 +16,8 @@ void View::updateBorders(
 void View::updateHands(const std::vector<std::shared_ptr<Hand>>& hands) {
   ROS_INFO("No view to update");
 }
+
+void View::updateDisplayAreas(
+    const std::vector<std::shared_ptr<DisplayArea>>& zones) {
+  ROS_INFO("No view to update");
+}

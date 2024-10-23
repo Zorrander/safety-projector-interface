@@ -8,6 +8,7 @@
 #include <string>
 #include <vector>
 
+#include "tuni_whitegoods_msgs/DynamicArea.h"
 #include "tuni_whitegoods_projector_interface/button.h"
 #include "tuni_whitegoods_projector_interface/display_area.h"
 #include "tuni_whitegoods_projector_interface/hand.h"
@@ -58,6 +59,8 @@ class ProjectorInterfaceModel {
   void updateHandPose(const std::string& name,
                       const geometry_msgs::Point& position);
 
+  void updateMovingTable(const tuni_whitegoods_msgs::DynamicArea& moving_table);
+
   void reset_interactions(const ros::TimerEvent&);
 
   void robot_book_border(std::string id);
@@ -69,6 +72,8 @@ class ProjectorInterfaceModel {
   std::vector<std::shared_ptr<Button>> getButtons();
   std::vector<std::shared_ptr<StaticBorder>> getBorders();
   std::vector<std::shared_ptr<Hand>> getHands();
+
+  std::vector<std::shared_ptr<DisplayArea>> getDisplayAreas();
 
   cv::Point fromRobot2Pixel(geometry_msgs::Pose pose);
   geometry_msgs::Pose fromPixel2Robot(geometry_msgs::Point pixel);

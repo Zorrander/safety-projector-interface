@@ -27,7 +27,7 @@ if marker_ids is not None:
             center = tuple(map(int, corner))  # Convert each corner (x, y) to integers
             # Draw circles on the detected marker corners
             cv2.circle(copied_image, center, 10, (0, 0, 255), 2)
-
+        print("Marker id: ", marker_id)
         print(marker_corners[i])
 
 # Display the image with drawn markers

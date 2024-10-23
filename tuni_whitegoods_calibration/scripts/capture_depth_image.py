@@ -5,6 +5,7 @@ import cv2
 import numpy as np
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
+from pathlib import Path
 
 class DepthImageSaver:
     def __init__(self):
@@ -20,7 +21,7 @@ class DepthImageSaver:
             rospy.logerr(f"CvBridge Error: {e}")
 
     def save_depth_image(self, depth_image):
-        cv2.imwrite('/home/odin3/depthmap.png', depth_image)
+        cv2.imwrite(str(Path.home() / 'depthmap.png'), depth_image)
         rospy.loginfo("Depth image saved")
 
 def main():

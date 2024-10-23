@@ -32,18 +32,26 @@ class TransformProjectorPointServer {
     if (!nh->getParam("border_calibration_file", border_calibration_file)) {
       ROS_ERROR("Camera calibration file is missing from configuration.");
     }
-    border_homography = loadHomography(border_calibration_file);
+    // border_homography = loadHomography(border_calibration_file);
 
-    // ros::param::get("/border_homography", border_homography_array);
-    // border_homography = cv::Matx33d(border_homography_array.data());
+    ros::param::get("/border_homography", border_homography_array);
+    border_homography = cv::Matx33d(border_homography_array.data());
 
     std::string button_calibration_file;
     if (!nh->getParam("button_calibration_file", button_calibration_file)) {
       ROS_ERROR("Camera calibration file is missing from configuration.");
     }
 
+    ros::param::get("projector_resolution", projector_resolution);
+
     button_homography = loadHomography(button_calibration_file);
   }
+
+  int inboundPixel(int value, int max_value) {
+    return std::max(0, std::min(value, max_value));
+  }
+
+  std::vector<int> projector_resolution;
 
  private:
   /**
@@ -93,8 +101,8 @@ class TransformProjectorPointServer {
     cv::Point2f input_point(req.u, req.v);
     cameraPoint.push_back(input_point);
     cv::perspectiveTransform(cameraPoint, projectorPoint, border_homography);
-    res.u_prime = projectorPoint[0].x;
-    res.v_prime = projectorPoint[0].y;
+    res.u_prime = inboundPixel(projectorPoint[0].x, projector_resolution[0]);
+    res.v_prime = inboundPixel(projectorPoint[0].y, projector_resolution[1]);
 
     return true;
   }
@@ -117,8 +125,8 @@ class TransformProjectorPointServer {
     projectorPoint.push_back(input_point);
     cv::perspectiveTransform(projectorPoint, cameraPoint,
                              border_homography.inv());
-    res.u_prime = cameraPoint[0].x;
-    res.v_prime = cameraPoint[0].y;
+    res.u_prime = inboundPixel(cameraPoint[0].x, projector_resolution[0]);
+    res.v_prime = inboundPixel(cameraPoint[0].y, projector_resolution[1]);
 
     return true;
   }

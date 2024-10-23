@@ -41,7 +41,7 @@ class TableTracker(object):
 
         self.zone_msg = DynamicArea()
         self.zone_pub = rospy.Publisher(
-            "/odin/projector_interface/moving_table/transform", Float64MultiArray, queue_size=10)
+            "/odin/projector_interface/moving_table/transform", DynamicArea, queue_size=10)
 
         self.transform_moving_table = rospy.ServiceProxy(
             'transform_table_server', TransformMovingTable)
@@ -82,14 +82,13 @@ class TableTracker(object):
             bottomRight = (int(bottomRight[0]), int(bottomRight[1]))
             bottomLeft = (int(bottomLeft[0]), int(bottomLeft[1]))
             topLeft = (int(topLeft[0]), int(topLeft[1]))
-
+            '''
             width = abs(bottomLeft[0] - topLeft[0])
             height = abs(topLeft[1] - topRight[1])
 
             scale_long = width*3.85
             scale_short = height*2.72
 
-            # TODO: need to add cases to infer table orientation
             x1 = topLeft[0]
             x2 = topLeft[0] - int(scale_short) 
             if x2<0:
@@ -135,7 +134,7 @@ class TableTracker(object):
             marker = Marker()
             marker.header.frame_id = "base"
             marker.header.stamp = rospy.Time(0)
-            marker.id = 1000
+            marker.id = 9999
             marker.type = Marker.LINE_STRIP
             marker.action = Marker.ADD
             marker.scale.x = 0.01
@@ -156,7 +155,7 @@ class TableTracker(object):
                 top_left_robot_coordinates.out_point_stamped.pose.position)
 
             self.vis_pub.publish(marker)
-
+            '''
 
             self.zone_msg.top_left = [topLeft[0],
                                          topLeft[1]]
@@ -168,8 +167,8 @@ class TableTracker(object):
                                           bottomLeft[1]]
 
             transformation = self.transform_moving_table(self.zone_msg)
-            matrix_msg = Float64MultiArray()
-            matrix_msg.data = transformation.transform
+            matrix_msg = DynamicArea()
+            matrix_msg = transformation.table_corners
             self.zone_pub.publish(matrix_msg)
 
 

@@ -14,13 +14,13 @@ class CameraView : public View {
  private:
   ros::NodeHandle* nh_;
   image_transport::ImageTransport it_;
-  cv_bridge::CvImagePtr cv_depth;
+  cv_bridge::CvImagePtr bridge_cv_depth;
 
   image_transport::Subscriber img_callback;
   image_transport::Publisher viz_pub;
   sensor_msgs::ImagePtr camera_viz_msg;
 
-  cv::Mat depth_normalized, depth_colormap;
+  cv::Mat cv_depth, depth_normalized, depth_colormap;
 
   void depthSceneCallback(const sensor_msgs::ImageConstPtr& depth_msg);
 
@@ -32,6 +32,8 @@ class CameraView : public View {
   void updateBorders(
       const std::vector<std::shared_ptr<StaticBorder>>& borders) override;
   void updateHands(const std::vector<std::shared_ptr<Hand>>& hands) override;
+  void updateDisplayAreas(
+      const std::vector<std::shared_ptr<DisplayArea>>& zones) override;
   void publish_image();
 };
 

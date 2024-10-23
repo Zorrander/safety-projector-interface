@@ -11,7 +11,7 @@ from pathlib import Path
 def select_point(event,x,y,flags,param):
     if event == cv2.EVENT_LBUTTONDBLCLK: # captures left button double-click
         print(x,y)
-        print(depthmap[0, 0])
+        print(depthmap[y, x])
 
 img = cv2.imread(str(Path.home() / 'rgb_img.png'), cv2.IMREAD_UNCHANGED)
 depthmap = cv2.imread(str(Path.home() / 'depthmap.png'), cv2.IMREAD_UNCHANGED)
