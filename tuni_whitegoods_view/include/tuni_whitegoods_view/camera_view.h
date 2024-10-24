@@ -19,18 +19,19 @@ class CameraView : public View {
   image_transport::Subscriber img_callback;
   image_transport::Publisher viz_pub;
   sensor_msgs::ImagePtr camera_viz_msg;
-
+  std::vector<int> camera_resolution;
   cv::Mat cv_depth, depth_normalized, depth_colormap;
+  std::map<std::string, std::shared_ptr<cv::Mat>> layers;
 
   void depthSceneCallback(const sensor_msgs::ImageConstPtr& depth_msg);
 
  public:
   CameraView(ros::NodeHandle* nh);
   void init(std::vector<std::shared_ptr<DisplayArea>> zones) override;
-  void updateButtons(
-      const std::vector<std::shared_ptr<Button>>& buttons) override;
-  void updateBorders(
-      const std::vector<std::shared_ptr<StaticBorder>>& borders) override;
+  void updateButtons(const std::vector<std::shared_ptr<Button>>& buttons,
+                     std::shared_ptr<cv::Mat> layer) override;
+  void updateBorders(const std::vector<std::shared_ptr<StaticBorder>>& borders,
+                     std::shared_ptr<cv::Mat> layer) override;
   void updateHands(const std::vector<std::shared_ptr<Hand>>& hands) override;
   void updateDisplayAreas(
       const std::vector<std::shared_ptr<DisplayArea>>& zones) override;

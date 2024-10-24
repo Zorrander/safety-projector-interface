@@ -48,11 +48,6 @@ ProjectorInterfaceController::ProjectorInterfaceController(ros::NodeHandle *nh)
       nh_->subscribe("/odin/internal/hand_detection", 10,
                      &ProjectorInterfaceController::handTrackerCallback, this);
 
-  // Subscribe to moving table detections
-  moving_table_pose_sub = nh_->subscribe(
-      "/odin/projector_interface/moving_table", 10,
-      &ProjectorInterfaceController::movingTableTrackerCallback, this);
-
   // Subscribe to commands coming from OpenFlow or custom scheduler
   service_borders = nh->advertiseService(
       "/execution/projector_interface/integration/services/"
@@ -280,11 +275,6 @@ void ProjectorInterfaceController::createBorderLayout(
   ROS_INFO("createBorderLayout");
   model_->create_border_layout(rows, cols, sf_factor, adjacent, status_booked,
                                status_free, status_operator);
-}
-
-void ProjectorInterfaceController::movingTableTrackerCallback(
-    const tuni_whitegoods_msgs::DynamicArea &msg) {
-  ROS_INFO("movingTableTrackerCallback");
 }
 
 void ProjectorInterfaceController::handTrackerCallback(

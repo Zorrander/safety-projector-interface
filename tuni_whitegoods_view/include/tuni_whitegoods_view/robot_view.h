@@ -15,10 +15,10 @@ class RobotView : public View {
   RobotView(ros::NodeHandle* nh);
 
   void init(std::vector<std::shared_ptr<DisplayArea>> zones) override;
-  void updateButtons(
-      const std::vector<std::shared_ptr<Button>>& buttons) override;
-  void updateBorders(
-      const std::vector<std::shared_ptr<StaticBorder>>& borders) override;
+  void updateButtons(const std::vector<std::shared_ptr<Button>>& buttons,
+                     std::shared_ptr<cv::Mat> layer) override;
+  void updateBorders(const std::vector<std::shared_ptr<StaticBorder>>& borders,
+                     std::shared_ptr<cv::Mat> layer) override;
   void updateHands(const std::vector<std::shared_ptr<Hand>>& hands) override;
   void updateDisplayAreas(
       const std::vector<std::shared_ptr<DisplayArea>>& zones) override;

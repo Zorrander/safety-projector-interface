@@ -16,4 +16,4 @@ camera_calibration_file: "/home/odin3/Desktop/test_calib.yaml"
 border_calibration_file: "/home/odin3/Desktop/test_homography.yaml"
 button_calibration_file: "/home/odin3/Desktop/test_homography.yaml"
 display_areas_calibration_file: "/home/odin3/Desktop/tuni_display_areas.yaml"
-moving_table: [1399,  596, 1394, 505, 1488, 503, 1494, 595]
+moving_table_corner_homography: [7.64854704e-01,  3.46877051e-01, -3.79193586e+02, -1.34936922e-01,  9.81233422e-01,  2.12731507e+01, -4.15198193e-04, 2.92282525e-04, 1.00000000e+00]

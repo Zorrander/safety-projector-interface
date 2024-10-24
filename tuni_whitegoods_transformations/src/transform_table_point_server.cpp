@@ -1,6 +1,4 @@
 #include <ros/ros.h>
-#include <tf2/LinearMath/Quaternion.h>
-#include <yaml-cpp/yaml.h>
 
 #include <opencv2/opencv.hpp>
 
@@ -26,41 +24,10 @@ class TransformTablePointServer {
         "transform_table_server",
         &TransformTablePointServer::transformTablePointCallback, this);
 
-    std::string display_areas_calibration_file;
-    if (!nh_->getParam("display_areas_calibration_file",
-                       display_areas_calibration_file)) {
-      ROS_ERROR(
-          "display_areas calibration file is missing from configuration.");
-    }
-
-    YAML::Node display_areas_calibration =
-        YAML::LoadFile(display_areas_calibration_file);
-
-    ros::Duration(2.0).sleep();
-
-    for (YAML::const_iterator it = display_areas_calibration.begin();
-         it != display_areas_calibration.end(); ++it) {
-      std::string area_name = it->first.as<std::string>();
-      YAML::Node area_node = it->second;
-
-      if (area_name == "moving_table") {
-        original_corners.push_back(
-            cv::Point2f(area_node["top_left"]["x"].as<double>(),
-                        area_node["top_left"]["y"].as<double>()));
-
-        original_corners.push_back(
-            cv::Point2f(area_node["top_right"]["x"].as<double>(),
-                        area_node["top_right"]["y"].as<double>()));
-
-        original_corners.push_back(
-            cv::Point2f(area_node["bottom_right"]["x"].as<double>(),
-                        area_node["bottom_right"]["y"].as<double>()));
-
-        original_corners.push_back(
-            cv::Point2f(area_node["bottom_left"]["x"].as<double>(),
-                        area_node["bottom_left"]["y"].as<double>()));
-      }
-    }
+    ros::param::get("/moving_table_corner_homography",
+                    moving_table_corner_homography_array);
+    moving_table_corner_homography =
+        cv::Matx33d(moving_table_corner_homography_array.data());
   }
 
  private:
@@ -73,6 +40,8 @@ class TransformTablePointServer {
           cv::Point2f(req.table.top_right[0], req.table.top_right[1]),
           cv::Point2f(req.table.bottom_right[0], req.table.bottom_right[1]),
           cv::Point2f(req.table.bottom_left[0], req.table.bottom_left[1])};
+      cv::perspectiveTransform(original_position, original_corners,
+                               moving_table_corner_homography);
     }
 
     std::vector<cv::Point2f> new_position = {
@@ -115,6 +84,9 @@ class TransformTablePointServer {
   ros::ServiceServer table_point_transform_service_;
   std::vector<cv::Point2f> original_position;
   std::vector<cv::Point2f> original_corners;
+
+  cv::Matx33d moving_table_corner_homography;
+  std::vector<double> moving_table_corner_homography_array;
 };
 
 /**

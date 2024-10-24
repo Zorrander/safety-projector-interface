@@ -2,9 +2,8 @@
 
 Button::Button(ros::NodeHandle* nh, std::string request_id, std::string name,
                std::string text, std_msgs::ColorRGBA button_color,
-               std_msgs::ColorRGBA text_color, geometry_msgs::Pose center,
-               float radius)
-    : name(name), text(text), center(center), radius(radius), id(request_id) {
+               std_msgs::ColorRGBA text_color, float radius)
+    : name(name), text(text), radius(radius), id(request_id) {
   set_button_color(button_color);
   set_text_color(text_color);
   button_already_pressed = false;
@@ -85,3 +84,6 @@ void Button::set_text_color(std_msgs::ColorRGBA text_color) {
 }
 
 std::string Button::getId() { return id; }
+
+void Button::setXratio(float ratio) { x_ratio = ratio; }
+void Button::setYratio(float ratio) { y_ratio = ratio; }

@@ -22,6 +22,7 @@ class Projector : public View {
   std::vector<double> border_homography_array, button_homography_array;
   std::vector<int> projector_resolution;
   ros::Subscriber transform_callback;
+  std::map<std::string, std::shared_ptr<cv::Mat>> layers;
   void transformCallback(const std_msgs::Float64MultiArray::ConstPtr& msg);
 
  public:
@@ -29,13 +30,14 @@ class Projector : public View {
   ~Projector();
 
   void init(std::vector<std::shared_ptr<DisplayArea>> zones) override;
-  void updateButtons(
-      const std::vector<std::shared_ptr<Button>>& buttons) override;
-  void updateBorders(
-      const std::vector<std::shared_ptr<StaticBorder>>& borders) override;
+  void updateButtons(const std::vector<std::shared_ptr<Button>>& buttons,
+                     std::shared_ptr<cv::Mat> layer) override;
+  void updateBorders(const std::vector<std::shared_ptr<StaticBorder>>& borders,
+                     std::shared_ptr<cv::Mat> layer) override;
   void updateHands(const std::vector<std::shared_ptr<Hand>>& hands) override;
   void updateDisplayAreas(
       const std::vector<std::shared_ptr<DisplayArea>>& zones) override;
+  void project_image();
 };
 
 #endif

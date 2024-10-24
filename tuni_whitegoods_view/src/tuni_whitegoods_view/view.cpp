@@ -6,11 +6,13 @@ void View::init(std::vector<std::shared_ptr<DisplayArea>> zones) {
   ROS_INFO("No view to initalize");
 }
 
-void View::updateButtons(const std::vector<std::shared_ptr<Button>>& buttons) {
+void View::updateButtons(const std::vector<std::shared_ptr<Button>>& buttons,
+                         std::shared_ptr<cv::Mat> layer) {
   ROS_INFO("No view to update");
 }
 void View::updateBorders(
-    const std::vector<std::shared_ptr<StaticBorder>>& borders) {
+    const std::vector<std::shared_ptr<StaticBorder>>& borders,
+    std::shared_ptr<cv::Mat> layer) {
   ROS_INFO("No view to update");
 }
 void View::updateHands(const std::vector<std::shared_ptr<Hand>>& hands) {

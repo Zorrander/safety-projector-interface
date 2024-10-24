@@ -137,32 +137,30 @@ void ProjectorInterfaceModel::addButton(
     std_msgs::ColorRGBA text_color, geometry_msgs::Pose center, float radius) {
   for (auto &z : zones) {
     if (z->name == zone) {
-      /*
-      geometry_msgs::Pose modified_center;
-      modified_center.position.x = center.position.x + 0.1;
-      modified_center.position.y = (request_id == "goButton")
-                                       ? center.position.y + 0.55
-                                       : center.position.y + 0.5;
-
-      modified_center.position.z = -0.40;
-      float modified_radius = radius / 2.5;
-      */
-      std::shared_ptr<Button> btn =
-          std::make_shared<Button>(nh_, request_id, name, text, button_color,
-                                   text_color, center, radius);
-      btn->center_cam_point = fromRobot2Pixel(center);
+      ROS_INFO("add button");
+      std::shared_ptr<Button> btn = std::make_shared<Button>(
+          nh_, request_id, name, text, button_color, text_color, radius);
+      geometry_msgs::Pose transformed_center =
+          z->compute_absolute_world_position(center);
+      btn->center_cam_point = cv::Point(transformed_center.position.x,
+                                        transformed_center.position.y);
+      btn->center = fromPixel2Robot(transformed_center.position);
+      btn->center_projected_point =
+          fromCamera2Projector(transformed_center.position);
+      btn->setXratio(center.position.x);
+      btn->setYratio(center.position.y);
       z->addButton(btn);
       break;
     }
   }
-  notify();  // Notify controller
+  notify();
 }
 
 void ProjectorInterfaceModel::change_button_color(
     std::string resource_id, std_msgs::ColorRGBA button_color) {
   for (auto &z : zones) {
     if (z->change_button_color(resource_id, button_color)) {
-      notify();  // Notify controller
+      notify();
       break;
     }
   }
@@ -280,10 +278,7 @@ void ProjectorInterfaceModel::updateMovingTable(
       projector_frame.push_back(fromCamera2Projector(camera_frame[1]));
       projector_frame.push_back(fromCamera2Projector(camera_frame[2]));
       projector_frame.push_back(fromCamera2Projector(camera_frame[3]));
-      for (size_t i = 0; i < projector_frame.size(); ++i) {
-        ROS_INFO("cv::Point[%zu]: (x: %d, y: %d)", i, projector_frame[i].x,
-                 projector_frame[i].y);
-      }
+
       zone->setProjectorFrame(projector_frame);
 
       std::vector<geometry_msgs::Point> robot_frame_points;
@@ -292,12 +287,24 @@ void ProjectorInterfaceModel::updateMovingTable(
       robot_frame_points.push_back(fromPixel2Robot(camera_frame[1]).position);
       robot_frame_points.push_back(fromPixel2Robot(camera_frame[2]).position);
       robot_frame_points.push_back(fromPixel2Robot(camera_frame[3]).position);
-      for (size_t i = 0; i < robot_frame_points.size(); ++i) {
-        ROS_INFO("geometry_msgs::Point[%zu]: (x: %f, y: %f, z: %f)", i,
-                 robot_frame_points[i].x, robot_frame_points[i].y,
-                 robot_frame_points[i].z);
-      }
+
       zone->setRobotFrame(robot_frame_points);
+
+      std::vector<std::shared_ptr<Button>> buttons;
+      zone->fetchButtons(buttons);
+
+      for (auto &button : buttons) {
+        geometry_msgs::Pose center;
+        center.position.x = button->x_ratio;
+        center.position.y = button->y_ratio;
+        geometry_msgs::Pose transformed_center =
+            zone->compute_absolute_world_position(center);
+        button->center_cam_point = cv::Point(transformed_center.position.x,
+                                             transformed_center.position.y);
+        button->center = fromPixel2Robot(transformed_center.position);
+        button->center_projected_point =
+            fromCamera2Projector(transformed_center.position);
+      }
     }
   }
 }

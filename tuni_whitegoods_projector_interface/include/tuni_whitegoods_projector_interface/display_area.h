@@ -58,6 +58,8 @@ class DisplayArea {
   void setRobotFrame(std::vector<geometry_msgs::Point> robot_frame_points);
   void setCameraFrame(std::vector<geometry_msgs::Point> camera_frame);
   void setProjectorFrame(std::vector<cv::Point> projector_frame);
+  geometry_msgs::Pose compute_absolute_world_position(
+      geometry_msgs::Pose center);
 };
 
 #endif

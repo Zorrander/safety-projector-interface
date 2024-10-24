@@ -17,9 +17,11 @@ class View {
   View();
   virtual void init(std::vector<std::shared_ptr<DisplayArea>> zones);
   virtual void updateButtons(
-      const std::vector<std::shared_ptr<Button>>& buttons);
+      const std::vector<std::shared_ptr<Button>>& buttons,
+      std::shared_ptr<cv::Mat> layer);
   virtual void updateBorders(
-      const std::vector<std::shared_ptr<StaticBorder>>& borders);
+      const std::vector<std::shared_ptr<StaticBorder>>& borders,
+      std::shared_ptr<cv::Mat> layer);
   virtual void updateHands(const std::vector<std::shared_ptr<Hand>>& hands);
   virtual void updateDisplayAreas(
       const std::vector<std::shared_ptr<DisplayArea>>& zones);

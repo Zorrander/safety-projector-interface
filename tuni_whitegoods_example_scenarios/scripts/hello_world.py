@@ -9,17 +9,6 @@ from integration.msg import VirtualButtonReference, VirtualButtonEventArray
 from integration.msg import SetVirtualButtonsProjectionAction, SetVirtualButtonsProjectionGoal, SetVirtualButtonChangeColorAction, SetVirtualButtonChangeColorGoal
 
 
-interaction = False 
-
-
-def interaction_cb(msg):
-    global interaction
-    for btn_event in msg.virtual_button_events:
-        if btn_event.virtual_button_id == "40":
-            if btn_event.event_type == 1:
-                interaction = True
-                break 
-
 def main():
     global interaction
     rospy.init_node('hello_world')
@@ -32,15 +21,13 @@ def main():
     color_client = actionlib.SimpleActionClient(button_color_server_name, SetVirtualButtonChangeColorAction)
     color_client.wait_for_server()
 
-    interaction_topic = "/execution/projector_interface/integration/topics/virtual_button_event_array"
-    interaction_sub = rospy.Subscriber(interaction_topic, VirtualButtonEventArray, interaction_cb)
     ## Project button 
     goal = SetVirtualButtonsProjectionGoal()
     goal.request_id = "go_button"
-    goal.zone = "shelf"
+    goal.zone = "moving_table"
     goal.virtual_button = VirtualButtonReference()
     goal.virtual_button.id = "go";
-    goal.virtual_button.zone = "shelf";
+    goal.virtual_button.zone = "moving_table";
     goal.virtual_button.name = "go";
     goal.virtual_button.description = "button go"
     goal.virtual_button.text = "GO"
@@ -53,8 +40,8 @@ def main():
     goal.virtual_button.text_color.b = 1.0
     goal.virtual_button.text_color.a = 1.0
 
-    goal.virtual_button.center.position.x = 1.2544027518210814
-    goal.virtual_button.center.position.y = 0.3572678561494941
+    goal.virtual_button.center.position.x = 0.8
+    goal.virtual_button.center.position.y = 0.8
     goal.virtual_button.center.position.z = 0
 
     goal.virtual_button.radius = 30.0

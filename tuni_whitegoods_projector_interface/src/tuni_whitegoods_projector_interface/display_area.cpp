@@ -3,6 +3,8 @@
 #include <integration/SafetyBorderViolation.h>
 #include <integration/VirtualButtonEventArray.h>
 
+#include <cmath>
+
 DisplayArea::DisplayArea(ros::NodeHandle *nh, std::string name)
     : nh_(nh), name(name) {
   pub_border_violation = nh->advertise<integration::SafetyBorderViolation>(
@@ -108,6 +110,19 @@ bool DisplayArea::change_button_color(std::string resource_id,
       break;
     }
   }
+  return result;
+}
+
+geometry_msgs::Pose DisplayArea::compute_absolute_world_position(
+    geometry_msgs::Pose center) {
+  geometry_msgs::Pose result;
+  result.position.x =
+      camera_frame_area[0].x +
+      (camera_frame_area[1].x - camera_frame_area[0].x) * center.position.x;
+  result.position.y =
+      camera_frame_area[0].y +
+      (camera_frame_area[3].y - camera_frame_area[0].y) * center.position.y;
+  result.position.z = center.position.z;
   return result;
 }
 

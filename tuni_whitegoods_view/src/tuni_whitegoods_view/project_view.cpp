@@ -14,101 +14,111 @@ Projector::Projector(ros::NodeHandle *nh) {
     shift = 0;  // Default value
     ROS_WARN("Parameter 'shiftX' not found, using default value 0.");
   }
-
+  ros::param::get("projector_resolution", projector_resolution);
+  layers["background"] = std::make_shared<cv::Mat>(cv::Mat::zeros(
+      projector_resolution[1], projector_resolution[0], CV_8UC3));
+  cv::namedWindow(OPENCV_WINDOW, cv::WINDOW_NORMAL);
+  cv::moveWindow(OPENCV_WINDOW, shift, 0);
+  cv::setWindowProperty(OPENCV_WINDOW, cv::WND_PROP_FULLSCREEN,
+                        cv::WINDOW_FULLSCREEN);
   ROS_INFO("ProjectorView running");
 }
 
 Projector::~Projector() { cv::destroyWindow(OPENCV_WINDOW); }
 
 void Projector::init(std::vector<std::shared_ptr<DisplayArea>> zones) {
-  ros::param::get("projector_resolution", projector_resolution);
-
-  ros::param::get("/border_homography", border_homography_array);
-  ros::param::get("/button_homography", button_homography_array);
-  border_homography = cv::Matx33d(border_homography_array.data());
-  button_homography = cv::Matx33d(button_homography_array.data());
-  for (int i = 0; i < 3; ++i) {
-    for (int j = 0; j < 3; ++j) {
-      ROS_INFO("%f", border_homography(i, j));
-    }
-  }
-
-  cv::namedWindow(OPENCV_WINDOW, cv::WINDOW_NORMAL);
-  cv::moveWindow(OPENCV_WINDOW, shift, 0);
-  cv::setWindowProperty(OPENCV_WINDOW, cv::WND_PROP_FULLSCREEN,
-                        cv::WINDOW_FULLSCREEN);
-  sum_img = cv::Mat::zeros(projector_resolution[1], projector_resolution[0],
-                           CV_8UC3);  // Black image
-  button_img =
-      cv::Mat::zeros(projector_resolution[1], projector_resolution[0], CV_8UC3);
-  border_img =
-      cv::Mat::zeros(projector_resolution[1], projector_resolution[0], CV_8UC3);
-
   for (auto &zone : zones) {
     if (!(zone->name == "projector" || zone->name == "camera")) {
-      const cv::Scalar color(255, 255, 255);
-      const int thickness = 10;
-      for (size_t i = 0; i < zone->projector_frame_area.size(); ++i) {
-        ROS_INFO_STREAM("Point " << i << ": ("
-                                 << zone->projector_frame_area[i].x << ", "
-                                 << zone->projector_frame_area[i].y << ")");
-      }
-      cv::polylines(sum_img, zone->projector_frame_area, true, color, thickness,
-                    cv::LINE_8);
+      cv::Point tl(zone->projector_frame_area[0].x,
+                   zone->projector_frame_area[0].y);
+      cv::Point tr(zone->projector_frame_area[1].x,
+                   zone->projector_frame_area[1].y);
+      cv::Point br(zone->projector_frame_area[2].x,
+                   zone->projector_frame_area[2].y);
+      cv::Point bl(zone->projector_frame_area[3].x,
+                   zone->projector_frame_area[3].y);
 
-      const int fontFace = cv::FONT_HERSHEY_SIMPLEX;
-      const double fontScale = 1.0;  // Adjust for text size
-      const int textThickness = 2;
-      const cv::Scalar textColor(255, 255, 255);  // Green color in BGR
+      std::vector<cv::Point> rectanglePoints = {tl, tr, br, bl};
 
-      cv::putText(sum_img, zone->name, zone->projector_frame_area[0], fontFace,
-                  fontScale, textColor, textThickness);
+      layers[zone->name] = std::make_shared<cv::Mat>(cv::Mat::zeros(
+          projector_resolution[1], projector_resolution[0], CV_8UC3));
+
+      cv::polylines(*layers[zone->name], rectanglePoints, true, cv::Scalar(255),
+                    10, cv::LINE_8);
     }
   }
-
-  try {
-    cv::imshow(OPENCV_WINDOW, sum_img);
-    cv::waitKey(100);
-  } catch (const cv::Exception &e) {
-    ROS_INFO("OpenCV error: %s", e.what());
-  }
+  project_image();
 }
 
 void Projector::updateButtons(
-    const std::vector<std::shared_ptr<Button>> &buttons) {
-  button_img =
-      cv::Mat::zeros(projector_resolution[1], projector_resolution[0], CV_8UC3);
+    const std::vector<std::shared_ptr<Button>> &buttons,
+    std::shared_ptr<cv::Mat> layer) {
   for (auto &button : buttons) {
-    cv::Mat img_transformed(projector_resolution[1], projector_resolution[0],
-                            CV_8UC3, cv::Scalar(0, 0, 0));
-    cv::warpPerspective(button->draw(), img_transformed, button_homography,
-                        sum_img.size());
-    button_img = button_img + img_transformed;
+    cv::circle(*layer, button->center_projected_point, button->radius,
+               button->btn_color, -1);
   }
-  sum_img = border_img + button_img;
-  cv::imshow(OPENCV_WINDOW, sum_img);
-  cv::waitKey(100);
 }
 
 void Projector::updateBorders(
-    const std::vector<std::shared_ptr<StaticBorder>> &borders) {
-  border_img =
-      cv::Mat::zeros(projector_resolution[1], projector_resolution[0], CV_8UC3);
+    const std::vector<std::shared_ptr<StaticBorder>> &borders,
+    std::shared_ptr<cv::Mat> layer) {
   for (auto &border : borders) {
-    cv::Mat img_transformed(projector_resolution[1], projector_resolution[0],
-                            CV_8UC3, cv::Scalar(0, 0, 0));
-    cv::warpPerspective(border->drawBorder(), img_transformed,
-                        border_homography, sum_img.size());
-    border_img = border_img + img_transformed;
+    /*
+    cv::rectangle(
+        *layer, border->top_left_proj_point, border->bottom_right_proj_point,
+        cv::Scalar(border->border_color.b * 255, border->border_color.g * 255,
+                   border->border_color.r * 255),
+        border->thickness * 2, cv::LINE_8);
+    */
   }
-  sum_img = border_img + button_img;
-  cv::imshow(OPENCV_WINDOW, sum_img);
-  cv::waitKey(100);
 }
 
 void Projector::updateHands(const std::vector<std::shared_ptr<Hand>> &hands) {}
 
 void Projector::updateDisplayAreas(
     const std::vector<std::shared_ptr<DisplayArea>> &zones) {
-  ROS_INFO("No view to update");
+  for (auto &zone : zones) {
+    if (!(zone->name == "projector" || zone->name == "camera")) {
+      cv::Point tl(zone->projector_frame_area[0].x,
+                   zone->projector_frame_area[0].y);
+      cv::Point tr(zone->projector_frame_area[1].x,
+                   zone->projector_frame_area[1].y);
+      cv::Point br(zone->projector_frame_area[2].x,
+                   zone->projector_frame_area[2].y);
+      cv::Point bl(zone->projector_frame_area[3].x,
+                   zone->projector_frame_area[3].y);
+
+      std::vector<cv::Point> rectanglePoints = {tl, tr, br, bl};
+
+      const cv::Scalar color(255, 255, 255);
+      const int thickness = 10;
+
+      layers[zone->name] = std::make_shared<cv::Mat>(cv::Mat::zeros(
+          projector_resolution[1], projector_resolution[0], CV_8UC3));
+
+      cv::polylines(*layers[zone->name], rectanglePoints, true, cv::Scalar(255),
+                    10, cv::LINE_8);
+
+      std::vector<std::shared_ptr<Button>> buttons;
+      zone->fetchButtons(buttons);
+      updateButtons(buttons, layers[zone->name]);
+
+      std::vector<std::shared_ptr<StaticBorder>> borders;
+      zone->fetchBorders(borders);
+      updateBorders(borders, layers[zone->name]);
+    }
+  }
+  project_image();
+}
+
+void Projector::project_image() {
+  cv::Mat combined = layers["background"]->clone();
+
+  for (auto it = layers.begin(); it != layers.end(); ++it) {
+    const std::string &name = it->first;
+    std::shared_ptr<cv::Mat> &layer = it->second;
+    cv::bitwise_or(combined, *layer, combined);
+  }
+  cv::imshow(OPENCV_WINDOW, combined);
+  cv::waitKey(100);
 }
