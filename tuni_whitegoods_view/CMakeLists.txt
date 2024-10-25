@@ -24,6 +24,19 @@ find_package(catkin REQUIRED COMPONENTS
 
 
 find_package(OpenCV 4 REQUIRED)
+find_package(OpenGL REQUIRED)
+find_package(glfw3 3.3 REQUIRED)
+find_package(GLEW REQUIRED)
+
+include(FetchContent)
+FetchContent_Declare(imgui
+        GIT_REPOSITORY https://github.com/ocornut/imgui.git
+        GIT_TAG v1.89.8-docking
+        CONFIGURE_COMMAND ""
+        BUILD_COMMAND ""
+        )
+FetchContent_MakeAvailable(imgui)
+
 
 catkin_package(
   INCLUDE_DIRS include
@@ -42,9 +55,30 @@ catkin_package(
 )
 
 include_directories(
-  include
+  include 
   ${catkin_INCLUDE_DIRS}
   ${OpenCV_INCLUDE_DIRS}
+  ${OPENGL_INCLUDE_DIRS}
+)
+
+
+add_library(imgui 
+    ${imgui_SOURCE_DIR}/imgui.cpp
+    ${imgui_SOURCE_DIR}/imgui_draw.cpp
+    ${imgui_SOURCE_DIR}/imgui_tables.cpp
+    ${imgui_SOURCE_DIR}/imgui_widgets.cpp
+    ${imgui_SOURCE_DIR}/imgui_demo.cpp
+    ${imgui_SOURCE_DIR}/backends/imgui_impl_glfw.cpp
+    ${imgui_SOURCE_DIR}/backends/imgui_impl_opengl3.cpp
+)
+target_include_directories(imgui PUBLIC
+  ${imgui_SOURCE_DIR} 
+  ${imgui_SOURCE_DIR}/backends
+)
+
+target_link_libraries(imgui 
+  glfw 
+  OpenGL::GL
 )
 
 add_library(view
@@ -52,14 +86,19 @@ add_library(view
   src/tuni_whitegoods_view/project_view.cpp
   src/tuni_whitegoods_view/robot_view.cpp
   src/tuni_whitegoods_view/camera_view.cpp
+  
 )
+
 target_link_libraries(view
   ${catkin_LIBRARIES} 
   ${OpenCV_LIBS} 
+  glfw 
+  OpenGL::GL 
+  GLEW::GLEW
+  imgui
 )
+
 add_dependencies(view ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-
-
 
 install(TARGETS view
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
