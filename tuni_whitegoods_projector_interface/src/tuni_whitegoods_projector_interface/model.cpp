@@ -68,7 +68,7 @@ void ProjectorInterfaceModel::create_border_layout(
     std_msgs::ColorRGBA status_booked, std_msgs::ColorRGBA status_free,
     std_msgs::ColorRGBA status_operator) {
   for (auto &zone : zones) {
-    if (zone->name == "shelf") {
+    if (zone->name == "shelf" || zone->name == "table") {
       zone->create_border_layout(rows, cols, sf_factor, adjacent, status_booked,
                                  status_free, status_operator);
     }
@@ -171,26 +171,76 @@ void ProjectorInterfaceModel::addStaticBorder(
     int pos_col, geometry_msgs::PolygonStamped bord, std::string b_topic,
     std_msgs::ColorRGBA b_color, bool filling, int thic, ros::Duration life,
     bool track) {
+  ROS_INFO("adding border");
   for (auto &zone : zones) {
+    ROS_INFO("%s", z.c_str());
     if (zone->name == z) {
       std::shared_ptr<StaticBorder> sb = std::make_shared<StaticBorder>(
           nh_, r_id, pos_row, pos_col, bord, b_topic, b_color, filling, thic,
           life, track);
+      if (zone->border_layout.rows == 0 && zone->border_layout.cols == 0) {
+        ROS_INFO("the old way");
+        // Also compute camera coordinates for detections
+        // TOP LEFT
+        geometry_msgs::Pose border_top_left_pose;
+        border_top_left_pose.position = sb->topLeftCornerPt;
+        sb->top_left_cam_point = fromRobot2Pixel(border_top_left_pose);
 
-      // Also compute camera coordinates for detections
-      // TOP LEFT
-      geometry_msgs::Pose border_top_left_pose;
-      border_top_left_pose.position = sb->topLeftCornerPt;
-      sb->top_left_cam_point = fromRobot2Pixel(border_top_left_pose);
+        // BOTTOM RIGHT
+        geometry_msgs::Pose border_bottom_right_pose;
+        border_bottom_right_pose.position = sb->bottomRightCornerPt;
+        sb->bottom_right_cam_point = fromRobot2Pixel(border_bottom_right_pose);
 
-      // BOTTOM RIGHT
-      geometry_msgs::Pose border_bottom_right_pose;
-      border_bottom_right_pose.position = sb->bottomRightCornerPt;
-      sb->bottom_right_cam_point = fromRobot2Pixel(border_top_left_pose);
+        sb->roi_rect =
+            cv::Rect(sb->top_left_cam_point, sb->bottom_right_cam_point);
+        sb->baseline = depth_img(sb->roi_rect);
 
-      sb->roi_rect =
-          cv::Rect(sb->top_left_cam_point, sb->bottom_right_cam_point);
-      sb->baseline = depth_img(sb->roi_rect);
+        geometry_msgs::Point tl, br;
+        tl.x = sb->top_left_cam_point.x;
+        tl.y = sb->top_left_cam_point.y;
+
+        br.x = sb->bottom_right_cam_point.x;
+        br.y = sb->bottom_right_cam_point.y;
+
+        sb->top_left_proj_point = fromCamera2Projector(tl);
+        sb->bottom_right_proj_point = fromCamera2Projector(br);
+      } else {
+        ROS_INFO("the new way");
+        std::vector<cv::Point> border_coordinates =
+            zone->generate_border(pos_row, pos_col);
+
+        sb->top_left_proj_point = border_coordinates[0];
+        sb->top_right_proj_point = border_coordinates[1];
+        sb->bottom_right_proj_point = border_coordinates[2];
+        sb->bottom_left_proj_point = border_coordinates[3];
+
+        sb->top_left_cam_point = fromProjector2Camera(sb->top_left_proj_point);
+        sb->top_right_cam_point =
+            fromProjector2Camera(sb->top_right_proj_point);
+        sb->bottom_right_cam_point =
+            fromProjector2Camera(sb->bottom_right_proj_point);
+        sb->bottom_left_cam_point =
+            fromProjector2Camera(sb->bottom_left_proj_point);
+
+        /*
+        geometry_msgs::Point tl, tr, br, bl;
+        tl.x = sb->top_left_cam_point.x;
+        tl.y = sb->top_left_cam_point.y;
+        sb->topLeftCornerPt = fromPixel2Robot(tl);
+
+        tl.x = sb->top_right_cam_point.x;
+        tl.y = sb->top_right_cam_point.y;
+        sb->topRightCornerPt = fromPixel2Robot(tr);
+
+        br.x = sb->bottom_right_cam_point.x;
+        br.y = sb->bottom_right_cam_point.y;
+        sb->bottomRightCornerPt = fromPixel2Robot(br);
+
+        bl.x = sb->bottom_left_cam_point.x;
+        bl.y = sb->bottom_left_cam_point.y;
+        sb->bottomLeftCornerPt = fromPixel2Robot(bl);
+        */
+      }
 
       zone->addBorder(sb);
 

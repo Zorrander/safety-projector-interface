@@ -22,6 +22,12 @@ ProjectorInterfaceController::ProjectorInterfaceController(ros::NodeHandle *nh)
 
   detector = std::make_shared<ObjectDetector>();
 
+  // Subscribe to commands coming from OpenFlow or custom scheduler
+  service_borders = nh->advertiseService(
+      "/execution/projector_interface/integration/services/"
+      "list_static_border_status",
+      &ProjectorInterfaceController::getBordersService, this);
+
   projector_view = std::make_shared<Projector>(nh_);
   camera_view = std::make_shared<CameraView>(nh_);
   robot_view = std::make_shared<RobotView>(nh_);
@@ -47,12 +53,6 @@ ProjectorInterfaceController::ProjectorInterfaceController(ros::NodeHandle *nh)
   hand_pose_sub =
       nh_->subscribe("/odin/internal/hand_detection", 10,
                      &ProjectorInterfaceController::handTrackerCallback, this);
-
-  // Subscribe to commands coming from OpenFlow or custom scheduler
-  service_borders = nh->advertiseService(
-      "/execution/projector_interface/integration/services/"
-      "list_static_border_status",
-      &ProjectorInterfaceController::getBordersService, this);
 
   transform_callback =
       nh->subscribe("/odin/projector_interface/moving_table/transform", 10,
@@ -440,11 +440,7 @@ bool ProjectorInterfaceController::getBordersService(
     ROS_INFO("border %s status: %d", sbs.id.c_str(), sbs.status);
     res.status_borders.push_back(sbs);
   }
-  integration::StaticBorderStatus sbs;
-  sbs.id = "border_four";
-  sbs.status = 1;
-  res.status_borders.push_back(sbs);
-  ROS_INFO("border %s status: %d", sbs.id.c_str(), sbs.status);
+
   ROS_INFO("Border status check complete.");
   return true;
 }

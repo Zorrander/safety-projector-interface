@@ -25,21 +25,23 @@ StaticBorder::StaticBorder(ros::NodeHandle* nh, std::string r_id, int pos_row,
   position_row = pos_row;
   position_col = pos_col;
 
-  topLeftCornerPt.x = bord.polygon.points[0].x;
-  topLeftCornerPt.y = bord.polygon.points[0].y;
-  topLeftCornerPt.z = shelf_height;
+  if (!bord.polygon.points.empty()) {
+    topLeftCornerPt.x = bord.polygon.points[0].x;
+    topLeftCornerPt.y = bord.polygon.points[0].y;
+    topLeftCornerPt.z = shelf_height;
 
-  topRightCornerPt.x = bord.polygon.points[1].x;
-  topRightCornerPt.y = bord.polygon.points[1].y;
-  topRightCornerPt.z = shelf_height;
+    topRightCornerPt.x = bord.polygon.points[1].x;
+    topRightCornerPt.y = bord.polygon.points[1].y;
+    topRightCornerPt.z = shelf_height;
 
-  bottomRightCornerPt.x = bord.polygon.points[2].x;
-  bottomRightCornerPt.y = bord.polygon.points[2].y;
-  bottomRightCornerPt.z = shelf_height;
+    bottomRightCornerPt.x = bord.polygon.points[2].x;
+    bottomRightCornerPt.y = bord.polygon.points[2].y;
+    bottomRightCornerPt.z = shelf_height;
 
-  bottomLeftCornerPt.x = bord.polygon.points[3].x;
-  bottomLeftCornerPt.y = bord.polygon.points[3].y;
-  bottomLeftCornerPt.z = shelf_height;
+    bottomLeftCornerPt.x = bord.polygon.points[3].x;
+    bottomLeftCornerPt.y = bord.polygon.points[3].y;
+    bottomLeftCornerPt.z = shelf_height;
+  }
 
   border_color = b_color;
   is_filled = filling;
@@ -141,7 +143,8 @@ void StaticBorder::resetInteractions() {
 
 bool StaticBorder::isAdjacent(std::shared_ptr<StaticBorder> sb) {
   bool result = false;
-  if (sb->getCol() == position_col + 1 || sb->getCol() == position_col - 1) {
+  if (sb->getCol() == position_col + 1 || sb->getCol() == position_col - 1 ||
+      sb->getRow() == position_row + 1 || sb->getRow() == position_row - 1) {
     result = true;
   }
   return result;

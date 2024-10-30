@@ -5,6 +5,10 @@ WORKDIR /catkin_ws
 
 COPY . /catkin_ws/src
 
+RUN sudo sh -c 'echo "yaml file:///path/to/catkin_ws/src/odin_hmi_rosdeps.yaml" > /etc/ros/rosdep/sources.list.d/30-my-custom-deps.list'
+
+RUN rosdep update
+
 RUN rosdep install --from-paths src --ignore-src -r -y
 
 RUN /bin/bash -c "source /opt/ros/noetic/setup.bash && catkin_make"

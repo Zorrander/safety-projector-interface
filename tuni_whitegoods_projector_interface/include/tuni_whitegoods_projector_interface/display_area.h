@@ -11,8 +11,8 @@
 #include "tuni_whitegoods_projector_interface/static_border.h"
 
 struct BorderLayout {
-  int rows;
-  int cols;
+  int rows = 0;
+  int cols = 0;
   float sf_factor;
   bool adjacent;
   std_msgs::ColorRGBA status_booked;
@@ -25,18 +25,25 @@ class DisplayArea {
   std::vector<std::shared_ptr<StaticBorder>> borders_;
   std::vector<std::shared_ptr<Button>> buttons_;
 
-  BorderLayout border_layout;
-
   ros::Publisher pub_border_violation;
   ros::Publisher pub_button_event;
 
   ros::NodeHandle* nh_;
+  double margin;
+  int inner_margin;
+  int rect_width;
+  int rect_height;
+
+  std::vector<cv::Point> left_side_points;
+  std::vector<cv::Point> right_side_points;
+  std::vector<cv::Point> top_side_points;
+  std::vector<cv::Point> bottom_side_points;
 
  public:
   std::string name;
   std::vector<geometry_msgs::Point> robot_frame_area;
   std::vector<geometry_msgs::Point> camera_frame_area;
-  std::vector<cv::Point> projector_frame_area;
+  std::vector<cv::Point> projector_frame_area, inner_projector_frame_area;
   DisplayArea(ros::NodeHandle* nh, std::string name);
   void addBorder(std::shared_ptr<StaticBorder> sb);
   void addButton(std::shared_ptr<Button> btn);
@@ -60,6 +67,13 @@ class DisplayArea {
   void setProjectorFrame(std::vector<cv::Point> projector_frame);
   geometry_msgs::Pose compute_absolute_world_position(
       geometry_msgs::Pose center);
+
+  BorderLayout border_layout;
+
+  void compute_border_dimensions(int rows, int columns);
+  std::vector<cv::Point> interpolate(const cv::Point& p1, const cv::Point& p2,
+                                     int num_points);
+  std::vector<cv::Point> generate_border(int row, int column);
 };
 
 #endif

@@ -1,0 +1,6 @@
+libgl1-mesa-dev:
+  ubuntu: [libgl1-mesa-dev]
+opencv4:
+  ubuntu: [libopencv-dev]
+Qt5Widgets:
+  ubuntu: [qt5-default]

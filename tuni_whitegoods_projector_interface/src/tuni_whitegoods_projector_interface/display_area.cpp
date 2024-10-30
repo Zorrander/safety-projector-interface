@@ -6,7 +6,7 @@
 #include <cmath>
 
 DisplayArea::DisplayArea(ros::NodeHandle *nh, std::string name)
-    : nh_(nh), name(name) {
+    : nh_(nh), name(name), margin(100), inner_margin(50) {
   pub_border_violation = nh->advertise<integration::SafetyBorderViolation>(
       "/execution/projector_interface/integration/topics/"
       "safety_border_violation",
@@ -24,6 +24,121 @@ void DisplayArea::create_border_layout(int rows, int cols, float sf_factor,
                                        std_msgs::ColorRGBA status_operator) {
   border_layout = {rows,          cols,        sf_factor,      adjacent,
                    status_booked, status_free, status_operator};
+  compute_border_dimensions(rows, cols);
+}
+
+void DisplayArea::compute_border_dimensions(int rows, int columns) {
+  ROS_INFO("table projector_frame_area top left: x = %d, y = %d",
+           projector_frame_area[0].x, projector_frame_area[0].y);
+  ROS_INFO("table projector_frame_area top left: x = %d, y = %d",
+           projector_frame_area[1].x, projector_frame_area[1].y);
+  ROS_INFO("table projector_frame_area top left: x = %d, y = %d",
+           projector_frame_area[2].x, projector_frame_area[2].y);
+  ROS_INFO("table projector_frame_area top left: x = %d, y = %d",
+           projector_frame_area[3].x, projector_frame_area[3].y);
+
+  // Calculate rectangle width and height with inner margins
+  int width_with_margin = static_cast<int>(
+      cv::norm(projector_frame_area[1] - projector_frame_area[0]) - 2 * margin);
+  int height_with_margin = static_cast<int>(
+      cv::norm(projector_frame_area[3] - projector_frame_area[0]) - 2 * margin);
+
+  rect_width = (width_with_margin - (columns - 1) * inner_margin) / columns;
+  rect_height = (height_with_margin - (rows - 1) * inner_margin) / rows;
+  ROS_INFO("rect_width: %d", rect_width);
+  ROS_INFO("rect_height: %d", rect_height);
+
+  cv::Point inner_top_left;
+  cv::Point inner_top_right;
+  cv::Point inner_bottom_left;
+  cv::Point inner_bottom_right;
+
+  if (projector_frame_area[0].x < projector_frame_area[1].x) {
+    ROS_INFO("left > right");
+    inner_top_left.x = projector_frame_area[0].x + margin;
+    inner_top_right.x = projector_frame_area[1].x - margin;
+  } else {
+    ROS_INFO("right > left");
+    inner_top_left.x = projector_frame_area[1].x + margin;
+    inner_top_right.x = projector_frame_area[0].x - margin;
+  }
+
+  inner_bottom_right.x = inner_top_right.x;
+  inner_bottom_left.x = inner_top_left.x;
+
+  if (projector_frame_area[0].y < projector_frame_area[3].y) {
+    ROS_INFO("top > down");
+    inner_top_left.y = projector_frame_area[3].y - margin;
+    inner_bottom_left.y = projector_frame_area[3].y + margin;
+  } else {
+    ROS_INFO("bottom > up");
+    inner_top_left.y = projector_frame_area[3].y + margin;
+    inner_bottom_left.y = projector_frame_area[0].y - margin;
+  }
+
+  inner_top_right.y = inner_top_left.y;
+  inner_bottom_right.y = inner_bottom_left.y;
+
+  inner_projector_frame_area = {inner_top_left, inner_top_right,
+                                inner_bottom_right, inner_bottom_left};
+
+  ROS_INFO("table inner projector_frame_area top left: x = %d, y = %d",
+           inner_projector_frame_area[0].x, inner_projector_frame_area[0].y);
+  ROS_INFO("table inner projector_frame_area top left: x = %d, y = %d",
+           inner_projector_frame_area[1].x, inner_projector_frame_area[1].y);
+  ROS_INFO("table inner projector_frame_area top left: x = %d, y = %d",
+           inner_projector_frame_area[2].x, inner_projector_frame_area[2].y);
+  ROS_INFO("table inner projector_frame_area top left: x = %d, y = %d",
+           inner_projector_frame_area[3].x, inner_projector_frame_area[3].y);
+
+  left_side_points =
+      interpolate(inner_projector_frame_area[0], inner_projector_frame_area[3],
+                  border_layout.rows);
+
+  right_side_points =
+      interpolate(inner_projector_frame_area[1], inner_projector_frame_area[2],
+                  border_layout.rows);
+
+  top_side_points =
+      interpolate(inner_projector_frame_area[0], inner_projector_frame_area[1],
+                  border_layout.cols);
+
+  bottom_side_points =
+      interpolate(inner_projector_frame_area[3], inner_projector_frame_area[2],
+                  border_layout.cols);
+}
+
+std::vector<cv::Point> DisplayArea::interpolate(const cv::Point &p1,
+                                                const cv::Point &p2,
+                                                int num_points) {
+  std::vector<cv::Point> points;
+  for (int i = 0; i < num_points + 1; ++i) {
+    double t = static_cast<double>(i) / (num_points);
+    int x = static_cast<int>(p1.x + (p2.x - p1.x) * t);
+    int y = static_cast<int>(p1.y + (p2.y - p1.y) * t);
+    points.push_back(cv::Point(x, y));
+  }
+  return points;
+}
+
+std::vector<cv::Point> DisplayArea::generate_border(int row, int column) {
+  cv::Point top_left;
+  cv::Point top_right;
+  cv::Point bottom_right;
+
+  top_left.x = top_side_points[column - 1].x + inner_margin / 2;
+  top_right.x = top_left.x + rect_width;
+  bottom_right.x = top_right.x;
+
+  top_left.y = left_side_points[row - 1].y + inner_margin / 2;
+  top_right.y = top_left.y;
+  bottom_right.y = top_right.y + rect_height;
+
+  cv::Point bottom_left(top_left.x, bottom_right.y);
+
+  std::vector<cv::Point> result = {top_left, top_right, bottom_right,
+                                   bottom_left};
+  return result;
 }
 
 bool DisplayArea::checkForInteractions(
@@ -37,6 +152,7 @@ bool DisplayArea::checkForInteractions(
     if (border->robot_booked || border->operator_booked) {
       if (border->checkForInteractions(name, cv_hand_position)) {
         result = true;
+        // OpenFlow signal
         integration::SafetyBorderViolation msg_border;
         geometry_msgs::PolygonStamped initial_border;
         geometry_msgs::Pose target_location;

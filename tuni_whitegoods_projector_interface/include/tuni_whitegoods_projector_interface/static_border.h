@@ -51,7 +51,15 @@ class StaticBorder {
   void resetInteractions();
 
   cv::Point top_left_cam_point;
+  cv::Point top_right_cam_point;
   cv::Point bottom_right_cam_point;
+  cv::Point bottom_left_cam_point;
+
+  cv::Point top_left_proj_point;
+  cv::Point top_right_proj_point;
+  cv::Point bottom_right_proj_point;
+  cv::Point bottom_left_proj_point;
+
   geometry_msgs::Point topLeftCornerPt, topRightCornerPt, bottomLeftCornerPt,
       bottomRightCornerPt;
   std_msgs::ColorRGBA border_color;

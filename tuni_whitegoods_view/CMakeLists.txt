@@ -22,7 +22,6 @@ find_package(catkin REQUIRED COMPONENTS
 
 )
 
-
 find_package(OpenCV 4 REQUIRED)
 find_package(OpenGL REQUIRED)
 find_package(glfw3 3.3 REQUIRED)

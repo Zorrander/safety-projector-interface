@@ -21,17 +21,18 @@ void SafetyBorderServer::executeSafetyBorder(
     const SetSafetyBorderProjectionGoalConstPtr &goal) {
   bool success = true;
 
+  controller->addStaticBorder(
+      goal->request_id, goal->zone, goal->position_row, goal->position_col,
+      goal->border, goal->border_topic, goal->border_color, goal->is_filled,
+      goal->thickness, goal->lifetime, goal->track_violations);
+  /*
   if (goal->border.polygon.points.size() > 1) {
-    controller->addStaticBorder(
-        goal->request_id, goal->zone, goal->position_row, goal->position_col,
-        goal->border, goal->border_topic, goal->border_color, goal->is_filled,
-        goal->thickness, goal->lifetime, goal->track_violations);
   } else {
     controller->addDynamicBorder(goal->request_id, goal->zone,
                                  goal->border_topic, goal->border_color,
                                  goal->is_filled, goal->thickness,
                                  goal->lifetime, goal->track_violations);
-  }
+  }*/
   sendFeedBackBorder();
   if (as_border.isPreemptRequested() || !ros::ok() || !success) {
     ROS_INFO("%s: Preempted", action_name_border_.c_str());
