@@ -222,6 +222,10 @@ void ProjectorInterfaceModel::addStaticBorder(
         sb->bottom_left_cam_point =
             fromProjector2Camera(sb->bottom_left_proj_point);
 
+        sb->roi_rect =
+            cv::Rect(sb->top_left_cam_point, sb->bottom_right_cam_point);
+        sb->baseline = depth_img(sb->roi_rect);
+
         /*
         geometry_msgs::Point tl, tr, br, bl;
         tl.x = sb->top_left_cam_point.x;

@@ -20,10 +20,10 @@ ProjectorInterfaceController::ProjectorInterfaceController(ros::NodeHandle *nh)
   // Initialize model
   model_ = std::make_unique<ProjectorInterfaceModel>(nh_);
 
-  detector = std::make_shared<ObjectDetector>();
+  detector = std::make_shared<ObjectDetector>(nh_);
 
   // Subscribe to commands coming from OpenFlow or custom scheduler
-  service_borders = nh->advertiseService(
+  service_borders = nh_->advertiseService(
       "/execution/projector_interface/integration/services/"
       "list_static_border_status",
       &ProjectorInterfaceController::getBordersService, this);
@@ -427,10 +427,11 @@ bool ProjectorInterfaceController::getBordersService(
   for (auto &border : model_->getBorders()) {
     integration::StaticBorderStatus sbs;
     sbs.id = border->getId();
-
+    ROS_INFO("Border %s", sbs.id.c_str());
     if (detector->scan(cv_depth(border->roi_rect), border->baseline) ||
         border->operator_booked) {
       sbs.status = 2;
+      border->changeThickness(6);
     } else if (border->robot_booked) {
       sbs.status = 1;
     } else {

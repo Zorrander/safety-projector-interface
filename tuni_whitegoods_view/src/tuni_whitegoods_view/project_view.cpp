@@ -1,7 +1,12 @@
 #include "tuni_whitegoods_view/project_view.h"
 
 #include <sensor_msgs/image_encodings.h>
+#include <std_msgs/Empty.h>
+#include <std_msgs/Int32.h>
 #include <tf2/LinearMath/Quaternion.h>
+
+#include <cstdlib>
+#include <thread>
 
 #include "tf2/utils.h"
 
@@ -33,22 +38,38 @@ Projector::Projector(ros::NodeHandle *nh)
           "execution/projector_interface/integration/actions/"
           "release_human_static_border",
           true),
+      project_client(
+          "/execution/projector_interface/integration/actions/"
+          "set_virtual_buttons_projection",
+          true),
       nh_(nh) {
   if (!ros::param::get("shiftX", shift)) {
     shift = 0;  // Default value
     ROS_WARN("Parameter 'shiftX' not found, using default value 0.");
   }
   ros::param::get("projector_resolution", projector_resolution);
-
+  scan = false;
+  tf = false;
   client_detection = nh->serviceClient<integration::ListStaticBordersStatus>(
       "/execution/projector_interface/integration/services/"
       "list_static_border_status");
 
-  if (!client_detection.waitForExistence(ros::Duration(5.0))) {
-    ROS_ERROR("Service not available after waiting");
-  } else {
-    ROS_INFO("Service available");
-  }
+  hand_detection_sub = nh_->subscribe("/odin/internal/hand_detection", 5,
+                                      &Projector::handDetectionCallback, this);
+
+  table_detection_sub =
+      nh_->subscribe("/odin/projector_interface/moving_table/transform", 5,
+                     &Projector::tableDetectionCallback, this);
+
+  smart_interface_pub = nh->advertise<std_msgs::Empty>("/odin/start", 1);
+
+  threshold_pub =
+      nh->advertise<std_msgs::Int32>("/odin/object_detection/set_threshold", 1);
+  non_zero_threshold_pub = nh->advertise<std_msgs::Int32>(
+      "/odin/object_detection/set_non_zero_threshold", 1);
+  noise_recuction_pub = nh->advertise<std_msgs::Int32>(
+      "/odin/object_detection/set_noise_reduction", 1);
+
   layers["background"] = {
       std::make_shared<cv::Mat>(cv::Mat::zeros(
           projector_resolution[1], projector_resolution[0], CV_8UC3)),
@@ -59,16 +80,21 @@ Projector::Projector(ros::NodeHandle *nh)
   cv::setWindowProperty(OPENCV_WINDOW, cv::WND_PROP_FULLSCREEN,
                         cv::WINDOW_FULLSCREEN);
 
-  // Initialize OpenGL, GLFW, and ImGui
   initializeGLFWandOpenGL();
 
-  // Create a GLFW window for rendering
   window = glfwCreateWindow(2300, 1300, "Layer Manager", nullptr, nullptr);
   glfwMakeContextCurrent(window);
   glewInit();
 
-  // Initialize ImGui
   initializeImGui(window);
+
+  hand_detection_counter = 0;
+  last_msg_time_ = ros::Time(0);
+  interval_in_seconds_ = 0.0f;
+
+  table_detection_counter = 0;
+  last_table_msg_time_ = ros::Time(0);
+  table_interval_in_seconds_ = 0.0f;
 
   ROS_INFO("ProjectorView running");
 }
@@ -85,8 +111,6 @@ void Projector::init(std::vector<std::shared_ptr<DisplayArea>> zones) {
               projector_resolution[1], projector_resolution[0], CV_8UC3)),
           true};
     }
-    // update_gui();
-    // project_image();
   }
 }
 
@@ -223,27 +247,54 @@ void Projector::show_debug_buttons() {
         }
       }
     }
-    ImGui::EndTabBar();  // End the tab bar
+    ImGui::EndTabBar();
   }
 
-  ImGui::End();  // End the window
+  ImGui::End();
 }
 
-void Projector::show_debug_hands() {}
+void Projector::show_debug_hands() {
+  ImGui::Begin("Hand dection");
+  ImGui::Text("Hand detection msg counter: %d", hand_detection_counter);
+  ImGui::Text("Time interval between messages: %.2f seconds",
+              interval_in_seconds_);
+  ImGui::End();
+}
+
+void Projector::show_moving_table() {
+  ImGui::Begin("Table dection");
+  ImGui::Text("Table detection msg counter: %d", table_detection_counter);
+  ImGui::Text("Time interval between messages: %.2f seconds",
+              table_interval_in_seconds_);
+  ImGui::End();
+}
 
 void Projector::show_debug_object_detection() {
   ImGui::Begin("Object dection");
+  static int thresholdValueSlider = 10;
+  static int nonZeroThresholdValueSlider = 10;
+  static int noiseReductionValueSlider = 3;
+  ImGui::SliderInt("Depth object threshold", &thresholdValueSlider, 0, 200);
+  ImGui::SliderInt("Non zero detection threshold", &nonZeroThresholdValueSlider,
+                   0, 200);
+  ImGui::SliderInt("Noise reduction", &noiseReductionValueSlider, 0, 10);
+
   if (ImGui::Button("Scan workspace")) {
     ROS_INFO("clicked");
-    if (client_detection.call(srv)) {
-      ROS_INFO("Service call successful. Border statuses:");
-      for (const auto &border_status : srv.response.status_borders) {
-        ROS_INFO("Border ID: %s, Status: %d", border_status.id.c_str(),
-                 border_status.status);
-      }
-    } else {
-      ROS_ERROR("Failed to call service getBordersService");
-    }
+    scan = true;
+
+    std_msgs::Int32 threshold_msg;
+    threshold_msg.data = thresholdValueSlider;
+    threshold_pub.publish(threshold_msg);
+
+    std_msgs::Int32 non_zero_threshold_msg;
+    non_zero_threshold_msg.data = nonZeroThresholdValueSlider;
+    non_zero_threshold_pub.publish(non_zero_threshold_msg);
+
+    std_msgs::Int32 noise_reduction_msg;
+    noise_reduction_msg.data = noiseReductionValueSlider;
+    noise_recuction_pub.publish(noise_reduction_msg);
+    ros::Duration(0.5).sleep();
   }
 
   ImGui::End();
@@ -262,12 +313,10 @@ void Projector::show_layer_manager() {
   ImGui::Begin("Layer Manager");
   ImGui::Text("Set visibility of each layer.");
 
-  // Iterate through layers and create checkboxes
   for (auto it = layers.begin(); it != layers.end(); ++it) {
     const std::string &name = it->first;
     Layer &layer = it->second;
 
-    // Frame for the checkbox
     ImGui::BeginChild(("LayerCheckboxFrame##" + name).c_str(), ImVec2(0, 30),
                       true, ImGuiWindowFlags_NoTitleBar);
     ImGui::Checkbox(name.c_str(), &layer.visible);
@@ -278,6 +327,7 @@ void Projector::show_layer_manager() {
 }
 
 void Projector::show_element_creator() {
+  static char buttonName[128] = "";
   static char borderName[128] = "";
   static char projectionZone[128] = "";
   static float sliderValue = 0.0f;
@@ -302,8 +352,8 @@ void Projector::show_element_creator() {
   }
 
   if (ImGui::BeginPopup("CreateBorderLayoutPopup")) {
-    static int rowValueSlider = 0;     // Slider integer value
-    static int columnValueSlider = 0;  // Slider integer value
+    static int rowValueSlider = 0;
+    static int columnValueSlider = 0;
 
     integration::SetLayoutStaticBordersGoal layout_goal;
 
@@ -334,15 +384,15 @@ void Projector::show_element_creator() {
 
     ImGui::Checkbox("Book adjacent", &checkboxValue);
 
-    // Button to validate choices
     if (ImGui::Button("Create")) {
+      row_layout = rowValueSlider;
+      column_layout = columnValueSlider;
       layout_goal.size_cols = columnValueSlider;
       layout_goal.size_rows = rowValueSlider;
       layout_goal.book_adjacent = checkboxValue;
       ROS_INFO("Sending goal...");
       ac.sendGoal(layout_goal);
 
-      // Close the popup after validation (optional)
       ImGui::CloseCurrentPopup();
     }
 
@@ -390,8 +440,26 @@ void Projector::show_element_creator() {
       msg.position_row = rowValue;
       msg.position_col = columnValue;
       msg.zone = area;
+
       ROS_INFO("Sending goal...");
       client_border.sendGoal(msg);
+      ImGui::CloseCurrentPopup();
+    }
+
+    if (ImGui::Button("Create all borders")) {
+      int count = 1;
+      for (int i = 1; i <= row_layout; i++) {
+        for (int j = 1; j <= column_layout; j++) {
+          msg.request_id = borderName + std::to_string(count);
+          msg.position_row = i;
+          msg.position_col = j;
+          msg.zone = area;
+
+          goalQueue.push(msg);
+
+          count++;
+        }
+      }
       ImGui::CloseCurrentPopup();
     }
 
@@ -399,22 +467,59 @@ void Projector::show_element_creator() {
   }
 
   if (ImGui::BeginPopup("CreateButtonPopup")) {
-    ImGui::Text("Set your options:");
+    static std::string button_area;
+    ImGui::InputText("Button name", buttonName, sizeof(buttonName));
 
-    // Slider for float value
-    ImGui::SliderFloat("Slider Value", &sliderValue, 0.0f, 100.0f);
+    integration::SetVirtualButtonsProjectionGoal goal;
 
-    // Checkbox for a boolean value
-    ImGui::Checkbox("Checkbox", &checkboxValue);
+    static int selected_index = 0;
+    std::vector<const char *> keys;
+    for (const auto &pair : layers) {
+      keys.push_back(pair.first.c_str());
+    }
 
-    // Button to validate choices
-    if (ImGui::Button("Validate")) {
-      // Process the input data
-      ImGui::Text("Slider Value: %.1f", sliderValue);
-      ImGui::Text("Checkbox is %s", checkboxValue ? "checked" : "unchecked");
-      // You can add additional processing logic here
+    if (ImGui::Combo("Select a projection area", &selected_index, keys.data(),
+                     keys.size())) {
+      button_area = keys[selected_index];
+    }
 
-      // Close the popup after validation (optional)
+    // Set button color (RGBA)
+    goal.virtual_button.button_color.r = 0.0;
+    goal.virtual_button.button_color.g = 0.0;
+    goal.virtual_button.button_color.b = 1.0;
+    goal.virtual_button.button_color.a = 1.0;
+
+    // Set text color (RGBA)
+    goal.virtual_button.text_color.r = 1.0;
+    goal.virtual_button.text_color.g = 1.0;
+    goal.virtual_button.text_color.b = 1.0;
+    goal.virtual_button.text_color.a = 1.0;
+
+    // Set button center position
+    static float xValue = 0.0f;
+    static float yValue = 0.0f;
+    static float radius = 0.0f;
+    ImGui::InputFloat("x", &xValue, 0.0f, 1.0f, "%.1f");
+    ImGui::InputFloat("y", &yValue, 0.0f, 1.0f, "%.1f");
+    ImGui::InputFloat("radius", &radius, 0.0f, 100.0f, "%.1f");
+
+    // Set additional button properties
+
+    goal.virtual_button.hidden = false;
+
+    if (ImGui::Button("Create")) {
+      goal.request_id = buttonName;
+      goal.zone = button_area;
+      goal.virtual_button.id = buttonName;
+      goal.virtual_button.zone = button_area;
+      goal.virtual_button.name = buttonName;
+      goal.virtual_button.text = buttonName;
+      goal.virtual_button.center.position.x = xValue;
+      goal.virtual_button.center.position.y = yValue;
+      goal.virtual_button.center.position.z = 0.0;
+      goal.virtual_button.radius = radius;
+
+      buttonQueue.push(goal);
       ImGui::CloseCurrentPopup();
     }
 
@@ -423,23 +528,87 @@ void Projector::show_element_creator() {
   ImGui::End();
 }
 
+void Projector::show_node_starter() {
+  ImGui::Begin("Start nodes");
+
+  if (ImGui::Button("Sart tf")) {
+    tf = true;
+  }
+
+  if (ImGui::Button("Start smart interface")) {
+    smart_interface_pub.publish(std_msgs::Empty());
+  }
+
+  ImGui::End();
+}
+
+void Projector::launchTfNode() {
+  std::string command = "roslaunch tuni_whitegoods tuni_tf.launch";
+  int result = std::system(command.c_str());
+
+  if (result == 0) {
+    ROS_INFO("Launch file started successfully.");
+  } else {
+    ROS_ERROR("Failed to start launch file.");
+  }
+}
+
 void Projector::update_gui() {
   ImGui_ImplOpenGL3_NewFrame();
   ImGui_ImplGlfw_NewFrame();
   ImGui::NewFrame();
+  show_node_starter();
+  if (tf) {
+    std::thread(&Projector::launchTfNode, this).detach();
+    tf = false;
+  }
   show_projected_image();
   show_layer_manager();
   show_element_creator();
   show_debug_borders();
+
+  if (!goalQueue.empty()) {
+    // Get the next goal from the queue
+    integration::SetSafetyBorderProjectionGoal currentGoal = goalQueue.front();
+
+    ROS_INFO("Sending goal: %s", currentGoal.request_id.c_str());
+    client_border.sendGoal(currentGoal);
+    ros::Duration(0.2).sleep();
+    goalQueue.pop();
+  }
+
   show_debug_buttons();
+  if (!buttonQueue.empty()) {
+    // Get the next goal from the queue
+    integration::SetVirtualButtonsProjectionGoal currentGoal =
+        buttonQueue.front();
+
+    ROS_INFO("Sending goal: %s", currentGoal.request_id.c_str());
+    project_client.sendGoal(currentGoal);
+    ros::Duration(0.2).sleep();
+    buttonQueue.pop();
+  }
+
   show_debug_hands();
   show_debug_object_detection();
-  // Render ImGui
+  show_moving_table();
+  if (scan) {
+    integration::ListStaticBordersStatus srv;
+
+    std::thread([this, srv]() mutable {
+      if (client_detection.call(srv)) {
+        ROS_INFO("Asynchronous response received");
+      } else {
+        ROS_ERROR("Failed to call service");
+      }
+    }).detach();
+
+    scan = false;
+  }
+
   ImGui::Render();
   glClear(GL_COLOR_BUFFER_BIT);
   ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
-  // Swap OpenGL buffers
   glfwSwapBuffers(window);
   glfwPollEvents();
 }
@@ -517,4 +686,28 @@ void Projector::updateDisplayAreas(
 void Projector::project_image() {
   cv::imshow(OPENCV_WINDOW, combined);
   cv::waitKey(1);
+}
+
+void Projector::handDetectionCallback(
+    const tuni_whitegoods_msgs::HandsState::ConstPtr &msg) {
+  ros::Time current_msg_time = ros::Time::now();
+  if (!last_msg_time_.isZero()) {
+    ros::Duration interval = current_msg_time - last_msg_time_;
+    interval_in_seconds_ = interval.toSec();
+  }
+  last_msg_time_ = current_msg_time;
+
+  hand_detection_counter++;
+}
+
+void Projector::tableDetectionCallback(
+    const tuni_whitegoods_msgs::DynamicArea::ConstPtr &msg) {
+  ros::Time current_msg_time = ros::Time::now();
+  if (!last_table_msg_time_.isZero()) {
+    ros::Duration interval = current_msg_time - last_table_msg_time_;
+    table_interval_in_seconds_ = interval.toSec();
+  }
+  last_table_msg_time_ = current_msg_time;
+
+  table_detection_counter++;
 }

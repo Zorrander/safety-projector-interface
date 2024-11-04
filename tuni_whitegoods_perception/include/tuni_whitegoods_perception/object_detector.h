@@ -7,6 +7,7 @@
 #include <image_transport/image_transport.h>
 #include <ros/ros.h>
 #include <sensor_msgs/Image.h>
+#include <std_msgs/Int32.h>
 
 #include <memory>
 #include <opencv2/highgui/highgui.hpp>
@@ -14,15 +15,23 @@
 #include <opencv2/opencv.hpp>
 #include <vector>
 
-class StaticBorder;  // Forward declaration for StaticBorder class
-
 class ObjectDetector {
  public:
-  ObjectDetector();  // Constructor
+  ObjectDetector(ros::NodeHandle* nh);
   bool scan(cv::Mat depth_image, cv::Mat baseline);
 
  private:
   ros::NodeHandle* nh_;
+  ros::Subscriber threshold_sub;
+  ros::Subscriber non_zero_threshold_sub;
+  ros::Subscriber noise_reduction_sub;
+  void thresholdCallback(const std_msgs::Int32::ConstPtr& msg);
+  void nonZeroThresholdCallback(const std_msgs::Int32::ConstPtr& msg);
+  void noiseReductionCallback(const std_msgs::Int32::ConstPtr& msg);
+
+  int threshold_value;
+  int non_zero_count_threshold;
+  int kernel_size;
 };
 
 #endif  // OBJECT_DETECTOR_H

@@ -21,7 +21,7 @@ class HandTracker(object):
     def __init__(self, mode=False, maxHands=2, detectionCon=0.5, modelComplexity=0, trackCon=0.5):
         rospy.init_node('hand_tracking')
         self.pub_hands_poi = rospy.Publisher(
-            "/odin/internal/hand_detection", HandsState, queue_size=1)
+            "/odin/internal/hand_detection", HandsState, queue_size=5)
 
         self.mode = mode
         self.maxHands = maxHands
