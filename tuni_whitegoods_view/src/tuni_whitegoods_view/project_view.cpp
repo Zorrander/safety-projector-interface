@@ -5,6 +5,9 @@
 #include <std_msgs/Int32.h>
 #include <tf2/LinearMath/Quaternion.h>
 
+#include <Eigen/Dense>
+#include <boost/algorithm/clamp.hpp>
+#include <cmath>
 #include <cstdlib>
 #include <thread>
 
@@ -158,6 +161,34 @@ GLuint Projector::cvMatToTexture(const cv::Mat &mat) {
   return textureID;
 }
 
+bool ToggleButton(const char *label, bool *v) {
+  // Change color based on toggle state
+  if (*v) {
+    ImGui::PushStyleColor(ImGuiCol_Button,
+                          ImVec4(0.0f, 0.6f, 0.0f, 1.0f));  // Green when true
+    ImGui::PushStyleColor(
+        ImGuiCol_ButtonHovered,
+        ImVec4(0.0f, 0.8f, 0.0f, 1.0f));  // Lighter green when hovered
+  } else {
+    ImGui::PushStyleColor(ImGuiCol_Button,
+                          ImVec4(0.6f, 0.0f, 0.0f, 1.0f));  // Red when false
+    ImGui::PushStyleColor(
+        ImGuiCol_ButtonHovered,
+        ImVec4(0.8f, 0.0f, 0.0f, 1.0f));  // Lighter red when hovered
+  }
+
+  // Create button and check if clicked
+  bool clicked = ImGui::Button(label);
+  if (clicked) {
+    *v = !*v;  // Toggle the value
+  }
+
+  // Pop the style color changes
+  ImGui::PopStyleColor(2);
+
+  return clicked;
+}
+
 void Projector::show_debug_borders() {
   ImGui::Begin("Borders");
   if (ImGui::BeginTabBar("BorderTabBar")) {
@@ -240,9 +271,16 @@ void Projector::show_debug_buttons() {
       zone->fetchButtons(buttons);
       for (auto &button : buttons) {
         if (ImGui::BeginTabItem(button->get_name().c_str())) {
-          ImGui::TextUnformatted(
-              (std::string("This is the content of ") + button->get_name())
-                  .c_str());
+          ToggleButton("Inverse text rotation", &button->flipTextRotation);
+          ImGui::SliderFloat("x_ratio", &button->x_ratio, 0, 1.0);
+          ImGui::SliderFloat("y_ratio", &button->y_ratio, 0, 1.0);
+          ImGui::SliderFloat("Button radius", &button->radius, 0, 100.0);
+          ImGui::SliderFloat("Font size", &button->fontScale, 0, 5.0);
+
+          ImGui::SliderInt("Origin text X", &button->origin_text_x, 0, 100);
+          ImGui::SliderInt("Origin text Y", &button->origin_text_y, 0, 100);
+
+          ImGui::SliderInt("Thickness", &button->thickness, 0, 10);
           ImGui::EndTabItem();
         }
       }
@@ -311,18 +349,50 @@ void Projector::show_projected_image() {
 
 void Projector::show_layer_manager() {
   ImGui::Begin("Layer Manager");
-  ImGui::Text("Set visibility of each layer.");
+  if (ImGui::BeginTabBar("LayerTabBar")) {
+    for (auto it = layers.begin(); it != layers.end(); ++it) {
+      const std::string &name = it->first;
+      Layer &layer = it->second;
+      for (auto &zone : display_areas) {
+        if (zone->name == name) {
+          if (ImGui::BeginTabItem(name.c_str())) {
+            ImGui::Checkbox("visible", &layer.visible);
 
-  for (auto it = layers.begin(); it != layers.end(); ++it) {
-    const std::string &name = it->first;
-    Layer &layer = it->second;
+            ImGui::PushItemWidth(300);
+            ImGui::SliderInt("Top left x", &zone->projector_frame_area[0].x, 1,
+                             projector_resolution[0]);
+            ImGui::SameLine();
+            ImGui::SliderInt("Top left y", &zone->projector_frame_area[0].y, 1,
+                             projector_resolution[1]);
 
-    ImGui::BeginChild(("LayerCheckboxFrame##" + name).c_str(), ImVec2(0, 30),
-                      true, ImGuiWindowFlags_NoTitleBar);
-    ImGui::Checkbox(name.c_str(), &layer.visible);
-    ImGui::EndChild();
+            ImGui::SliderInt("Top right x", &zone->projector_frame_area[1].x, 1,
+                             projector_resolution[0]);
+            ImGui::SameLine();
+            ImGui::SliderInt("Top right y", &zone->projector_frame_area[1].y, 1,
+                             projector_resolution[1]);
+
+            ImGui::SliderInt("Bottom right x", &zone->projector_frame_area[2].x,
+                             1, projector_resolution[0]);
+            ImGui::SameLine();
+            ImGui::SliderInt("Bottom right y", &zone->projector_frame_area[2].y,
+                             1, projector_resolution[1]);
+
+            ImGui::SliderInt("Bottom left x", &zone->projector_frame_area[3].x,
+                             1, projector_resolution[0]);
+            ImGui::SameLine();
+            ImGui::SliderInt("Bottom left y", &zone->projector_frame_area[3].y,
+                             1, projector_resolution[1]);
+
+            ImGui::PopItemWidth();
+            ImGui::EndTabItem();
+
+            break;
+          }
+        }
+      }
+    }
+    ImGui::EndTabBar();
   }
-
   ImGui::End();
 }
 
@@ -619,6 +689,107 @@ void Projector::updateButtons(
   for (auto &button : buttons) {
     cv::circle(*layer, button->center_projected_point, button->radius,
                button->btn_color, -1);
+    int fontFace = cv::FONT_HERSHEY_SIMPLEX;
+
+    cv::Size textSize =
+        cv::getTextSize(button->text, fontFace, button->fontScale,
+                        button->thickness, &button->baseline);
+
+    cv::Mat textImage = cv::Mat::zeros(textSize.height + button->baseline,
+                                       textSize.width, CV_8UC3);
+    cv::putText(textImage, button->text,
+                cv::Point(button->origin_text_x, button->origin_text_y),
+                fontFace, button->fontScale, button->txt_color,
+                button->thickness);
+
+    // rectangle around that to see what the projection area would be if
+    // straight
+    int top_left_straight_table_x, top_left_straight_table_y,
+        top_right_straight_table_x, top_right_straight_table_y;
+
+    top_left_straight_table_x =
+        button->center_projected_point.x - width_moving_table / 2;
+    top_left_straight_table_y =
+        button->center_projected_point.x - height_moving_table / 2;
+    top_right_straight_table_x =
+        button->center_projected_point.x + width_moving_table / 2;
+    top_right_straight_table_y =
+        button->center_projected_point.x - height_moving_table / 2;
+
+    Eigen::Vector2d point1(top_left_straight_table_x,
+                           top_left_straight_table_y);
+    Eigen::Vector2d point2(top_right_straight_table_x,
+                           top_right_straight_table_y);
+    Eigen::Vector2d point3(top_left_moving_table_x, top_left_moving_table_y);
+    Eigen::Vector2d point4(top_right_moving_table_x, top_right_moving_table_y);
+
+    // Calculate rotation angle
+
+    Eigen::Vector2d direction1 = point2 - point1;
+    Eigen::Vector2d direction2 = point4 - point3;
+
+    Eigen::Vector2d normLine1 = direction1.normalized();
+    Eigen::Vector2d normLine2 = direction2.normalized();
+
+    double cosTheta = normLine1.dot(normLine2);
+    cosTheta = boost::algorithm::clamp(cosTheta, -1.0, 1.0);
+
+    double angleRadians = std::acos(cosTheta);
+    double angleDegrees = angleRadians * (180.0 / M_PI);
+
+    // Determine the direction of rotation using the cross product
+    double crossProductZ =
+        normLine1.x() * normLine2.y() - normLine1.y() * normLine2.x();
+
+    if (button->flipTextRotation) {
+      if (crossProductZ > 0) {
+        angleDegrees = -angleDegrees;
+      }
+    } else {
+      if (crossProductZ < 0) {
+        angleDegrees = -angleDegrees;
+      }
+    }
+    // Compute rotation matrix
+    // Estimate the bounding box for the rotated text
+    int padding = static_cast<int>(std::sqrt(
+        textSize.width * textSize.width + textSize.height * textSize.height));
+
+    cv::Mat paddedTextImage = cv::Mat::zeros(
+        textImage.rows + padding, textImage.cols + padding, textImage.type());
+
+    // Center the original text in the new padded image
+    textImage.copyTo(paddedTextImage(
+        cv::Rect(padding / 2, padding / 2, textImage.cols, textImage.rows)));
+
+    // Update the rotation matrix to rotate around the center of the new
+    // padded image
+    cv::Point2f center(paddedTextImage.cols / 2.0f,
+                       paddedTextImage.rows / 2.0f);
+    cv::Mat rotationMatrix = cv::getRotationMatrix2D(center, angleDegrees, 1.0);
+
+    cv::Mat rotatedText;
+    cv::warpAffine(paddedTextImage, rotatedText, rotationMatrix,
+                   paddedTextImage.size(), cv::INTER_LANCZOS4,
+                   cv::BORDER_TRANSPARENT);
+
+    // Calculate the new ROI based on the expanded rotated text dimensions
+    cv::Rect roi(button->center_projected_point.x - rotatedText.cols / 2,
+                 button->center_projected_point.y - rotatedText.rows / 2,
+                 rotatedText.cols, rotatedText.rows);
+
+    // Ensure ROI stays within the bounds of `layer`
+    int x = std::max(0, roi.x);
+    int y = std::max(0, roi.y);
+    int width = std::min(roi.width, layer->cols - x);
+    int height = std::min(roi.height, layer->rows - y);
+
+    cv::Rect validRoi(x, y, width, height);
+
+    // Copy the rotated text into the layer, using the valid ROI to handle
+    // boundaries
+    rotatedText(cv::Rect(0, 0, validRoi.width, validRoi.height))
+        .copyTo((*layer)(validRoi), rotatedText);
   }
 }
 
@@ -710,4 +881,19 @@ void Projector::tableDetectionCallback(
   last_table_msg_time_ = current_msg_time;
 
   table_detection_counter++;
+
+  top_left_moving_table_x = msg->top_left[0];
+  top_left_moving_table_y = msg->top_left[1];
+
+  top_right_moving_table_x = msg->top_right[0];
+  top_right_moving_table_y = msg->top_right[1];
+
+  bottom_right_moving_table_x = msg->bottom_right[0];
+  bottom_right_moving_table_y = msg->bottom_right[1];
+
+  bottom_left_moving_table_x = msg->bottom_left[0];
+  bottom_left_moving_table_y = msg->bottom_left[1];
+
+  height_moving_table = top_left_moving_table_y - bottom_left_moving_table_y;
+  width_moving_table = top_right_moving_table_x - top_left_moving_table_x;
 }

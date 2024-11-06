@@ -13,19 +13,26 @@
 class Button {
  private:
   std::string name;
-  std::string text;
+
   std::string id;
   cv::Mat btn_img;
   bool left_hand_press, right_hand_press, button_pressed;
   bool button_already_pressed;
 
  public:
+  std::string text;
+  bool flipTextRotation;
   float x_ratio;
   float y_ratio;
+  int origin_text_x;
+  int origin_text_y;
   std_msgs::ColorRGBA ros_btn_color, ros_text_color;
   cv::Scalar btn_color, txt_color;
   cv::Scalar base_btn_color;
   float radius;
+  float fontScale;
+  int thickness;
+  int baseline;
   Button(ros::NodeHandle* nh, std::string request_id, std::string name,
          std::string text, std_msgs::ColorRGBA button_color,
          std_msgs::ColorRGBA text_color, float radius);

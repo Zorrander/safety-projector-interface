@@ -232,13 +232,35 @@ bool DisplayArea::change_button_color(std::string resource_id,
 geometry_msgs::Pose DisplayArea::compute_absolute_world_position(
     geometry_msgs::Pose center) {
   geometry_msgs::Pose result;
-  result.position.x =
-      camera_frame_area[0].x +
-      (camera_frame_area[1].x - camera_frame_area[0].x) * center.position.x;
-  result.position.y =
-      camera_frame_area[0].y +
-      (camera_frame_area[3].y - camera_frame_area[0].y) * center.position.y;
+
+  int centerX = (camera_frame_area[0].x + camera_frame_area[1].x +
+                 camera_frame_area[2].x + camera_frame_area[3].x) /
+                4;
+  int centerY = (camera_frame_area[0].y + camera_frame_area[1].y +
+                 camera_frame_area[2].y + camera_frame_area[3].y) /
+                4;
+
+  // Determine if the frame is portrait or landscape by checking the differences
+  // in x and y distances
+  bool isPortrait = (std::abs(camera_frame_area[0].y - camera_frame_area[1].y) >
+                     std::abs(camera_frame_area[0].x - camera_frame_area[1].x));
+
+  int width;
+  int height;
+
+  // Map normalized coordinates back to absolute position
+  if (isPortrait) {
+    width = camera_frame_area[2].x - camera_frame_area[0].x;
+    height = camera_frame_area[1].y - camera_frame_area[0].y;
+  } else {
+    width = camera_frame_area[1].x - camera_frame_area[0].x;
+    height = camera_frame_area[3].y - camera_frame_area[0].y;
+  }
+  result.position.x = centerX + (center.position.x - 0.5) * width;
+  // Y direction:
+  result.position.y = centerY + (center.position.y - 0.5) * height;
   result.position.z = center.position.z;
+
   return result;
 }
 

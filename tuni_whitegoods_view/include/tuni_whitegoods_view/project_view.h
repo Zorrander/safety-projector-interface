@@ -72,6 +72,13 @@ class Projector : public View {
   ros::Publisher non_zero_threshold_pub;
   ros::Publisher noise_recuction_pub;
 
+  float top_left_moving_table_x, top_left_moving_table_y,
+      top_right_moving_table_x, top_right_moving_table_y,
+      bottom_left_moving_table_x, bottom_left_moving_table_y,
+      bottom_right_moving_table_x, bottom_right_moving_table_y;
+
+  int height_moving_table, width_moving_table;
+
   void initializeGLFWandOpenGL();
   void initializeImGui(GLFWwindow* window);
   void update_gui();

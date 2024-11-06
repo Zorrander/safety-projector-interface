@@ -26,6 +26,7 @@ find_package(OpenCV 4 REQUIRED)
 find_package(OpenGL REQUIRED)
 find_package(glfw3 3.3 REQUIRED)
 find_package(GLEW REQUIRED)
+find_package(Eigen3 REQUIRED)
 
 include(FetchContent)
 FetchContent_Declare(imgui
@@ -95,6 +96,7 @@ target_link_libraries(view
   OpenGL::GL 
   GLEW::GLEW
   imgui
+  Eigen3::Eigen
 )
 
 add_dependencies(view ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})

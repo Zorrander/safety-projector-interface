@@ -7,7 +7,13 @@ Button::Button(ros::NodeHandle* nh, std::string request_id, std::string name,
   set_button_color(button_color);
   set_text_color(text_color);
   button_already_pressed = false;
+  flipTextRotation = false;
   ros::param::get("camera_resolution", camera_resolution);
+  fontScale = 0.5;
+  thickness = 2;
+  baseline = 0;
+  origin_text_x = 0;
+  origin_text_y = 40;
 }
 
 cv::Mat Button::draw() {
@@ -16,7 +22,7 @@ cv::Mat Button::draw() {
   cv::circle(btn_img, center_cam_point, radius, btn_color, -1);
 
   int fontFace = cv::FONT_HERSHEY_SIMPLEX;
-  double fontScale = 0.5;
+
   int thickness = 2;
 
   // Calculate the size of the text box
