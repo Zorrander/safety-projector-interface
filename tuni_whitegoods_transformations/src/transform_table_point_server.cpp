@@ -1,5 +1,7 @@
 #include <ros/ros.h>
 
+#include <Eigen/Dense>
+#include <boost/algorithm/clamp.hpp>
 #include <opencv2/opencv.hpp>
 
 #include "tuni_whitegoods_msgs/TransformMovingTable.h"
@@ -57,25 +59,95 @@ class TransformTablePointServer {
     cv::perspectiveTransform(original_corners, transformed_corners,
                              moving_table_homography);
 
-    res.table_corners.top_left[0] =
-        static_cast<double>(transformed_corners[0].x);
-    res.table_corners.top_left[1] =
-        static_cast<double>(transformed_corners[0].y);
+    // Calculate the center
+    double centerX = (transformed_corners[0].x + transformed_corners[1].x +
+                      transformed_corners[2].x + transformed_corners[3].x) /
+                     4.0;
+    double centerY = (transformed_corners[0].y + transformed_corners[1].y +
+                      transformed_corners[2].y + transformed_corners[3].y) /
+                     4.0;
 
-    res.table_corners.top_right[0] =
-        static_cast<double>(transformed_corners[1].x);
-    res.table_corners.top_right[1] =
-        static_cast<double>(transformed_corners[1].y);
+    cv::Point2f center(centerX, centerY);
 
-    res.table_corners.bottom_right[0] =
-        static_cast<double>(transformed_corners[2].x);
-    res.table_corners.bottom_right[1] =
-        static_cast<double>(transformed_corners[2].y);
+    // Calculate side lengths
+    double width1 = std::hypot(
+        transformed_corners[1].x - transformed_corners[0].x,
+        transformed_corners[1].y - transformed_corners[0].y);  // Top side
+    double width2 = std::hypot(
+        transformed_corners[2].x - transformed_corners[3].x,
+        transformed_corners[2].y - transformed_corners[3].y);  // Bottom side
+    double height1 = std::hypot(
+        transformed_corners[3].x - transformed_corners[0].x,
+        transformed_corners[3].y - transformed_corners[0].y);  // Left side
+    double height2 = std::hypot(
+        transformed_corners[2].x - transformed_corners[1].x,
+        transformed_corners[2].y - transformed_corners[1].y);  // Right side
 
-    res.table_corners.bottom_left[0] =
-        static_cast<double>(transformed_corners[3].x);
-    res.table_corners.bottom_left[1] =
-        static_cast<double>(transformed_corners[3].y);
+    // Find maximum width and height
+    double max_width = std::max(width1, width2);
+    double max_height = std::max(height1, height2);
+
+    // Determine if it's portrait or landscape
+    bool isPortrait = (max_height > max_width);
+
+    if (isPortrait) {
+      // Swap if needed so that max_height is the vertical and max_width is
+      // horizontal
+      std::swap(max_width, max_height);
+    }
+    cv::Size2f size(max_width, max_height);
+
+    int top_left_straight_table_x, top_left_straight_table_y,
+        top_right_straight_table_x, top_right_straight_table_y;
+
+    top_left_straight_table_x = centerX - max_width / 2;
+    top_left_straight_table_y = centerY - max_height / 2;
+    top_right_straight_table_x = centerX + max_width / 2;
+    top_right_straight_table_y = centerY - max_height / 2;
+
+    Eigen::Vector2d point1(top_left_straight_table_x,
+                           top_left_straight_table_y);
+    Eigen::Vector2d point2(top_right_straight_table_x,
+                           top_right_straight_table_y);
+    Eigen::Vector2d point3(transformed_corners[0].x, transformed_corners[0].y);
+    Eigen::Vector2d point4(transformed_corners[1].x, transformed_corners[1].y);
+
+    // Calculate rotation angle
+
+    Eigen::Vector2d direction1 = point2 - point1;
+    Eigen::Vector2d direction2 = point4 - point3;
+
+    Eigen::Vector2d normLine1 = direction1.normalized();
+    Eigen::Vector2d normLine2 = direction2.normalized();
+
+    double cosTheta = normLine1.dot(normLine2);
+    cosTheta = boost::algorithm::clamp(cosTheta, -1.0, 1.0);
+
+    double angleRadians = std::acos(cosTheta);
+    double angleDegrees = angleRadians * (180.0 / M_PI);
+
+    double crossProductZ =
+        normLine1.x() * normLine2.y() - normLine1.y() * normLine2.x();
+    if (crossProductZ < 0) {
+      angleDegrees = -angleDegrees;
+    }
+
+    cv::RotatedRect movingTable(center, size, angleDegrees);
+
+    cv::Point2f vertices[4];
+    movingTable.points(vertices);
+
+    res.table_corners.top_left[0] = static_cast<double>(vertices[0].x);
+    res.table_corners.top_left[1] = static_cast<double>(vertices[0].y);
+
+    res.table_corners.top_right[0] = static_cast<double>(vertices[1].x);
+    res.table_corners.top_right[1] = static_cast<double>(vertices[1].y);
+
+    res.table_corners.bottom_right[0] = static_cast<double>(vertices[2].x);
+    res.table_corners.bottom_right[1] = static_cast<double>(vertices[2].y);
+
+    res.table_corners.bottom_left[0] = static_cast<double>(vertices[3].x);
+    res.table_corners.bottom_left[1] = static_cast<double>(vertices[3].y);
 
     return true;
   }

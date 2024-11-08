@@ -71,16 +71,11 @@ class HandTracker(object):
                 Hand = self.results.multi_hand_landmarks[i]
                 h, w, _ = cv_img.shape
                 for id, lm in enumerate(Hand.landmark):
-                    cx, cy = int(lm.x*w), int(lm.y*h)
+                    cx = int(min(max(lm.x * w, 0), w - 1))
+                    cy = int(min(max(lm.y * h, 0), h - 1))
                     lmlist.append([id, cx, cy])
                     if id == 12:
                         msg_hands.name.append(handType.lower())
-                        if draw:
-                            color = (0, 255, 0) if handType == 'Right' else (
-                                255, 0, 0)
-                            # Draw a circle at the fingertip
-                            cv2.circle(cv_img, (cx, cy), 10, color, cv2.FILLED)
-                            cv2.putText(cv_img, f"{handType} Hand", (cx + 10, cy - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
                         tmp_pos = Point()
                         tmp_pos.x = cx
                         tmp_pos.y = cy

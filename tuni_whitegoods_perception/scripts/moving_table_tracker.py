@@ -2,7 +2,7 @@
 
 import cv2
 import rospy
-
+import math
 import message_filters
 import numpy as np
 from cv_bridge import CvBridge
@@ -52,6 +52,8 @@ class TableTracker(object):
             'transform_pixel_to_3D', TransformPixelTo3D)
         self.in_point_stamped = PoseStamped()
         self.in_point_stamped.header.frame_id = "rgb_camera_link"
+        self.previous_center_x = 0
+        self.previous_center_y = 0
 
    # subscriber that get the RGB image
     def callback_image(self, msg, depth_msg):
@@ -65,6 +67,15 @@ class TableTracker(object):
         self.in_point_stamped.pose.position.x = coordinates.x
         self.in_point_stamped.pose.position.y = coordinates.y
         self.in_point_stamped.pose.position.z = coordinates.z
+
+    def has_moved(self, center_x, center_y):
+        result = False
+        dx = center_x - self.previous_center_x
+        dy = center_y - self.previous_center_y
+        distance = math.sqrt(dx * dx + dy * dy)
+        if (distance > 5):
+            result = True
+        return result
 
     # method called when the display is dynamic like on a moving table.
     # it has to update the transform so it always fit on the table
@@ -82,21 +93,28 @@ class TableTracker(object):
             bottomRight = (int(bottomRight[0]), int(bottomRight[1]))
             bottomLeft = (int(bottomLeft[0]), int(bottomLeft[1]))
             topLeft = (int(topLeft[0]), int(topLeft[1]))
+            
+            center_x =  (topRight[0] + bottomRight[0] + bottomLeft[0] + topLeft[0]) / 4
+            center_y =  (topRight[1] + bottomRight[1] + bottomLeft[1] + topLeft[1]) / 4
 
-            self.zone_msg.top_left = [topLeft[0],
-                                         topLeft[1]]
-            self.zone_msg.top_right = [topRight[0],
-                                      topRight[1]]
-            self.zone_msg.bottom_right = [bottomRight[0],
-                                       bottomRight[1]]
-            self.zone_msg.bottom_left = [bottomLeft[0],
-                                          bottomLeft[1]]
+            if self.has_moved(center_x, center_y) or self.previous_center_x is None or self.previous_center_y is None:
+                self.zone_msg.top_left = [topLeft[0],
+                                             topLeft[1]]
+                self.zone_msg.top_right = [topRight[0],
+                                          topRight[1]]
+                self.zone_msg.bottom_right = [bottomRight[0],
+                                           bottomRight[1]]
+                self.zone_msg.bottom_left = [bottomLeft[0],
+                                              bottomLeft[1]]
 
-            transformation = self.transform_moving_table(self.zone_msg)
-            matrix_msg = DynamicArea()
-            matrix_msg = transformation.table_corners
-            self.zone_pub.publish(matrix_msg)
-
+                transformation = self.transform_moving_table(self.zone_msg)
+                matrix_msg = DynamicArea()
+                matrix_msg = transformation.table_corners
+                self.zone_pub.publish(matrix_msg)
+            
+            self.previous_center_x = center_x
+            self.previous_center_y = center_y
+            
 
 if __name__ == '__main__':
     table_tracker = TableTracker()

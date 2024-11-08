@@ -102,7 +102,10 @@ Projector::Projector(ros::NodeHandle *nh)
   ROS_INFO("ProjectorView running");
 }
 
-Projector::~Projector() { cv::destroyWindow(OPENCV_WINDOW); }
+Projector::~Projector() {
+  cv::destroyWindow(OPENCV_WINDOW);
+  ImGui::DestroyContext();
+}
 
 void Projector::init(std::vector<std::shared_ptr<DisplayArea>> zones) {
   display_areas = zones;
@@ -632,7 +635,7 @@ void Projector::update_gui() {
     std::thread(&Projector::launchTfNode, this).detach();
     tf = false;
   }
-  show_projected_image();
+  // show_projected_image();
   show_layer_manager();
   show_element_creator();
   show_debug_borders();
@@ -710,11 +713,11 @@ void Projector::updateButtons(
     top_left_straight_table_x =
         button->center_projected_point.x - width_moving_table / 2;
     top_left_straight_table_y =
-        button->center_projected_point.x - height_moving_table / 2;
+        button->center_projected_point.y - height_moving_table / 2;
     top_right_straight_table_x =
         button->center_projected_point.x + width_moving_table / 2;
     top_right_straight_table_y =
-        button->center_projected_point.x - height_moving_table / 2;
+        button->center_projected_point.y - height_moving_table / 2;
 
     Eigen::Vector2d point1(top_left_straight_table_x,
                            top_left_straight_table_y);
@@ -843,6 +846,7 @@ void Projector::updateDisplayAreas(
       updateBorders(borders, layers[zone->name].mat);
     }
   }
+
   combined = layers["background"].mat->clone();
   for (auto it = layers.begin(); it != layers.end(); ++it) {
     if (it->second.visible) {

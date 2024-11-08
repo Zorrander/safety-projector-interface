@@ -15,6 +15,7 @@ find_package(catkin REQUIRED
 
 find_package(OpenCV 4 REQUIRED)
 find_package(yaml-cpp REQUIRED)
+find_package(Eigen3 REQUIRED)
 
 catkin_package(
    CATKIN_DEPENDS roscpp 
@@ -54,5 +55,6 @@ add_executable(transform_table_point_server src/transform_table_point_server.cpp
 target_link_libraries(transform_table_point_server 
       ${catkin_LIBRARIES}
       ${OpenCV_LIBRARIES}
+      Eigen3::Eigen
 )
 add_dependencies(transform_table_point_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
