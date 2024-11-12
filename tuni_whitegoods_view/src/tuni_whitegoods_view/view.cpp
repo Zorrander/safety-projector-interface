@@ -6,6 +6,10 @@ void View::init(std::vector<std::shared_ptr<DisplayArea>> zones) {
   ROS_INFO("No view to initalize");
 }
 
+void View::moveWindow() {
+  ROS_INFO("No view to update");
+}
+
 void View::updateButtons(const std::vector<std::shared_ptr<Button>>& buttons,
                          std::shared_ptr<cv::Mat> layer) {
   ROS_INFO("No view to update");

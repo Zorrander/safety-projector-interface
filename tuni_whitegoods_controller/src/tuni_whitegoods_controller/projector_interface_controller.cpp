@@ -28,12 +28,16 @@ ProjectorInterfaceController::ProjectorInterfaceController(ros::NodeHandle *nh)
       "list_static_border_status",
       &ProjectorInterfaceController::getBordersService, this);
 
-  projector_view = std::make_shared<Projector>(nh_);
+  projector_view = std::make_shared<Projector>(nh_, 1);
+  projector_view->window_name = "Projector 1";
+  second_projector_view = std::make_shared<Projector>(nh_, 2);
+  projector_view->window_name = "Projector 2";
   camera_view = std::make_shared<CameraView>(nh_);
   robot_view = std::make_shared<RobotView>(nh_);
 
   // Initialize views
   views.push_back(projector_view);
+  views.push_back(second_projector_view);
   views.push_back(camera_view);
   views.push_back(robot_view);
 
@@ -84,44 +88,44 @@ void ProjectorInterfaceController::init() {
   YAML::Node display_areas_calibration =
       YAML::LoadFile(display_areas_calibration_file);
 
-  ros::Duration(2.0).sleep();
+  ros::Duration(1.0).sleep();
 
-  for (YAML::const_iterator it = display_areas_calibration.begin();
-       it != display_areas_calibration.end(); ++it) {
-    std::string area_name = it->first.as<std::string>();
-    YAML::Node area_node = it->second;
+  for (const auto& projector : display_areas_calibration) {
+    int projector_id = std::stoi(projector.first.as<std::string>()); 
 
-    std::vector<geometry_msgs::Point> points;
-    geometry_msgs::Point tl;
-    geometry_msgs::Point tr;
-    geometry_msgs::Point br;
-    geometry_msgs::Point bl;
+    for (const auto& area : projector.second) {
+      std::string area_name = area.first.as<std::string>();
+      YAML::Node area_node = area.second;
 
-    tl.x = area_node["top_left"]["x"].as<double>();
-    tl.y = area_node["top_left"]["y"].as<double>();
-    tl.z = area_node["top_left"]["z"].as<double>() / 1000.0;
+      std::vector<geometry_msgs::Point> points;
+      geometry_msgs::Point tl;
+      geometry_msgs::Point tr;
+      geometry_msgs::Point br;
+      geometry_msgs::Point bl;
 
-    tr.x = area_node["top_right"]["x"].as<double>();
-    tr.y = area_node["top_right"]["y"].as<double>();
-    tr.z = area_node["top_right"]["z"].as<double>() / 1000.0;
+      tl.x = area_node["top_left"]["x"].as<double>();
+      tl.y = area_node["top_left"]["y"].as<double>();
+      tl.z = area_node["top_left"]["z"].as<double>() / 1000.0;
 
-    br.x = area_node["bottom_right"]["x"].as<double>();
-    br.y = area_node["bottom_right"]["y"].as<double>();
-    br.z = area_node["bottom_right"]["z"].as<double>() / 1000.0;
+      tr.x = area_node["top_right"]["x"].as<double>();
+      tr.y = area_node["top_right"]["y"].as<double>();
+      tr.z = area_node["top_right"]["z"].as<double>() / 1000.0;
 
-    bl.x = area_node["bottom_left"]["x"].as<double>();
-    bl.y = area_node["bottom_left"]["y"].as<double>();
-    bl.z = area_node["bottom_left"]["z"].as<double>() / 1000.0;
+      br.x = area_node["bottom_right"]["x"].as<double>();
+      br.y = area_node["bottom_right"]["y"].as<double>();
+      br.z = area_node["bottom_right"]["z"].as<double>() / 1000.0;
 
-    points.push_back(tl);
-    points.push_back(tr);
-    points.push_back(br);
-    points.push_back(bl);
+      bl.x = area_node["bottom_left"]["x"].as<double>();
+      bl.y = area_node["bottom_left"]["y"].as<double>();
+      bl.z = area_node["bottom_left"]["z"].as<double>() / 1000.0;
 
-    std::shared_ptr<DisplayArea> display_area =
-        std::make_shared<DisplayArea>(nh_, area_name);
-
-    model_->add_zone(display_area, points);
+      points.push_back(tl);
+      points.push_back(tr);
+      points.push_back(br);
+      points.push_back(bl);
+      ROS_INFO("Projector %d given %s", projector_id, area_name.c_str());
+      model_->add_zone(std::make_shared<DisplayArea>(nh_, area_name, projector_id), points);
+    }
   }
 
   ROS_INFO("Registered display areas");
@@ -129,7 +133,7 @@ void ProjectorInterfaceController::init() {
   ros::Duration(1.0).sleep();
 
   // Add the camera field of view (for visualization only)
-
+  /*
   std::vector<geometry_msgs::Point> camera_corners;
   geometry_msgs::Point camera_tl;
   geometry_msgs::Point camera_tr;
@@ -216,12 +220,17 @@ void ProjectorInterfaceController::init() {
   model_->add_zone(projector_area, projector_corners);
 
   ROS_INFO("Registered projection area");
+  */
+  for (auto &view : views) {
+    view->init(model_->getDisplayAreas());
+  }
 
   ros::Duration(1.0).sleep();
 
   for (auto &view : views) {
-    view->init(model_->getDisplayAreas());
+    view->updateDisplayAreas(model_->getDisplayAreas());
   }
+
   init_done = true;
 }
 
@@ -287,14 +296,15 @@ void ProjectorInterfaceController::handTrackerCallback(
 
 void ProjectorInterfaceController::modelUpdateCallback(
     const std_msgs::Empty &msg) {
-  if (init_done) {
+  ROS_INFO("modelUpdateCallback");
+  //if (init_done) {
     for (auto &view : views) {
       // view->updateButtons(model_->getButtons());
       // view->updateBorders(model_->getBorders());
       // view->updateHands(model_->getHands());
       view->updateDisplayAreas(model_->getDisplayAreas());
     }
-  }
+  //}
 }
 
 /**

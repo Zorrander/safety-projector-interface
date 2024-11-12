@@ -15,6 +15,9 @@
 class View {
  public:
   View();
+  int shift;
+  std::string window_name;
+  virtual void moveWindow();
   virtual void init(std::vector<std::shared_ptr<DisplayArea>> zones);
   virtual void updateButtons(
       const std::vector<std::shared_ptr<Button>>& buttons,

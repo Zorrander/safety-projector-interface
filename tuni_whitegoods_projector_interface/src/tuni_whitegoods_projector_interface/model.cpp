@@ -172,8 +172,10 @@ void ProjectorInterfaceModel::addStaticBorder(
     std_msgs::ColorRGBA b_color, bool filling, int thic, ros::Duration life,
     bool track) {
   ROS_INFO("adding border");
+  ROS_INFO("%s", z.c_str());
   for (auto &zone : zones) {
-    ROS_INFO("%s", z.c_str());
+    ROS_INFO("%s", zone->name.c_str());
+
     if (zone->name == z) {
       std::shared_ptr<StaticBorder> sb = std::make_shared<StaticBorder>(
           nh_, r_id, pos_row, pos_col, bord, b_topic, b_color, filling, thic,

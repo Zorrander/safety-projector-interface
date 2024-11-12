@@ -5,8 +5,8 @@
 
 #include <cmath>
 
-DisplayArea::DisplayArea(ros::NodeHandle *nh, std::string name)
-    : nh_(nh), name(name), margin(100), inner_margin(50) {
+DisplayArea::DisplayArea(ros::NodeHandle *nh, std::string name, int projector_id)
+    : nh_(nh), name(name), margin(30), inner_margin(50), projector_id_(projector_id) {
   pub_border_violation = nh->advertise<integration::SafetyBorderViolation>(
       "/execution/projector_interface/integration/topics/"
       "safety_border_violation",
@@ -30,11 +30,11 @@ void DisplayArea::create_border_layout(int rows, int cols, float sf_factor,
 void DisplayArea::compute_border_dimensions(int rows, int columns) {
   ROS_INFO("table projector_frame_area top left: x = %d, y = %d",
            projector_frame_area[0].x, projector_frame_area[0].y);
-  ROS_INFO("table projector_frame_area top left: x = %d, y = %d",
+  ROS_INFO("table projector_frame_area top right: x = %d, y = %d",
            projector_frame_area[1].x, projector_frame_area[1].y);
-  ROS_INFO("table projector_frame_area top left: x = %d, y = %d",
+  ROS_INFO("table projector_frame_area bottom right: x = %d, y = %d",
            projector_frame_area[2].x, projector_frame_area[2].y);
-  ROS_INFO("table projector_frame_area top left: x = %d, y = %d",
+  ROS_INFO("table projector_frame_area bottom left: x = %d, y = %d",
            projector_frame_area[3].x, projector_frame_area[3].y);
 
   // Calculate rectangle width and height with inner margins
@@ -43,8 +43,8 @@ void DisplayArea::compute_border_dimensions(int rows, int columns) {
   int height_with_margin = static_cast<int>(
       cv::norm(projector_frame_area[3] - projector_frame_area[0]) - 2 * margin);
 
-  rect_width = (width_with_margin - (columns - 1) * inner_margin) / columns;
-  rect_height = (height_with_margin - (rows - 1) * inner_margin) / rows;
+  rect_width = (width_with_margin - columns * inner_margin) / columns;
+  rect_height = (height_with_margin - rows * inner_margin) / rows;
   ROS_INFO("rect_width: %d", rect_width);
   ROS_INFO("rect_height: %d", rect_height);
 
@@ -68,8 +68,8 @@ void DisplayArea::compute_border_dimensions(int rows, int columns) {
 
   if (projector_frame_area[0].y < projector_frame_area[3].y) {
     ROS_INFO("top > down");
-    inner_top_left.y = projector_frame_area[3].y - margin;
-    inner_bottom_left.y = projector_frame_area[3].y + margin;
+    inner_top_left.y = projector_frame_area[0].y + margin;
+    inner_bottom_left.y = projector_frame_area[3].y - margin;
   } else {
     ROS_INFO("bottom > up");
     inner_top_left.y = projector_frame_area[3].y + margin;

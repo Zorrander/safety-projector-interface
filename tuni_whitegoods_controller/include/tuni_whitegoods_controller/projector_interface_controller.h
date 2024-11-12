@@ -21,13 +21,8 @@ class ProjectorInterfaceController {
  protected:
   ros::NodeHandle *nh_;
 
-  std::vector<std::shared_ptr<View>> views;
-
-  std::shared_ptr<View> projector_view, camera_view, robot_view;
 
   std::shared_ptr<ObjectDetector> detector;
-
-  std::unique_ptr<ProjectorInterfaceModel> model_;
 
   ros::Subscriber hand_pose_sub, moving_table_pose_sub, model_update_sub,
       depth_sub, transform_callback;
@@ -82,5 +77,9 @@ class ProjectorInterfaceController {
   // void process_button(double center_x, double center_y, const
   // unity_msgs::ElementUI &msg); void callback_button_color(const
   // unity_msgs::ElementUI::ConstPtr &msg);
+
+  std::shared_ptr<View> projector_view, second_projector_view, camera_view, robot_view;
+  std::unique_ptr<ProjectorInterfaceModel> model_;
+  std::vector<std::shared_ptr<View>> views;
 };
 #endif

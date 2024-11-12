@@ -28,23 +28,26 @@ class TransformProjectorPointServer {
         &TransformProjectorPointServer::reverseTransformProjectorPointCallback,
         this);
 
+    /*
     std::string border_calibration_file;
     if (!nh->getParam("border_calibration_file", border_calibration_file)) {
       ROS_ERROR("Camera calibration file is missing from configuration.");
     }
-    // border_homography = loadHomography(border_calibration_file);
-
+    border_homography = loadHomography(border_calibration_file);
+    */
     ros::param::get("/border_homography", border_homography_array);
     border_homography = cv::Matx33d(border_homography_array.data());
-
+    
+    /*
     std::string button_calibration_file;
     if (!nh->getParam("button_calibration_file", button_calibration_file)) {
       ROS_ERROR("Camera calibration file is missing from configuration.");
     }
-
+    button_homography = loadHomography(button_calibration_file);
+    */
     ros::param::get("projector_resolution", projector_resolution);
 
-    button_homography = loadHomography(button_calibration_file);
+   
   }
 
   int inboundPixel(int value, int max_value) {

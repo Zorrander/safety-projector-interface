@@ -96,7 +96,7 @@ int main(int argc, char** argv) {
 
   ROS_INFO("PROJECTOR INTERFACE NODE RUNNING");
   while (ros::ok()) {
-    gui->update_imgui();
+    //gui->update_imgui();
     ros::spinOnce(); 
   }
   
