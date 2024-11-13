@@ -21,10 +21,22 @@ void SafetyBorderServer::executeSafetyBorder(
     const SetSafetyBorderProjectionGoalConstPtr &goal) {
   bool success = true;
 
-  controller->addStaticBorder(
+  if (goal->zone == "cell_left" || goal->zone == "cell_right"){
+    for (auto &zone : controller->model_->getDisplayAreas()){
+      if (zone->name == goal->zone){
+        zone->color = cv::Scalar(goal->border_color.b * 255, goal->border_color.g * 255, goal->border_color.r * 255);
+        for (auto &view : controller->views) {
+          view->updateDisplayAreas(controller->model_->getDisplayAreas());
+        }
+      }
+    }
+  } else {
+    controller->addStaticBorder(
       goal->request_id, goal->zone, goal->position_row, goal->position_col,
       goal->border, goal->border_topic, goal->border_color, goal->is_filled,
-      goal->thickness, goal->lifetime, goal->track_violations);
+      goal->thickness, goal->lifetime, goal->track_violations);  
+  }
+
   /*
   if (goal->border.polygon.points.size() > 1) {
   } else {

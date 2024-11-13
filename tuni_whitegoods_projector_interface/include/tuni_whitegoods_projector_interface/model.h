@@ -45,7 +45,7 @@ class ProjectorInterfaceModel {
                  float radius);
   void change_button_color(std::string resource_id,
                            std_msgs::ColorRGBA button_color);
-
+  void addInstructions(std::string zone, std::string title, std_msgs::ColorRGBA title_color);
   void addStaticBorder(cv::Mat depth_img, std::string r_id, std::string z,
                        int pos_row, int pos_col,
                        geometry_msgs::PolygonStamped bord, std::string b_topic,

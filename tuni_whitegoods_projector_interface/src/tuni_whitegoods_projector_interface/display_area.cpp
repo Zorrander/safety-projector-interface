@@ -15,6 +15,8 @@ DisplayArea::DisplayArea(ros::NodeHandle *nh, std::string name, int projector_id
       "/execution/projector_interface/integration/topics/"
       "virtual_button_event_array",
       1);
+  filling = false;
+  color = cv::Scalar(255, 0, 0);
 }
 
 void DisplayArea::create_border_layout(int rows, int cols, float sf_factor,

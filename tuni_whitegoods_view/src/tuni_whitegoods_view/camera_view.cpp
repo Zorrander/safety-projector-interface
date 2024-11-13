@@ -16,18 +16,20 @@ CameraView::CameraView(ros::NodeHandle* nh) : it_(*nh), nh_(nh) {
 
 void CameraView::init(std::vector<std::shared_ptr<DisplayArea>> zones) {
   for (auto& zone : zones) {
-    cv::Point tl(zone->camera_frame_area[0].x, zone->camera_frame_area[0].y);
-    cv::Point tr(zone->camera_frame_area[1].x, zone->camera_frame_area[1].y);
-    cv::Point br(zone->camera_frame_area[2].x, zone->camera_frame_area[2].y);
-    cv::Point bl(zone->camera_frame_area[3].x, zone->camera_frame_area[3].y);
+    if (!zone->camera_frame_area.empty()){
+      cv::Point tl(zone->camera_frame_area[0].x, zone->camera_frame_area[0].y);
+      cv::Point tr(zone->camera_frame_area[1].x, zone->camera_frame_area[1].y);
+      cv::Point br(zone->camera_frame_area[2].x, zone->camera_frame_area[2].y);
+      cv::Point bl(zone->camera_frame_area[3].x, zone->camera_frame_area[3].y);
 
-    std::vector<cv::Point> rectanglePoints = {tl, tr, br, bl};
+      std::vector<cv::Point> rectanglePoints = {tl, tr, br, bl};
 
-    layers[zone->name] = std::make_shared<cv::Mat>(
-        cv::Mat::zeros(camera_resolution[1], camera_resolution[0], CV_8UC3));
+      layers[zone->name] = std::make_shared<cv::Mat>(
+          cv::Mat::zeros(camera_resolution[1], camera_resolution[0], CV_8UC3));
 
-    cv::polylines(*layers[zone->name], rectanglePoints, true, cv::Scalar(255),
-                  10, cv::LINE_8);
+      cv::polylines(*layers[zone->name], rectanglePoints, true, cv::Scalar(255),
+                    10, cv::LINE_8);
+    }
   }
   publish_image();
 }
@@ -62,30 +64,32 @@ void CameraView::updateHands(const std::vector<std::shared_ptr<Hand>>& hands) {
 
 void CameraView::updateDisplayAreas(
     const std::vector<std::shared_ptr<DisplayArea>>& zones) {
-  for (auto& zone : zones) {
-    cv::Point tl(zone->camera_frame_area[0].x, zone->camera_frame_area[0].y);
-    cv::Point tr(zone->camera_frame_area[1].x, zone->camera_frame_area[1].y);
-    cv::Point br(zone->camera_frame_area[2].x, zone->camera_frame_area[2].y);
-    cv::Point bl(zone->camera_frame_area[3].x, zone->camera_frame_area[3].y);
+  for (auto& zone : zones) { 
+    if (!zone->camera_frame_area.empty()){
+      cv::Point tl(zone->camera_frame_area[0].x, zone->camera_frame_area[0].y);
+      cv::Point tr(zone->camera_frame_area[1].x, zone->camera_frame_area[1].y);
+      cv::Point br(zone->camera_frame_area[2].x, zone->camera_frame_area[2].y);
+      cv::Point bl(zone->camera_frame_area[3].x, zone->camera_frame_area[3].y);
 
-    std::vector<cv::Point> rectanglePoints = {tl, tr, br, bl};
+      std::vector<cv::Point> rectanglePoints = {tl, tr, br, bl};
 
-    const cv::Scalar color(255, 255, 255);
-    const int thickness = 10;
+      const cv::Scalar color(255, 255, 255);
+      const int thickness = 10;
 
-    layers[zone->name] = std::make_shared<cv::Mat>(
-        cv::Mat::zeros(camera_resolution[1], camera_resolution[0], CV_8UC3));
+      layers[zone->name] = std::make_shared<cv::Mat>(
+          cv::Mat::zeros(camera_resolution[1], camera_resolution[0], CV_8UC3));
 
-    cv::polylines(*layers[zone->name], rectanglePoints, true, cv::Scalar(255),
-                  10, cv::LINE_8);
+      cv::polylines(*layers[zone->name], rectanglePoints, true, cv::Scalar(255),
+                    10, cv::LINE_8);
 
-    std::vector<std::shared_ptr<Button>> buttons;
-    zone->fetchButtons(buttons);
-    updateButtons(buttons, layers[zone->name]);
+      std::vector<std::shared_ptr<Button>> buttons;
+      zone->fetchButtons(buttons);
+      updateButtons(buttons, layers[zone->name]);
 
-    std::vector<std::shared_ptr<StaticBorder>> borders;
-    zone->fetchBorders(borders);
-    updateBorders(borders, layers[zone->name]);
+      std::vector<std::shared_ptr<StaticBorder>> borders;
+      zone->fetchBorders(borders);
+      updateBorders(borders, layers[zone->name]);
+    }
   }
   publish_image();
 }

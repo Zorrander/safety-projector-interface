@@ -44,7 +44,10 @@ class Projector : public View {
   std::vector<std::shared_ptr<DisplayArea>> display_areas;   
 
   int height_moving_table, width_moving_table;
-  
+  int TEXT_FACE;
+  double TEXT_SCALE_TITLE;
+  double TEXT_SCALE;
+  int TEXT_THICKNESS;
 
  public:
   Projector(ros::NodeHandle* nh, int id);

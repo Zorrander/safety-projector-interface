@@ -66,6 +66,7 @@ class ProjectorInterfaceController {
   void operator_book_border(std::string id);
   void robot_release_border(std::string id, int status);
   void operator_release_border(std::string id, int status);
+  void addInstructions(std::string zone, std::string title, std_msgs::ColorRGBA title_color);
   std::vector<std::string> getAdjacentBorders(int row, int col);
   bool getBordersService(integration::ListStaticBordersStatus::Request &req,
                          integration::ListStaticBordersStatus::Response &res);

@@ -22,7 +22,8 @@ InstructionProjectionServer::InstructionProjectionServer(
 
 // send instruction to be written on the interface
 void InstructionProjectionServer::executeInstruction(
-    const SetInstructionsProjectionGoalConstPtr &goal) {
+    const SetInstructionsProjectionGoalConstPtr &goal) {  
+  controller->addInstructions(goal->zone, goal->title, goal->title_color);
   bool success = true;
   sendFeedBackInstruction();
   if (as_instruct.isPreemptRequested() || !ros::ok()) {

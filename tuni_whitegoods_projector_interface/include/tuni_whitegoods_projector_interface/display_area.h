@@ -41,6 +41,9 @@ class DisplayArea {
 
  public:
   std::string name;
+  bool filling;
+  std::string instructions;
+  cv::Scalar color;
   std::vector<geometry_msgs::Point> robot_frame_area;
   std::vector<geometry_msgs::Point> camera_frame_area;
   std::vector<cv::Point> projector_frame_area, inner_projector_frame_area;

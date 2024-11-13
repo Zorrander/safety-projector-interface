@@ -18,8 +18,10 @@ RobotView::RobotView(ros::NodeHandle* nh) {
 void RobotView::init(std::vector<std::shared_ptr<DisplayArea>> zones) {
   for (auto& zone : zones) {
     ROS_INFO("Robot view -> add (%s)", zone->name.c_str());
-    createRvizMarker(zone->robot_frame_area, hand_color, zone->name);
-    ros::Duration(1.0).sleep();
+    if (!zone->robot_frame_area.empty()){
+      createRvizMarker(zone->robot_frame_area, hand_color, zone->name);
+      ros::Duration(1.0).sleep();
+    }
   }
 }
 

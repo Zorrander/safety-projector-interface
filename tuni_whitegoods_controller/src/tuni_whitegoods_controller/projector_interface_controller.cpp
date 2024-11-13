@@ -307,6 +307,10 @@ void ProjectorInterfaceController::modelUpdateCallback(
   //}
 }
 
+void ProjectorInterfaceController::addInstructions(std::string zone, std::string title, std_msgs::ColorRGBA title_color){
+    model_->addInstructions(zone, title, title_color);
+}
+
 /**
  * @brief      Adds a button.
  *

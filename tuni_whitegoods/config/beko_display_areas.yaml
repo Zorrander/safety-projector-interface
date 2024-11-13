@@ -36,38 +36,38 @@
       z: 2203
 
 2:
-  cell_1:
+  cell_left:
     top_left:
-      x: 739
-      y: 762
-      z: 1507
-    top_right:
-      x: 1483
-      y: 763
-      z: 1489
-    bottom_right:
-      x: 1533
-      y: 973
-      z: 1376
-    bottom_left:
-      x: 720
-      y: 970
-      z: 1392
-
-  cell2:
-    top_left:
-      x: 598
-      y: 356
-      z: 2203
+      x: 35
+      y: 491
+      z: 3000
     top_right:
       x: 771
-      y: 351
-      z: 2203
+      y: 465
+      z: 3000
     bottom_right:
-      x: 758
-      y: 570
-      z: 2203
+      x: 771
+      y: 126
+      z: 3000
     bottom_left:
-      x: 568
-      y: 574
-      z: 2203
+      x: 1
+      y: 150
+      z: 3000
+
+  cell_right:
+    top_left:
+      x: 1250
+      y: 490
+      z: 3000
+    top_right:
+      x: 1879
+      y: 461
+      z: 3000
+    bottom_right:
+      x: 1920
+      y: 115
+      z: 3000
+    bottom_left:
+      x: 1270
+      y: 125
+      z: 3000

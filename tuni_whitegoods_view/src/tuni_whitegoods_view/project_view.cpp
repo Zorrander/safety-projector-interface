@@ -33,6 +33,10 @@ Projector::Projector(ros::NodeHandle *nh, int id)
       nh_->subscribe("/odin/projector_interface/moving_table/transform", 5,
                      &Projector::tableDetectionCallback, this);
 
+  TEXT_FACE = cv::FONT_HERSHEY_DUPLEX;
+  TEXT_SCALE_TITLE = 2.0;
+  TEXT_SCALE = 1.0;
+  TEXT_THICKNESS = 2;
 
   combined = layers["background"].mat->clone();
 
@@ -193,10 +197,10 @@ void Projector::updateHands(const std::vector<std::shared_ptr<Hand>> &hands) {}
 
 void Projector::updateDisplayAreas(
     const std::vector<std::shared_ptr<DisplayArea>> &zones) {
-  ROS_INFO("updateDisplayAreas");
   for (auto &zone : zones) {
     if (!(zone->name == "projector" || zone->name == "camera")) {
       if(id_ == zone->projector_id_) {
+        ROS_INFO("Projector(%d) -> updateDisplayAreas(%s)", zone->projector_id_, zone->name.c_str());
         cv::Point tl(zone->projector_frame_area[0].x,
                      zone->projector_frame_area[0].y);
         cv::Point tr(zone->projector_frame_area[1].x,
@@ -217,8 +221,30 @@ void Projector::updateDisplayAreas(
                 projector_resolution[1], projector_resolution[0], CV_8UC3)),
             visibility};
 
-        cv::polylines(*layers[zone->name].mat, rectanglePoints, true,
-                      cv::Scalar(255), 10, cv::LINE_8);
+        if (!zone->filling){
+          cv::polylines(*layers[zone->name].mat, rectanglePoints, true,
+                        cv::Scalar(255), 10, cv::LINE_8);
+        } else {
+          cv::rectangle(*layers[zone->name].mat, tl, br,
+                        zone->color, cv::FILLED);
+        }
+
+        if (!zone->instructions.empty()){ 
+          // Create a temporary Mat to hold the text only
+          cv::Mat textLayer = cv::Mat::zeros(layers[zone->name].mat->size(), layers[zone->name].mat->type());
+
+          // Draw the text on the temporary Mat
+          cv::putText(textLayer, zone->instructions, cv::Point(tl.x + 10, tl.y + 200),
+                      TEXT_FACE, TEXT_SCALE_TITLE, cv::Scalar(255, 255, 255), TEXT_THICKNESS, cv::LINE_AA);
+
+          // Rotate the temporary Mat by 180 degrees
+          cv::Mat rotatedTextLayer;
+          cv::flip(textLayer, rotatedTextLayer, 0); // Flips vertically only
+          // cv::flip(rotatedTextLayer, rotatedTextLayer, 1); // Flips horizontally only (ensures left-to-right orientation)
+
+          // Add the rotated text layer onto the original layer
+          cv::addWeighted(*layers[zone->name].mat, 1.0, rotatedTextLayer, 1.0, 0.0, *layers[zone->name].mat);
+        }
 
         std::vector<std::shared_ptr<Button>> buttons;
         zone->fetchButtons(buttons);
