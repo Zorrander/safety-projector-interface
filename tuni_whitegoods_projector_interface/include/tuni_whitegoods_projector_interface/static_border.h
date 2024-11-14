@@ -30,7 +30,8 @@ class StaticBorder {
   bool checkForInteractions(const std::string& name,
                             const cv::Point& hand_position);
   float getBorderDiagonal();
-
+  bool isAlreadyCrossed();
+  void setAlreadyCrossed(bool alreadyCrossed);
   cv::Mat drawMask();
   std::string getZone() const;
   std::string getId();
@@ -71,7 +72,7 @@ class StaticBorder {
   cv::Mat border_mask;
   int position_row;
   int position_col;
-
+  bool border_already_crossed;
   std::vector<int> camera_resolution;
   float shelf_height;
   bool is_filled;

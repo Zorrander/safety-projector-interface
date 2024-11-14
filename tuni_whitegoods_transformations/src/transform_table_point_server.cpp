@@ -30,30 +30,41 @@ class TransformTablePointServer {
                     moving_table_corner_homography_array);
     moving_table_corner_homography =
         cv::Matx33d(moving_table_corner_homography_array.data());
+
+    original_position = {cv::Point2f(775, 81), cv::Point2f(809, 90),
+                         cv::Point2f(795, 119), cv::Point2f(757, 109)};
+
+    original_corners = {cv::Point2f(795, 119), cv::Point2f(856, 141),
+                        cv::Point2f(803, 247), cv::Point2f(728, 221)};
   }
+
+  cv::Mat moving_table_homography;
 
  private:
   bool transformTablePointCallback(
       tuni_whitegoods_msgs::TransformMovingTable::Request& req,
       tuni_whitegoods_msgs::TransformMovingTable::Response& res) {
-    if (original_position.empty()) {
-      original_position = {
-          cv::Point2f(req.table.top_left[0], req.table.top_left[1]),
-          cv::Point2f(req.table.top_right[0], req.table.top_right[1]),
-          cv::Point2f(req.table.bottom_right[0], req.table.bottom_right[1]),
-          cv::Point2f(req.table.bottom_left[0], req.table.bottom_left[1])};
-      cv::perspectiveTransform(original_position, original_corners,
-                               moving_table_corner_homography);
-    }
-
     std::vector<cv::Point2f> new_position = {
         cv::Point2f(req.table.top_left[0], req.table.top_left[1]),
         cv::Point2f(req.table.top_right[0], req.table.top_right[1]),
         cv::Point2f(req.table.bottom_right[0], req.table.bottom_right[1]),
         cv::Point2f(req.table.bottom_left[0], req.table.bottom_left[1])};
 
-    cv::Mat moving_table_homography =
-        cv::findHomography(original_position, new_position);
+    moving_table_homography =
+        cv::getPerspectiveTransform(original_position, new_position);
+
+    // Flatten the matrix into the response
+    if (!moving_table_homography.empty()) {
+      for (int i = 0; i < moving_table_homography.rows; ++i) {
+        for (int j = 0; j < moving_table_homography.cols; ++j) {
+          res.table_corners.transformation_matrix.push_back(
+              moving_table_homography.at<double>(i, j));
+        }
+      }
+    } else {
+      ROS_WARN("Transformation matrix could not be computed.");
+      return false;
+    }
 
     std::vector<cv::Point2f> transformed_corners;
     cv::perspectiveTransform(original_corners, transformed_corners,

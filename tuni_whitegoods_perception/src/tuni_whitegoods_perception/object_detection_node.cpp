@@ -38,7 +38,7 @@ bool ObjectDetector::scan(cv::Mat depth_image, cv::Mat baseline) {
     ROS_INFO("No significant object detected.");
   }
 
-  
+  /*
   cv::Mat depth_normalized, depth_colormap;
   cv::Mat baseline_normalized, baseline_colormap;
   cv::Mat difference_normalized, difference_colormap;
@@ -61,8 +61,8 @@ bool ObjectDetector::scan(cv::Mat depth_image, cv::Mat baseline) {
   cv::imshow("Object detection", combined);
 
   cv::waitKey(0);
-  
 
+  */
   return result;
 }
 

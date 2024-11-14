@@ -32,10 +32,10 @@ def compute_table_homography():
 def compute_moving_table_homography():
     # Four corners of the book in source image
     #pts_src = np.array([[1399, 596], [1394, 505], [1488, 503],[1494, 595]])
-    pts_src = np.array([[1294, 375], [1202, 380], [1200, 293],[1289, 290]])
+    pts_src = np.array([[795, 119], [856, 141], [803, 247],[728, 221]])
     # Four corners of the book  destination image.
     #pts_dst = np.array([[1401, 599],[1376, 233],[1645, 220],[1675, 592]])
-    pts_dst = np.array([[1294, 375],[1098, 379],[1090, 250],[1287, 240]])
+    pts_dst = np.array([[636, 47],[738, 88],[656, 252],[555, 210]])
     # Calculate Homography
     h, status = cv2.findHomography(pts_src, pts_dst)
     print(h)

@@ -13,8 +13,7 @@
 
 using namespace std;
 
-Projector::Projector(ros::NodeHandle *nh, int id)
-    : nh_(nh), id_(id) {
+Projector::Projector(ros::NodeHandle *nh, int id) : nh_(nh), id_(id) {
   if (!ros::param::get("shiftX", shift)) {
     shift = 0;  // Default value
     ROS_WARN("Parameter 'shiftX' not found, using default value 0.");
@@ -43,9 +42,7 @@ Projector::Projector(ros::NodeHandle *nh, int id)
   ROS_INFO("ProjectorView running");
 }
 
-Projector::~Projector() {
-  cv::destroyWindow(window_name);
-}
+Projector::~Projector() { cv::destroyWindow(window_name); }
 
 void Projector::init(std::vector<std::shared_ptr<DisplayArea>> zones) {
   display_areas = zones;
@@ -66,8 +63,10 @@ void Projector::init(std::vector<std::shared_ptr<DisplayArea>> zones) {
   ROS_INFO("init done");
 }
 
-void Projector::moveWindow(){
+void Projector::moveWindow() {
   cv::moveWindow(window_name, shift, 0);
+  cv::setWindowProperty(window_name, cv::WND_PROP_FULLSCREEN,
+                        cv::WINDOW_FULLSCREEN);
   project_image();
 }
 
@@ -199,8 +198,9 @@ void Projector::updateDisplayAreas(
     const std::vector<std::shared_ptr<DisplayArea>> &zones) {
   for (auto &zone : zones) {
     if (!(zone->name == "projector" || zone->name == "camera")) {
-      if(id_ == zone->projector_id_) {
-        ROS_INFO("Projector(%d) -> updateDisplayAreas(%s)", zone->projector_id_, zone->name.c_str());
+      if (id_ == zone->projector_id_) {
+        ROS_INFO("Projector(%d) -> updateDisplayAreas(%s)", zone->projector_id_,
+                 zone->name.c_str());
         cv::Point tl(zone->projector_frame_area[0].x,
                      zone->projector_frame_area[0].y);
         cv::Point tr(zone->projector_frame_area[1].x,
@@ -221,44 +221,49 @@ void Projector::updateDisplayAreas(
                 projector_resolution[1], projector_resolution[0], CV_8UC3)),
             visibility};
 
-        if (!zone->filling){
+        if (!zone->filling) {
           cv::polylines(*layers[zone->name].mat, rectanglePoints, true,
                         cv::Scalar(255), 10, cv::LINE_8);
         } else {
-          cv::rectangle(*layers[zone->name].mat, tl, br,
-                        zone->color, cv::FILLED);
+          cv::rectangle(*layers[zone->name].mat, tl, br, zone->color,
+                        cv::FILLED);
         }
 
-        if (!zone->instructions.empty()){ 
+        if (!zone->instructions.empty()) {
           // Create a temporary Mat to hold the text only
-          cv::Mat textLayer = cv::Mat::zeros(layers[zone->name].mat->size(), layers[zone->name].mat->type());
+          cv::Mat textLayer = cv::Mat::zeros(layers[zone->name].mat->size(),
+                                             layers[zone->name].mat->type());
 
           // Draw the text on the temporary Mat
-          cv::putText(textLayer, zone->instructions, cv::Point(tl.x + 10, tl.y + 200),
-                      TEXT_FACE, TEXT_SCALE_TITLE, cv::Scalar(255, 255, 255), TEXT_THICKNESS, cv::LINE_AA);
+          cv::putText(textLayer, zone->instructions,
+                      cv::Point(tl.x + 10, tl.y + 200), TEXT_FACE,
+                      TEXT_SCALE_TITLE, cv::Scalar(255, 255, 255),
+                      TEXT_THICKNESS, cv::LINE_AA);
 
           // Rotate the temporary Mat by 180 degrees
           cv::Mat rotatedTextLayer;
-          cv::flip(textLayer, rotatedTextLayer, 0); // Flips vertically only
-          // cv::flip(rotatedTextLayer, rotatedTextLayer, 1); // Flips horizontally only (ensures left-to-right orientation)
+          cv::flip(textLayer, rotatedTextLayer, 0);  // Flips vertically only
+          // cv::flip(rotatedTextLayer, rotatedTextLayer, 1); // Flips
+          // horizontally only (ensures left-to-right orientation)
 
           // Add the rotated text layer onto the original layer
-          cv::addWeighted(*layers[zone->name].mat, 1.0, rotatedTextLayer, 1.0, 0.0, *layers[zone->name].mat);
+          cv::addWeighted(*layers[zone->name].mat, 1.0, rotatedTextLayer, 1.0,
+                          0.0, *layers[zone->name].mat);
         }
 
         std::vector<std::shared_ptr<Button>> buttons;
         zone->fetchButtons(buttons);
-        if (!buttons.empty()) { 
+        if (!buttons.empty()) {
           updateButtons(buttons, layers[zone->name].mat);
         }
 
         std::vector<std::shared_ptr<StaticBorder>> borders;
         zone->fetchBorders(borders);
-        if (!borders.empty()) { 
+        if (!borders.empty()) {
           updateBorders(borders, layers[zone->name].mat);
-        }  
+        }
       }
-    }  
+    }
   }
   combined = layers["background"].mat->clone();
   for (auto it = layers.begin(); it != layers.end(); ++it) {

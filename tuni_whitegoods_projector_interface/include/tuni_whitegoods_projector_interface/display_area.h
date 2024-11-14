@@ -47,7 +47,7 @@ class DisplayArea {
   std::vector<geometry_msgs::Point> robot_frame_area;
   std::vector<geometry_msgs::Point> camera_frame_area;
   std::vector<cv::Point> projector_frame_area, inner_projector_frame_area;
-  DisplayArea(ros::NodeHandle *nh, std::string name, int projector_id);
+  DisplayArea(ros::NodeHandle* nh, std::string name, int projector_id);
   void addBorder(std::shared_ptr<StaticBorder> sb);
   void addButton(std::shared_ptr<Button> btn);
   bool change_button_color(std::string resource_id,
@@ -72,7 +72,7 @@ class DisplayArea {
       geometry_msgs::Pose center);
 
   BorderLayout border_layout;
-
+  bool containsBorder(std::string border_id);
   void compute_border_dimensions(int rows, int columns);
   std::vector<cv::Point> interpolate(const cv::Point& p1, const cv::Point& p2,
                                      int num_points);

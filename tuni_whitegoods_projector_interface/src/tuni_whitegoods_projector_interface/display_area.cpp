@@ -5,8 +5,13 @@
 
 #include <cmath>
 
-DisplayArea::DisplayArea(ros::NodeHandle *nh, std::string name, int projector_id)
-    : nh_(nh), name(name), margin(30), inner_margin(50), projector_id_(projector_id) {
+DisplayArea::DisplayArea(ros::NodeHandle *nh, std::string name,
+                         int projector_id)
+    : nh_(nh),
+      name(name),
+      margin(30),
+      inner_margin(50),
+      projector_id_(projector_id) {
   pub_border_violation = nh->advertise<integration::SafetyBorderViolation>(
       "/execution/projector_interface/integration/topics/"
       "safety_border_violation",
@@ -151,27 +156,25 @@ bool DisplayArea::checkForInteractions(
                              static_cast<int>(hand_position.y));
 
   for (auto &border : borders_) {
-    if (border->robot_booked || border->operator_booked) {
-      if (border->checkForInteractions(name, cv_hand_position)) {
+    if (border->robot_booked &&
+        border->checkForInteractions(name, cv_hand_position)) {
+      if (!border->isAlreadyCrossed()) {
         result = true;
+        border->setAlreadyCrossed(true);
         // OpenFlow signal
         integration::SafetyBorderViolation msg_border;
-        geometry_msgs::PolygonStamped initial_border;
-        geometry_msgs::Pose target_location;
-
-        msg_border.header.frame_id = "base";
         msg_border.request_id = border->getId();
-
-        // initial_border.polygon.points.push_back();
-        // initial_border.polygon.points.push_back();
-        // initial_border.polygon.points.push_back();
-        // initial_border.polygon.points.push_back();
-
-        // target_location.position = ;
-
-        // msg_border.initial_border = initial_border;
-        // msg_border.target_location = target_location;
+        msg_border.violation_active = true;
         pub_border_violation.publish(msg_border);
+      }
+    } else {
+      if (border->isAlreadyCrossed()) {
+        integration::SafetyBorderViolation msg_border;
+        msg_border.request_id = border->getId();
+        msg_border.violation_active = false;
+        pub_border_violation.publish(msg_border);
+
+        border->setAlreadyCrossed(false);
       }
     }
   }
@@ -229,6 +232,13 @@ bool DisplayArea::change_button_color(std::string resource_id,
     }
   }
   return result;
+}
+
+bool DisplayArea::containsBorder(std::string border_id) {
+  return std::any_of(borders_.begin(), borders_.end(),
+                     [border_id](const std::shared_ptr<StaticBorder> border) {
+                       return border->getId() == border_id;
+                     });
 }
 
 geometry_msgs::Pose DisplayArea::compute_absolute_world_position(

@@ -32,9 +32,9 @@ class TableTracker(object):
 
         self.bridge = CvBridge()
         self.arucoDict = cv2.aruco.getPredefinedDictionary(
-            cv2.aruco.DICT_6X6_250)
+            cv2.aruco.DICT_6X6_50)
         self.arucoParams = cv2.aruco.DetectorParameters()
-
+        self.arucoParams.adaptiveThreshConstant = 10
         self.use_moving_table = rospy.get_param("is_moving")
         self.vis_pub = rospy.Publisher(
             "visualization_marker", Marker, queue_size=10)
@@ -62,12 +62,6 @@ class TableTracker(object):
         if self.use_moving_table:
             self.find_dynamic_ui_transform(rgb_img, depth_image)
 
-    def create_input_message(self, coordinates):
-        self.in_point_stamped.header.stamp = rospy.Time(0)
-        self.in_point_stamped.pose.position.x = coordinates.x
-        self.in_point_stamped.pose.position.y = coordinates.y
-        self.in_point_stamped.pose.position.z = coordinates.z
-
     def has_moved(self, center_x, center_y):
         result = False
         dx = center_x - self.previous_center_x
@@ -80,8 +74,10 @@ class TableTracker(object):
     # method called when the display is dynamic like on a moving table.
     # it has to update the transform so it always fit on the table
     def find_dynamic_ui_transform(self, rgb_img, depth_image):
+        gray = cv2.cvtColor(rgb_img, cv2.COLOR_BGR2GRAY)
+        #gray = cv2.equalizeHist(gray)
         (corners, ids, rejected) = cv2.aruco.detectMarkers(
-            rgb_img, self.arucoDict, parameters=self.arucoParams)
+            gray, self.arucoDict, parameters=self.arucoParams)
         if len(corners) == 0:
             # print("No marker detected")
             pass
@@ -107,9 +103,9 @@ class TableTracker(object):
                 self.zone_msg.bottom_left = [bottomLeft[0],
                                               bottomLeft[1]]
 
-                transformation = self.transform_moving_table(self.zone_msg)
+                response = self.transform_moving_table(self.zone_msg)
                 matrix_msg = DynamicArea()
-                matrix_msg = transformation.table_corners
+                matrix_msg = response.table_corners
                 self.zone_pub.publish(matrix_msg)
             
             self.previous_center_x = center_x

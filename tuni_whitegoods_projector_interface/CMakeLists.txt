@@ -11,7 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
   integration
   tuni_whitegoods_msgs
 )
-
+find_package(Eigen3 REQUIRED)
 find_package(OpenCV 4 REQUIRED)
 
 catkin_package(
@@ -39,6 +39,7 @@ add_library(hmi_model
 target_link_libraries(hmi_model
   ${catkin_LIBRARIES} 
   ${OpenCV_LIBS} 
+  Eigen3::Eigen
 )
 add_dependencies(hmi_model ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 

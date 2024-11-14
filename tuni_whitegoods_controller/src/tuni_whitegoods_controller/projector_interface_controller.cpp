@@ -90,10 +90,10 @@ void ProjectorInterfaceController::init() {
 
   ros::Duration(1.0).sleep();
 
-  for (const auto& projector : display_areas_calibration) {
-    int projector_id = std::stoi(projector.first.as<std::string>()); 
+  for (const auto &projector : display_areas_calibration) {
+    int projector_id = std::stoi(projector.first.as<std::string>());
 
-    for (const auto& area : projector.second) {
+    for (const auto &area : projector.second) {
       std::string area_name = area.first.as<std::string>();
       YAML::Node area_node = area.second;
 
@@ -124,7 +124,8 @@ void ProjectorInterfaceController::init() {
       points.push_back(br);
       points.push_back(bl);
       ROS_INFO("Projector %d given %s", projector_id, area_name.c_str());
-      model_->add_zone(std::make_shared<DisplayArea>(nh_, area_name, projector_id), points);
+      model_->add_zone(
+          std::make_shared<DisplayArea>(nh_, area_name, projector_id), points);
     }
   }
 
@@ -297,18 +298,19 @@ void ProjectorInterfaceController::handTrackerCallback(
 void ProjectorInterfaceController::modelUpdateCallback(
     const std_msgs::Empty &msg) {
   ROS_INFO("modelUpdateCallback");
-  //if (init_done) {
-    for (auto &view : views) {
-      // view->updateButtons(model_->getButtons());
-      // view->updateBorders(model_->getBorders());
-      // view->updateHands(model_->getHands());
-      view->updateDisplayAreas(model_->getDisplayAreas());
-    }
+  // if (init_done) {
+  for (auto &view : views) {
+    // view->updateButtons(model_->getButtons());
+    // view->updateBorders(model_->getBorders());
+    // view->updateHands(model_->getHands());
+    view->updateDisplayAreas(model_->getDisplayAreas());
+  }
   //}
 }
 
-void ProjectorInterfaceController::addInstructions(std::string zone, std::string title, std_msgs::ColorRGBA title_color){
-    model_->addInstructions(zone, title, title_color);
+void ProjectorInterfaceController::addInstructions(
+    std::string zone, std::string title, std_msgs::ColorRGBA title_color) {
+  model_->addInstructions(zone, title, title_color);
 }
 
 /**

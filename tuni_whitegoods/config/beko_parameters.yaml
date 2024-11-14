@@ -1,7 +1,7 @@
 projector_resolution: [1920, 1080]
 shiftX: 1920
 hand_visualization: false
-is_moving: false
+is_moving: true
 camera_resolution: [1920, 1080]
 robot_frame: base
 camera_frame: rgb_camera_link
@@ -9,5 +9,5 @@ shelf_height: 0.15
 display_areas_calibration_file: "/home/odin-lms2/odin_ws/src/safety-projector-interface/tuni_whitegoods/config/beko_display_areas.yaml"
 camera_calibration_file: "/home/odin-lms2/Desktop/test_calib.yaml"
 border_homography: [1.70497912e+00, 4.42399276e-01, -7.37314713e+02, 5.19667675e-02, 2.20520788e+00, -4.49266091e+02, 5.66463639e-05, 5.47137996e-04, 1.00000000e+00]
-button_homography: [2.96464922e+00, -1.07291215e+00, -6.60992620e+02, 1.39999849e+00, 6.79257520e-01, -3.23236961e+02, 2.41945642e-03, -2.21125947e-03, 1.00000000e+00]
-moving_table_corner_homography: [7.64854704e-01,  3.46877051e-01, -3.79193586e+02, -1.34936922e-01,  9.81233422e-01,  2.12731507e+01, -4.15198193e-04, 2.92282525e-04, 1.00000000e+00]
+button_homography: [ 7.42830611e-01,  7.90235720e-01, -2.49890960e+02, -5.13937788e-02,  1.37823456e+00, -9.10279920e+01, -5.70003386e-04,  1.14822866e-03,  1.00000000e+00]
+moving_table_corner_homography: [ 1.23599829e+00, -9.57334405e-01, -2.21562352e+02, -1.22498877e-01,  1.45632226e+00, -2.63442518e+02, -2.33287440e-04, -1.16968166e-03, 1.00000000e+00]

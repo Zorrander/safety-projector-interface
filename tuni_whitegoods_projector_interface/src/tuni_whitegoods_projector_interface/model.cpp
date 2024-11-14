@@ -3,6 +3,9 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <std_msgs/Empty.h>
 
+#include <Eigen/Dense>
+#include <boost/algorithm/clamp.hpp>
+
 #include "tuni_whitegoods_msgs/Transform3DToPixel.h"
 #include "tuni_whitegoods_msgs/TransformPixelTo3D.h"
 #include "tuni_whitegoods_msgs/TransformPixelToProjection.h"
@@ -41,6 +44,13 @@ ProjectorInterfaceModel::ProjectorInterfaceModel(ros::NodeHandle *nh)
   client_projector_point.waitForExistence();
   ROS_INFO("transform_point_to_project service is now available.");
 
+  client_projector_smart_interface =
+      nh_->serviceClient<tuni_whitegoods_msgs::TransformPixelToProjection>(
+          "transform_point_to_smart_interface");
+  ROS_INFO("Waiting for transform_point_to_project service to be available...");
+  client_projector_smart_interface.waitForExistence();
+  ROS_INFO("transform_point_to_project service is now available.");
+
   client_reverse_projector_point =
       nh_->serviceClient<tuni_whitegoods_msgs::TransformPixelToProjection>(
           "reverse_transform_point_to_project");
@@ -53,12 +63,21 @@ ProjectorInterfaceModel::ProjectorInterfaceModel(ros::NodeHandle *nh)
   left_hand = std::make_shared<Hand>("left");
   right_hand = std::make_shared<Hand>("right");
 
+  ros::param::get("/button_homography", button_homography_array);
+  button_homography = cv::Matx33d(button_homography_array.data());
+  first_transformation = true;
   pub_change_notification =
       nh->advertise<std_msgs::Empty>("/odin/internal/model_changed", 1);
 
+  original_table_projector_position = {
+      cv::Point2f(636, 47), cv::Point2f(738, 88), cv::Point2f(656, 252),
+      cv::Point2f(555, 210)};
+  original_table_projector_position = {
+      cv::Point2f(795, 119), cv::Point2f(856, 141), cv::Point2f(803, 247),
+      cv::Point2f(728, 221)};
   // Create a timer
   interaction_timer_ = nh->createTimer(
-      ros::Duration(1.0), &ProjectorInterfaceModel::reset_interactions, this);
+      ros::Duration(0.5), &ProjectorInterfaceModel::reset_interactions, this);
   ros::param::get("hand_visualization", hand_visualization);
   hands_detected = false;
 }
@@ -98,13 +117,14 @@ void ProjectorInterfaceModel::add_zone(
     std::vector<geometry_msgs::Point> camera_frame) {
   for (size_t i = 0; i < camera_frame.size(); ++i) {
     ROS_INFO("geometry_msgs::Point[%zu]: (x: %f, y: %f, z: %f)", i,
-      camera_frame[i].x, camera_frame[i].y, camera_frame[i].z);
+             camera_frame[i].x, camera_frame[i].y, camera_frame[i].z);
   }
 
   if (display_area->name == "cell_left" || display_area->name == "cell_right") {
     std::vector<cv::Point> projector_frame;
     for (size_t i = 0; i < camera_frame.size(); ++i) {
-      projector_frame.push_back(cv::Point(camera_frame[i].x, camera_frame[i].y));
+      projector_frame.push_back(
+          cv::Point(camera_frame[i].x, camera_frame[i].y));
     }
 
     display_area->setProjectorFrame(projector_frame);
@@ -142,7 +162,9 @@ void ProjectorInterfaceModel::add_zone(
   zones.push_back(display_area);
 }
 
-void ProjectorInterfaceModel::addInstructions(std::string zone, std::string title, std_msgs::ColorRGBA title_color){
+void ProjectorInterfaceModel::addInstructions(std::string zone,
+                                              std::string title,
+                                              std_msgs::ColorRGBA title_color) {
   for (auto &z : zones) {
     if (z->name == zone) {
       ROS_INFO("add instructions");
@@ -150,7 +172,7 @@ void ProjectorInterfaceModel::addInstructions(std::string zone, std::string titl
       break;
     }
   }
-  notify();  
+  notify();
 }
 
 void ProjectorInterfaceModel::addButton(
@@ -198,7 +220,7 @@ void ProjectorInterfaceModel::addStaticBorder(
   for (auto &zone : zones) {
     ROS_INFO("%s", zone->name.c_str());
 
-    if (zone->name == z) {
+    if (zone->name == z && !zone->containsBorder(r_id)) {
       std::shared_ptr<StaticBorder> sb = std::make_shared<StaticBorder>(
           nh_, r_id, pos_row, pos_col, bord, b_topic, b_color, filling, thic,
           life, track);
@@ -337,7 +359,7 @@ void ProjectorInterfaceModel::updateMovingTable(
         geometry_msgs::Point point;
         point.x = arr[0];
         point.y = arr[1];
-        point.z = 1.3;
+        point.z = 2.2;
         return point;
       };
 
@@ -350,14 +372,174 @@ void ProjectorInterfaceModel::updateMovingTable(
 
       zone->setCameraFrame(camera_frame);
 
-      std::vector<cv::Point> projector_frame;
+      // Create a 2x3 matrix of type CV_64F (double precision)
+      cv::Mat mat(2, 3, CV_32F);
 
-      projector_frame.push_back(fromCamera2Projector(camera_frame[0]));
-      projector_frame.push_back(fromCamera2Projector(camera_frame[1]));
-      projector_frame.push_back(fromCamera2Projector(camera_frame[2]));
-      projector_frame.push_back(fromCamera2Projector(camera_frame[3]));
+      // Copy data from vector to cv::Mat
+      std::memcpy(mat.data, moving_table.transformation_matrix.data(),
+                  moving_table.transformation_matrix.size() * sizeof(double));
 
-      zone->setProjectorFrame(projector_frame);
+      // cv::Mat table_transfo = mat * button_homography;
+      std::vector<cv::Point2f> projector_frame;
+      std::vector<cv::Point> proj_frame;
+
+      std::vector<cv::Point2f> position = {
+          cv::Point2f(camera_frame[0].x, camera_frame[0].y),
+          cv::Point2f(camera_frame[1].x, camera_frame[1].y),
+          cv::Point2f(camera_frame[2].x, camera_frame[2].y),
+          cv::Point2f(camera_frame[3].x, camera_frame[3].y)};
+
+      cv::perspectiveTransform(position, projector_frame, button_homography);
+
+      if (first_transformation) {
+        first_transformation = false;
+        // Calculate the center
+        double centerX = (projector_frame[0].x + projector_frame[1].x +
+                          projector_frame[2].x + projector_frame[3].x) /
+                         4.0;
+        double centerY = (projector_frame[0].y + projector_frame[1].y +
+                          projector_frame[2].y + projector_frame[3].y) /
+                         4.0;
+
+        cv::Point2f center(centerX, centerY);
+
+        // Calculate side lengths
+        double width1 = std::hypot(
+            projector_frame[1].x - projector_frame[0].x,
+            projector_frame[1].y - projector_frame[0].y);  // Top side
+        double width2 = std::hypot(
+            projector_frame[2].x - projector_frame[3].x,
+            projector_frame[2].y - projector_frame[3].y);  // Bottom side
+        double height1 = std::hypot(
+            projector_frame[3].x - projector_frame[0].x,
+            projector_frame[3].y - projector_frame[0].y);  // Left side
+        double height2 = std::hypot(
+            projector_frame[2].x - projector_frame[1].x,
+            projector_frame[2].y - projector_frame[1].y);  // Right side
+
+        // Find maximum width and height
+        max_width = std::max(width1, width2);
+        max_height = std::max(height1, height2);
+
+        // Determine if it's portrait or landscape
+        bool isPortrait = (max_height > max_width);
+
+        if (isPortrait) {
+          // Swap if needed so that max_height is the vertical and max_width is
+          // horizontal
+          std::swap(max_width, max_height);
+        }
+        size = cv::Size2f(max_width, max_height);
+
+        int top_left_straight_table_x, top_left_straight_table_y,
+            top_right_straight_table_x, top_right_straight_table_y;
+
+        top_left_straight_table_x = centerX - max_width / 2;
+        top_left_straight_table_y = centerY - max_height / 2;
+        top_right_straight_table_x = centerX + max_width / 2;
+        top_right_straight_table_y = centerY - max_height / 2;
+
+        Eigen::Vector2d point1(top_left_straight_table_x,
+                               top_left_straight_table_y);
+        Eigen::Vector2d point2(top_right_straight_table_x,
+                               top_right_straight_table_y);
+        Eigen::Vector2d point3(projector_frame[0].x, projector_frame[0].y);
+        Eigen::Vector2d point4(projector_frame[1].x, projector_frame[1].y);
+
+        // Calculate rotation angle
+
+        Eigen::Vector2d direction1 = point2 - point1;
+        Eigen::Vector2d direction2 = point4 - point3;
+
+        Eigen::Vector2d normLine1 = direction1.normalized();
+        Eigen::Vector2d normLine2 = direction2.normalized();
+
+        double cosTheta = normLine1.dot(normLine2);
+        cosTheta = boost::algorithm::clamp(cosTheta, -1.0, 1.0);
+
+        double angleRadians = std::acos(cosTheta);
+        double angleDegrees = angleRadians * (180.0 / M_PI);
+
+        double crossProductZ =
+            normLine1.x() * normLine2.y() - normLine1.y() * normLine2.x();
+        if (crossProductZ < 0) {
+          angleDegrees = -angleDegrees;
+        }
+
+        cv::RotatedRect movingTable(center, size, angleDegrees);
+
+        cv::Point2f vertices[4];
+        movingTable.points(vertices);
+
+        proj_frame.push_back(cv::Point(static_cast<int>(vertices[0].x),
+                                       static_cast<int>(vertices[0].y)));
+        proj_frame.push_back(cv::Point(static_cast<int>(vertices[1].x),
+                                       static_cast<int>(vertices[1].y)));
+        proj_frame.push_back(cv::Point(static_cast<int>(vertices[2].x),
+                                       static_cast<int>(vertices[2].y)));
+        proj_frame.push_back(cv::Point(static_cast<int>(vertices[3].x),
+                                       static_cast<int>(vertices[3].y)));
+        zone->setProjectorFrame(proj_frame);
+      } else {
+        // Calculate the center
+        double centerX = (projector_frame[0].x + projector_frame[1].x +
+                          projector_frame[2].x + projector_frame[3].x) /
+                         4.0;
+        double centerY = (projector_frame[0].y + projector_frame[1].y +
+                          projector_frame[2].y + projector_frame[3].y) /
+                         4.0;
+
+        cv::Point2f center(centerX, centerY);
+        int top_left_straight_table_x, top_left_straight_table_y,
+            top_right_straight_table_x, top_right_straight_table_y;
+
+        top_left_straight_table_x = centerX - max_width / 2;
+        top_left_straight_table_y = centerY - max_height / 2;
+        top_right_straight_table_x = centerX + max_width / 2;
+        top_right_straight_table_y = centerY - max_height / 2;
+
+        Eigen::Vector2d point1(top_left_straight_table_x,
+                               top_left_straight_table_y);
+        Eigen::Vector2d point2(top_right_straight_table_x,
+                               top_right_straight_table_y);
+        Eigen::Vector2d point3(projector_frame[0].x, projector_frame[0].y);
+        Eigen::Vector2d point4(projector_frame[1].x, projector_frame[1].y);
+
+        // Calculate rotation angle
+
+        Eigen::Vector2d direction1 = point2 - point1;
+        Eigen::Vector2d direction2 = point4 - point3;
+
+        Eigen::Vector2d normLine1 = direction1.normalized();
+        Eigen::Vector2d normLine2 = direction2.normalized();
+
+        double cosTheta = normLine1.dot(normLine2);
+        cosTheta = boost::algorithm::clamp(cosTheta, -1.0, 1.0);
+
+        double angleRadians = std::acos(cosTheta);
+        double angleDegrees = angleRadians * (180.0 / M_PI);
+
+        double crossProductZ =
+            normLine1.x() * normLine2.y() - normLine1.y() * normLine2.x();
+        if (crossProductZ < 0) {
+          angleDegrees = -angleDegrees;
+        }
+
+        cv::RotatedRect movingTable(center, size, angleDegrees);
+
+        cv::Point2f vertices[4];
+        movingTable.points(vertices);
+
+        proj_frame.push_back(cv::Point(static_cast<int>(vertices[0].x),
+                                       static_cast<int>(vertices[0].y)));
+        proj_frame.push_back(cv::Point(static_cast<int>(vertices[1].x),
+                                       static_cast<int>(vertices[1].y)));
+        proj_frame.push_back(cv::Point(static_cast<int>(vertices[2].x),
+                                       static_cast<int>(vertices[2].y)));
+        proj_frame.push_back(cv::Point(static_cast<int>(vertices[3].x),
+                                       static_cast<int>(vertices[3].y)));
+        zone->setProjectorFrame(proj_frame);
+      }
 
       std::vector<geometry_msgs::Point> robot_frame_points;
 
@@ -365,7 +547,6 @@ void ProjectorInterfaceModel::updateMovingTable(
       robot_frame_points.push_back(fromPixel2Robot(camera_frame[1]).position);
       robot_frame_points.push_back(fromPixel2Robot(camera_frame[2]).position);
       robot_frame_points.push_back(fromPixel2Robot(camera_frame[3]).position);
-
       zone->setRobotFrame(robot_frame_points);
 
       std::vector<std::shared_ptr<Button>> buttons;
@@ -532,4 +713,14 @@ cv::Point ProjectorInterfaceModel::fromCamera2Projector(
   result.y = srv_camera_to_projector.response.v_prime;
 
   return result;
+}
+
+cv::Point ProjectorInterfaceModel::fromCamera2ProjectorSmartInterface(
+    geometry_msgs::Point pixel, cv::Mat mat) {
+  std::vector<cv::Point2f> points = {{pixel.x, pixel.y}};
+  std::vector<cv::Point2f> transformedPoints;
+
+  cv::transform(points, transformedPoints, mat);
+
+  return transformedPoints[0];
 }

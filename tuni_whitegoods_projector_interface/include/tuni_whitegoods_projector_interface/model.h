@@ -24,11 +24,17 @@ class ProjectorInterfaceModel {
 
   ros::ServiceClient client_world_coordinates, client_3D_to_pixel,
       client_pixel_to_3D, client_projector_point,
-      client_reverse_projector_point;
+      client_reverse_projector_point, client_projector_smart_interface;
 
   ros::Timer interaction_timer_;
-
+  cv::Size2f size;
+  double max_width;
+  double max_height;
+  std::vector<cv::Point2f> original_table_projector_position;
+  bool first_transformation;
   bool hands_detected, action_triggered, hand_visualization;
+  cv::Matx33d button_homography;
+  std::vector<double> button_homography_array;
 
  public:
   ProjectorInterfaceModel(ros::NodeHandle* nh);
@@ -45,7 +51,8 @@ class ProjectorInterfaceModel {
                  float radius);
   void change_button_color(std::string resource_id,
                            std_msgs::ColorRGBA button_color);
-  void addInstructions(std::string zone, std::string title, std_msgs::ColorRGBA title_color);
+  void addInstructions(std::string zone, std::string title,
+                       std_msgs::ColorRGBA title_color);
   void addStaticBorder(cv::Mat depth_img, std::string r_id, std::string z,
                        int pos_row, int pos_col,
                        geometry_msgs::PolygonStamped bord, std::string b_topic,
@@ -79,6 +86,9 @@ class ProjectorInterfaceModel {
   geometry_msgs::Pose fromPixel2Robot(geometry_msgs::Point pixel);
   cv::Point fromProjector2Camera(cv::Point pixel);
   cv::Point fromCamera2Projector(geometry_msgs::Point pixel);
+  cv::Point fromCamera2ProjectorSmartInterface(geometry_msgs::Point pixel,
+                                               cv::Mat mat);
+
   std::vector<std::shared_ptr<DisplayArea>> zones;
 };
 #endif

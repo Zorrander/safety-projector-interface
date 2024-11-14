@@ -23,6 +23,11 @@ class TransformProjectorPointServer {
     projector_point_transform_service_ = nh_->advertiseService(
         "transform_point_to_project",
         &TransformProjectorPointServer::transformProjectorPointCallback, this);
+    projector_smart_interface_transform_service_ =
+        nh_->advertiseService("transform_point_to_smart_interface",
+                              &TransformProjectorPointServer::
+                                  transformProjectorSmartInterfaceCallback,
+                              this);
     reverse_projector_point_transform_service_ = nh_->advertiseService(
         "reverse_transform_point_to_project",
         &TransformProjectorPointServer::reverseTransformProjectorPointCallback,
@@ -37,7 +42,10 @@ class TransformProjectorPointServer {
     */
     ros::param::get("/border_homography", border_homography_array);
     border_homography = cv::Matx33d(border_homography_array.data());
-    
+
+    ros::param::get("/button_homography", button_homography_array);
+    button_homography = cv::Matx33d(button_homography_array.data());
+
     /*
     std::string button_calibration_file;
     if (!nh->getParam("button_calibration_file", button_calibration_file)) {
@@ -46,8 +54,6 @@ class TransformProjectorPointServer {
     button_homography = loadHomography(button_calibration_file);
     */
     ros::param::get("projector_resolution", projector_resolution);
-
-   
   }
 
   int inboundPixel(int value, int max_value) {
@@ -110,6 +116,21 @@ class TransformProjectorPointServer {
     return true;
   }
 
+  bool transformProjectorSmartInterfaceCallback(
+      tuni_whitegoods_msgs::TransformPixelToProjection::Request& req,
+      tuni_whitegoods_msgs::TransformPixelToProjection::Response& res) {
+    std::vector<cv::Point2f> cameraPoint;
+    std::vector<cv::Point2f> projectorPoint;
+
+    cv::Point2f input_point(req.u, req.v);
+    cameraPoint.push_back(input_point);
+    cv::perspectiveTransform(cameraPoint, projectorPoint, button_homography);
+    res.u_prime = inboundPixel(projectorPoint[0].x, projector_resolution[0]);
+    res.v_prime = inboundPixel(projectorPoint[0].y, projector_resolution[1]);
+
+    return true;
+  }
+
   /**
    * @brief      { function_description }
    *
@@ -136,7 +157,8 @@ class TransformProjectorPointServer {
 
   ros::NodeHandle* nh_;
   ros::ServiceServer projector_point_transform_service_,
-      reverse_projector_point_transform_service_;
+      reverse_projector_point_transform_service_,
+      projector_smart_interface_transform_service_;
   cv::Matx33d border_homography, button_homography;
   std::vector<double> border_homography_array, button_homography_array;
 };

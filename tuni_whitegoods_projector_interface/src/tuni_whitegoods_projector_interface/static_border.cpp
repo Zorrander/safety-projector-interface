@@ -20,7 +20,7 @@ StaticBorder::StaticBorder(ros::NodeHandle* nh, std::string r_id, int pos_row,
                            bool track) {
   ros::param::get("camera_resolution", camera_resolution);
   ros::param::get("shelf_height", shelf_height);
-
+  border_already_crossed = false;
   request_id = r_id;
   position_row = pos_row;
   position_col = pos_col;
@@ -52,6 +52,12 @@ StaticBorder::StaticBorder(ros::NodeHandle* nh, std::string r_id, int pos_row,
   right_hand_crossed = false;
   robot_booked = false;
   operator_booked = false;
+}
+
+bool StaticBorder::isAlreadyCrossed() { return border_already_crossed; }
+
+void StaticBorder::setAlreadyCrossed(bool alreadyCrossed) {
+  border_already_crossed = alreadyCrossed;
 }
 
 // draw a border
@@ -139,6 +145,7 @@ void StaticBorder::resetInteractions() {
   right_hand_crossed = false;
   border_violated = false;
   thickness = 1;
+  border_already_crossed = false;
 }
 
 bool StaticBorder::isAdjacent(std::shared_ptr<StaticBorder> sb) {
