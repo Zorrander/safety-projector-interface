@@ -15,6 +15,7 @@ from tuni_whitegoods_msgs.msg import DynamicArea
 from geometry_msgs.msg import PoseStamped, Transform
 from sensor_msgs.msg import Image
 from std_msgs.msg import Float64MultiArray
+from std_msgs.msg import Int32
 
 class TableTracker(object):
     def __init__(self):
@@ -39,6 +40,10 @@ class TableTracker(object):
         self.vis_pub = rospy.Publisher(
             "visualization_marker", Marker, queue_size=10)
 
+        self.threshold_sub = rospy.Subscriber("/odin/object_detection/set_threshold_detection_table", Int32, self.callback_threshold)
+
+        self.threshold = 5 
+
         self.zone_msg = DynamicArea()
         self.zone_pub = rospy.Publisher(
             "/odin/projector_interface/moving_table/transform", DynamicArea, queue_size=10)
@@ -62,12 +67,15 @@ class TableTracker(object):
         if self.use_moving_table:
             self.find_dynamic_ui_transform(rgb_img, depth_image)
 
+    def callback_threshold(self, threshold):
+        self.threshold = threshold.data
+
     def has_moved(self, center_x, center_y):
         result = False
         dx = center_x - self.previous_center_x
         dy = center_y - self.previous_center_y
         distance = math.sqrt(dx * dx + dy * dy)
-        if (distance > 5):
+        if (distance > self.threshold):
             result = True
         return result
 

@@ -21,7 +21,6 @@ class ProjectorInterfaceController {
  protected:
   ros::NodeHandle *nh_;
 
-
   std::shared_ptr<ObjectDetector> detector;
 
   ros::Subscriber hand_pose_sub, moving_table_pose_sub, model_update_sub,
@@ -31,7 +30,7 @@ class ProjectorInterfaceController {
 
   ros::ServiceServer service_borders;
   cv::Mat cv_depth;
-
+  cv_bridge::CvImagePtr cv_bridge_depth;
   std::vector<int> projector_resolution;
   std::vector<int> camera_resolution;
   bool init_done;
@@ -66,7 +65,8 @@ class ProjectorInterfaceController {
   void operator_book_border(std::string id);
   void robot_release_border(std::string id, int status);
   void operator_release_border(std::string id, int status);
-  void addInstructions(std::string zone, std::string title, std_msgs::ColorRGBA title_color);
+  void addInstructions(std::string zone, std::string title,
+                       std_msgs::ColorRGBA title_color);
   std::vector<std::string> getAdjacentBorders(int row, int col);
   bool getBordersService(integration::ListStaticBordersStatus::Request &req,
                          integration::ListStaticBordersStatus::Response &res);
@@ -79,7 +79,8 @@ class ProjectorInterfaceController {
   // unity_msgs::ElementUI &msg); void callback_button_color(const
   // unity_msgs::ElementUI::ConstPtr &msg);
 
-  std::shared_ptr<View> projector_view, second_projector_view, camera_view, robot_view;
+  std::shared_ptr<View> projector_view, second_projector_view, camera_view,
+      robot_view;
   std::unique_ptr<ProjectorInterfaceModel> model_;
   std::vector<std::shared_ptr<View>> views;
 };

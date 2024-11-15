@@ -3,6 +3,7 @@ Class to create StaticBorder
 */
 #include "tuni_whitegoods_projector_interface/static_border.h"
 
+#include <integration/SafetyBorderViolation.h>
 // The parameters are defined in OpenFlow
 // id : id of the border
 // z : zone where to display the border
@@ -24,6 +25,10 @@ StaticBorder::StaticBorder(ros::NodeHandle* nh, std::string r_id, int pos_row,
   request_id = r_id;
   position_row = pos_row;
   position_col = pos_col;
+  pub_border_violation = nh->advertise<integration::SafetyBorderViolation>(
+      "/execution/projector_interface/integration/topics/"
+      "safety_border_violation",
+      1);
 
   if (!bord.polygon.points.empty()) {
     topLeftCornerPt.x = bord.polygon.points[0].x;
@@ -144,14 +149,22 @@ void StaticBorder::resetInteractions() {
   left_hand_crossed = false;
   right_hand_crossed = false;
   border_violated = false;
-  thickness = 1;
   border_already_crossed = false;
+
+  thickness = 1;
+
+  integration::SafetyBorderViolation msg_border;
+  msg_border.request_id = request_id;
+  msg_border.violation_active = false;
+  pub_border_violation.publish(msg_border);
 }
 
 bool StaticBorder::isAdjacent(std::shared_ptr<StaticBorder> sb) {
   bool result = false;
-  if (sb->getCol() == position_col + 1 || sb->getCol() == position_col - 1 ||
-      sb->getRow() == position_row + 1 || sb->getRow() == position_row - 1) {
+  if ((sb->getRow() == position_row && (sb->getCol() == position_col + 1 ||
+                                        sb->getCol() == position_col - 1)) ||
+      (sb->getCol() == position_col && (sb->getRow() == position_row + 1 ||
+                                        sb->getRow() == position_row - 1))) {
     result = true;
   }
   return result;

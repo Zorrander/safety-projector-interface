@@ -30,7 +30,7 @@ void UserInterfaceServer::executePresetUI(
 
     controller->addButton(button.id, button.zone, button.name, button.text,
                           button.button_color, button.text_color, button.center,
-                          button.radius - 10);
+                          button.radius);
     counter += 1;
   }
   bool success = true;

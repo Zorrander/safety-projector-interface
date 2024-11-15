@@ -3,17 +3,8 @@
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
-#include <imgui.h>
-#include "imgui_impl_glfw.h"
-#include "imgui_impl_opengl3.h"
-
-#include <cstdlib>
-#include <thread>
-
-#include <queue>
-
 #include <actionlib/client/simple_action_client.h>
-
+#include <imgui.h>
 #include <integration/BookOperatorStaticBorderAction.h>
 #include <integration/BookOperatorStaticBorderGoal.h>
 #include <integration/BookRobotStaticBorderAction.h>
@@ -29,18 +20,22 @@
 #include <integration/SetSafetyBorderProjectionGoal.h>
 #include <integration/SetVirtualButtonsProjectionAction.h>
 #include <integration/SetVirtualButtonsProjectionGoal.h>
+#include <std_msgs/Int32.h>
 
+#include <cstdlib>
+#include <queue>
+#include <thread>
 
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_opengl3.h"
+#include "tuni_whitegoods_controller/projector_interface_controller.h"
 #include "tuni_whitegoods_msgs/DynamicArea.h"
 #include "tuni_whitegoods_msgs/HandsState.h"
 #include "tuni_whitegoods_projector_interface/display_area.h"
 #include "tuni_whitegoods_view/view.h"
 
-#include "tuni_whitegoods_controller/projector_interface_controller.h"
-
 class GUI {
  private:
-
   ros::NodeHandle* nh_;
   int row_layout, column_layout;
   bool scan;
@@ -62,6 +57,12 @@ class GUI {
   ros::Publisher non_zero_threshold_pub;
   ros::Publisher noise_recuction_pub;
 
+  ros::Publisher pub_max_width;
+  ros::Publisher pub_max_height;
+  ros::Publisher pub_angle;
+  ros::Publisher pub_center;
+  ros::Publisher pub_threshold_detection_table;
+
   void initializeGLFWandOpenGL();
   void initializeImGui(GLFWwindow* window);
   void update_gui();
@@ -79,7 +80,6 @@ class GUI {
   void show_moving_table();
   void show_node_starter();
   void launchTfNode();
-
 
   actionlib::SimpleActionClient<integration::SetSafetyBorderProjectionAction>
       client_border;
@@ -104,10 +104,9 @@ class GUI {
   ros::Time last_table_msg_time_;
   float table_interval_in_seconds_;
 
-
-
  public:
-  GUI(ros::NodeHandle* nh, std::shared_ptr<ProjectorInterfaceController> controller);
+  GUI(ros::NodeHandle* nh,
+      std::shared_ptr<ProjectorInterfaceController> controller);
   ~GUI();
   void handDetectionCallback(
       const tuni_whitegoods_msgs::HandsState::ConstPtr& msg);

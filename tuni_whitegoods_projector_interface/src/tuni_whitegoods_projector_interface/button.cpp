@@ -50,6 +50,11 @@ bool Button::checkForInteractions(const std::string& name,
                                   const cv::Point& hand_position) {
   bool result = false;
   float distance = cv::norm(hand_position - center_cam_point);
+  ROS_INFO("Hand Position: [%d, %d]", hand_position.x, hand_position.y);
+  ROS_INFO("Center Cam Point: [%d, %d]", center_cam_point.x,
+           center_cam_point.y);
+  ROS_INFO("Distance: %.2f", distance);
+  ROS_INFO("radius: %.2f", radius);
   bool is_crossed = distance < radius * 1.2;
   if (name == "left") {
     left_hand_press = is_crossed;
@@ -60,17 +65,19 @@ bool Button::checkForInteractions(const std::string& name,
   button_pressed = (left_hand_press || right_hand_press);
 
   if (button_pressed) {
-    btn_color = cv::Scalar(0, 0, 255);
+    btn_color = cv::Scalar(255, 0, 0);
     result = true;
   } else {
-    btn_color = cv::Scalar(255, 0, 0);
+    btn_color = base_btn_color;
   }
   return result;
 }
 
 void Button::resetInteractions() {
+  left_hand_press = false;
+  right_hand_press = false;
   button_pressed = false;
-  btn_color = cv::Scalar(255, 0, 0);
+  btn_color = base_btn_color;
 }
 
 std::string Button::get_name() { return name; }

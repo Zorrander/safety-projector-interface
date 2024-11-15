@@ -31,10 +31,12 @@ class ProjectorInterfaceModel {
   double max_width;
   double max_height;
   std::vector<cv::Point2f> original_table_projector_position;
-  bool first_transformation;
+
   bool hands_detected, action_triggered, hand_visualization;
   cv::Matx33d button_homography;
   std::vector<double> button_homography_array;
+  double original_max_width;
+  double original_max_height;
 
  public:
   ProjectorInterfaceModel(ros::NodeHandle* nh);
@@ -86,9 +88,7 @@ class ProjectorInterfaceModel {
   geometry_msgs::Pose fromPixel2Robot(geometry_msgs::Point pixel);
   cv::Point fromProjector2Camera(cv::Point pixel);
   cv::Point fromCamera2Projector(geometry_msgs::Point pixel);
-  cv::Point fromCamera2ProjectorSmartInterface(geometry_msgs::Point pixel,
-                                               cv::Mat mat);
-
+  cv::Point fromCamera2SmartInterface(geometry_msgs::Point pixel);
   std::vector<std::shared_ptr<DisplayArea>> zones;
 };
 #endif

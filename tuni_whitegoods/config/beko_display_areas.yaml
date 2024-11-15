@@ -19,21 +19,21 @@
 
   moving_table:
     top_left:
-      x: 656
-      y: 343
-      z: 2203
+      x: 0
+      y: 0
+      z: 0
     top_right:
-      x: 832
-      y: 411
-      z: 2203
+      x: 0
+      y: 0
+      z: 0
     bottom_right:
-      x: 704
-      y: 628
-      z: 2203
+      x: 0
+      y: 0
+      z: 0
     bottom_left:
-      x: 535
-      y: 563
-      z: 2203
+      x: 0
+      y: 0
+      z: 0
 
 2:
   cell_left:

@@ -246,13 +246,6 @@ void ProjectorInterfaceController::transformCallback(
 
 void ProjectorInterfaceController::depthImageCallback(
     const sensor_msgs::ImageConstPtr &depth_msg) {
-  // Check if the received image is empty
-  if (depth_msg->data.empty()) {
-    ROS_ERROR("Received an empty depth image!");
-    return;
-  }
-
-  cv_bridge::CvImagePtr cv_bridge_depth;
   try {
     cv_bridge_depth = cv_bridge::toCvCopy(
         depth_msg, sensor_msgs::image_encodings::TYPE_16UC1);
@@ -262,10 +255,6 @@ void ProjectorInterfaceController::depthImageCallback(
   }
 
   cv_depth = cv_bridge_depth->image;
-  if (cv_depth.empty()) {
-    ROS_ERROR("Converted depth image is empty!");
-    return;
-  }
 }
 /**
  * @brief      Creates a border layout.
@@ -293,6 +282,11 @@ void ProjectorInterfaceController::handTrackerCallback(
     geometry_msgs::Point position = msg.position[i];
     model_->updateHandPose(msg.name[i], position);
   }
+  /*
+  for (auto &view : views) {
+    view->updateHands(model_->getHands());
+  }
+  */
 }
 
 void ProjectorInterfaceController::modelUpdateCallback(

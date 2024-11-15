@@ -1,7 +1,7 @@
 #include "user_interface/gui.h"
 
-
-GUI::GUI(ros::NodeHandle *nh, std::shared_ptr<ProjectorInterfaceController> controller)
+GUI::GUI(ros::NodeHandle *nh,
+         std::shared_ptr<ProjectorInterfaceController> controller)
     : client_border(
           "/execution/projector_interface/integration/actions/"
           "set_safety_border_projection",
@@ -54,6 +54,17 @@ GUI::GUI(ros::NodeHandle *nh, std::shared_ptr<ProjectorInterfaceController> cont
   noise_recuction_pub = nh->advertise<std_msgs::Int32>(
       "/odin/object_detection/set_noise_reduction", 1);
 
+  pub_max_width = nh->advertise<std_msgs::Int32>(
+      "/odin/object_detection/set_max_width_table", 1);
+  pub_max_height = nh->advertise<std_msgs::Int32>(
+      "/odin/object_detection/set_max_height_table", 1);
+  pub_angle = nh->advertise<std_msgs::Int32>(
+      "/odin/object_detection/set_angle_table", 1);
+  pub_center = nh->advertise<std_msgs::Int32>(
+      "/odin/object_detection/set_center_table", 1);
+  pub_threshold_detection_table = nh->advertise<std_msgs::Int32>(
+      "/odin/object_detection/set_threshold_detection_table", 1);
+
   initializeGLFWandOpenGL();
 
   window = glfwCreateWindow(1900, 1000, "ODIN Manager", nullptr, nullptr);
@@ -73,9 +84,7 @@ GUI::GUI(ros::NodeHandle *nh, std::shared_ptr<ProjectorInterfaceController> cont
   ROS_INFO("GUI running");
 }
 
-GUI::~GUI() {
-  ImGui::DestroyContext();
-}
+GUI::~GUI() { ImGui::DestroyContext(); }
 
 void GUI::initializeGLFWandOpenGL() {
   if (!glfwInit()) {
@@ -154,7 +163,7 @@ void GUI::update_imgui() {
   ImGui_ImplGlfw_NewFrame();
   ImGui::NewFrame();
   show_node_starter();
-  
+
   if (tf) {
     std::thread(&GUI::launchTfNode, this).detach();
     tf = false;
@@ -211,7 +220,6 @@ void GUI::update_imgui() {
   glfwSwapBuffers(window);
   glfwPollEvents();
 }
-
 
 void GUI::show_debug_borders() {
   ImGui::Begin("Borders");
@@ -325,23 +333,56 @@ void GUI::show_debug_hands() {
 
 void GUI::show_moving_table() {
   ImGui::Begin("Table dection");
+  static int maxWidthSlider = 0;
+  static int maxHeightSlider = 0;
+  static int angleSlider = 0;
+  static int centerSlider = 0;
+  static int thresholdDetectionSlider = 0;
+
   ImGui::Text("Table detection msg counter: %d", table_detection_counter);
   ImGui::Text("Time interval between messages: %.2f seconds",
               table_interval_in_seconds_);
+
+  ImGui::SliderInt("Max width", &maxWidthSlider, -200, 200);
+  ImGui::SliderInt("Max height", &maxHeightSlider, -200, 200);
+  ImGui::SliderInt("Center", &angleSlider, -200, 200);
+  ImGui::SliderInt("Angle", &centerSlider, -200, 200);
+  ImGui::SliderInt("Threshold detection", &thresholdDetectionSlider, 0, 200);
+
+  if (ImGui::Button("Update")) {
+    std_msgs::Int32 threshold_detection_table_msg;
+    std_msgs::Int32 center_msg;
+    std_msgs::Int32 angle_msg;
+    std_msgs::Int32 max_height_msg;
+    std_msgs::Int32 max_width_msg;
+
+    threshold_detection_table_msg.data = thresholdDetectionSlider;
+    center_msg.data = centerSlider;
+    angle_msg.data = angleSlider;
+    max_height_msg.data = maxHeightSlider;
+    max_width_msg.data = maxWidthSlider;
+
+    pub_max_width.publish(max_width_msg);
+    pub_max_height.publish(max_height_msg);
+    pub_angle.publish(angle_msg);
+    pub_center.publish(center_msg);
+    pub_threshold_detection_table.publish(threshold_detection_table_msg);
+  }
   ImGui::End();
 }
 
-void GUI::show_projector_manager(){
+void GUI::show_projector_manager() {
   ImGui::Begin("Projector manager");
-  
-  if (ImGui::InputInt("Projector 1", &controller_->projector_view->shift)){
+
+  if (ImGui::InputInt("Projector 1", &controller_->projector_view->shift)) {
     controller_->projector_view->moveWindow();
   }
 
-  if (ImGui::InputInt("Projector 2", &controller_->second_projector_view->shift)){
+  if (ImGui::InputInt("Projector 2",
+                      &controller_->second_projector_view->shift)) {
     controller_->projector_view->moveWindow();
   }
-  ImGui::End(); 
+  ImGui::End();
 }
 
 void GUI::show_debug_object_detection() {
@@ -387,63 +428,61 @@ void GUI::show_debug_object_detection() {
 void GUI::show_layer_manager() {
   ImGui::Begin("Layer Manager");
   if (ImGui::BeginTabBar("LayerTabBar")) {
-      for (auto &zone : controller_->model_->getDisplayAreas()) {
-          if (ImGui::BeginTabItem(zone->name.c_str())) {
+    for (auto &zone : controller_->model_->getDisplayAreas()) {
+      if (ImGui::BeginTabItem(zone->name.c_str())) {
+        bool change = false;
 
-            bool change = false;
+        ImGui::PushItemWidth(300);
+        if (ImGui::SliderInt("Top left x", &zone->projector_frame_area[0].x, 1,
+                             projector_resolution[0])) {
+          change = true;
+        }
+        ImGui::SameLine();
+        if (ImGui::SliderInt("Top left y", &zone->projector_frame_area[0].y, 1,
+                             projector_resolution[1])) {
+          change = true;
+        }
 
-            ImGui::PushItemWidth(300);
-            if (ImGui::SliderInt("Top left x", &zone->projector_frame_area[0].x, 1,
-                             projector_resolution[0])){
-              change = true;
-            }
-            ImGui::SameLine();
-            if (ImGui::SliderInt("Top left y", &zone->projector_frame_area[0].y, 1,
-                             projector_resolution[1])){
-              change = true;
-            }
+        if (ImGui::SliderInt("Top right x", &zone->projector_frame_area[1].x, 1,
+                             projector_resolution[0])) {
+          change = true;
+        }
+        ImGui::SameLine();
+        if (ImGui::SliderInt("Top right y", &zone->projector_frame_area[1].y, 1,
+                             projector_resolution[1])) {
+          change = true;
+        }
 
-            if (ImGui::SliderInt("Top right x", &zone->projector_frame_area[1].x, 1,
-                             projector_resolution[0])){
-              change = true;
-            }
-            ImGui::SameLine();
-            if (ImGui::SliderInt("Top right y", &zone->projector_frame_area[1].y, 1,
-                             projector_resolution[1])){
-              change = true;
-            }
+        if (ImGui::SliderInt("Bottom right x", &zone->projector_frame_area[2].x,
+                             1, projector_resolution[0])) {
+          change = true;
+        }
+        ImGui::SameLine();
+        if (ImGui::SliderInt("Bottom right y", &zone->projector_frame_area[2].y,
+                             1, projector_resolution[1])) {
+          change = true;
+        }
 
-            if (ImGui::SliderInt("Bottom right x", &zone->projector_frame_area[2].x,
-                             1, projector_resolution[0])){
-              change = true;
-            }
-            ImGui::SameLine();
-            if (ImGui::SliderInt("Bottom right y", &zone->projector_frame_area[2].y,
-                             1, projector_resolution[1])){
-              change = true;
-            }
+        if (ImGui::SliderInt("Bottom left x", &zone->projector_frame_area[3].x,
+                             1, projector_resolution[0])) {
+          change = true;
+        }
+        ImGui::SameLine();
+        if (ImGui::SliderInt("Bottom left y", &zone->projector_frame_area[3].y,
+                             1, projector_resolution[1])) {
+          change = true;
+        }
 
-            if (ImGui::SliderInt("Bottom left x", &zone->projector_frame_area[3].x,
-                             1, projector_resolution[0])){
-              change = true;
-            }
-            ImGui::SameLine();
-            if (ImGui::SliderInt("Bottom left y", &zone->projector_frame_area[3].y,
-                             1, projector_resolution[1])){
-              change = true;
-            }
-
-            if (change){
-              for (auto &view : controller_->views) {
-                view->updateDisplayAreas(controller_->model_->getDisplayAreas());
-              }
-            }
-
-            ImGui::PopItemWidth();
-            ImGui::EndTabItem();
-
+        if (change) {
+          for (auto &view : controller_->views) {
+            view->updateDisplayAreas(controller_->model_->getDisplayAreas());
           }
         }
+
+        ImGui::PopItemWidth();
+        ImGui::EndTabItem();
+      }
+    }
     ImGui::EndTabBar();
   }
   ImGui::End();
@@ -533,19 +572,23 @@ void GUI::show_element_creator() {
     ImGui::InputText("Border name", borderName, sizeof(borderName));
 
     if (keys.empty()) {
-        for (const auto& zone : controller_->model_->getDisplayAreas()) {
-            keys.push_back(zone->name);  // Copy `zone->name` into `keys` as `std::string`
-        }
+      for (const auto &zone : controller_->model_->getDisplayAreas()) {
+        keys.push_back(
+            zone->name);  // Copy `zone->name` into `keys` as `std::string`
+      }
     }
 
-    std::vector<const char*> key_ptrs;
-    for (const auto& key : keys) {
-        key_ptrs.push_back(key.c_str());  // Convert `std::string` to `const char*`
+    std::vector<const char *> key_ptrs;
+    for (const auto &key : keys) {
+      key_ptrs.push_back(
+          key.c_str());  // Convert `std::string` to `const char*`
     }
 
-    if (ImGui::Combo("Select a projection area", &selected_index, key_ptrs.data(), key_ptrs.size())) {
+    if (ImGui::Combo("Select a projection area", &selected_index,
+                     key_ptrs.data(), key_ptrs.size())) {
       area = keys[selected_index];  // Assign the selected area string
-      ROS_INFO("Selected area: %s", area.c_str());  // Debug log to confirm selection
+      ROS_INFO("Selected area: %s",
+               area.c_str());  // Debug log to confirm selection
     }
 
     ImGui::InputInt("Row", &rowValue, 1, 5);
@@ -614,8 +657,8 @@ void GUI::show_element_creator() {
 
     // Set button color (RGBA)
     goal.virtual_button.button_color.r = 0.0;
-    goal.virtual_button.button_color.g = 0.0;
-    goal.virtual_button.button_color.b = 1.0;
+    goal.virtual_button.button_color.g = 1.0;
+    goal.virtual_button.button_color.b = 0.0;
     goal.virtual_button.button_color.a = 1.0;
 
     // Set text color (RGBA)

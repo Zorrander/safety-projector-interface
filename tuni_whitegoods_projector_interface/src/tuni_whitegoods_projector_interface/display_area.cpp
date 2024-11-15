@@ -181,6 +181,7 @@ bool DisplayArea::checkForInteractions(
 
   for (auto &button : buttons_) {
     integration::VirtualButtonEventArray events;
+
     if (button->checkForInteractions(name, cv_hand_position)) {
       if (!button->isAlreadyPressed()) {
         result = true;

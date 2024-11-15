@@ -20,11 +20,11 @@ if __name__ == "__main__":
 	cv2.moveWindow("window", 1920, 0)
 	cv2.setWindowProperty("window", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
 
-	size = 50
+	size = 30
 	aruc_id = 0
 
-	for y in range(300,800,100):
-		for x in range(300,1500,100):
+	for y in range(350,450,40):
+		for x in range(900,1000,40):
 			print(x, y)
 			tag = np.zeros((size, size, 1), dtype="uint8")
 			cv2.aruco.generateImageMarker(aruco_dict, aruc_id, size, tag, 1)

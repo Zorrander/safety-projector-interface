@@ -69,6 +69,7 @@ class StaticBorder {
   cv::Rect roi_rect;
 
  private:
+  ros::Publisher pub_border_violation;
   cv::Mat border_mask;
   int position_row;
   int position_col;
