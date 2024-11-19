@@ -11,12 +11,11 @@ CameraView::CameraView(ros::NodeHandle* nh) : it_(*nh), nh_(nh) {
   ros::param::get("camera_resolution", camera_resolution);
   layers["background"] = std::make_shared<cv::Mat>(
       cv::Mat::zeros(camera_resolution[1], camera_resolution[0], CV_8UC3));
-  ROS_INFO("CameraView running");
 }
 
 void CameraView::init(std::vector<std::shared_ptr<DisplayArea>> zones) {
   for (auto& zone : zones) {
-    if (!zone->camera_frame_area.empty()){
+    if (!zone->camera_frame_area.empty()) {
       cv::Point tl(zone->camera_frame_area[0].x, zone->camera_frame_area[0].y);
       cv::Point tr(zone->camera_frame_area[1].x, zone->camera_frame_area[1].y);
       cv::Point br(zone->camera_frame_area[2].x, zone->camera_frame_area[2].y);
@@ -58,14 +57,17 @@ void CameraView::updateBorders(
 void CameraView::updateHands(const std::vector<std::shared_ptr<Hand>>& hands) {
   for (auto& hand : hands) {
     cv::Point hand_position(hand->pixel_position.x, hand->pixel_position.y);
-    cv::circle(cv_depth, hand_position, 25, cv::Scalar(255, 255, 0), -1);
+    cv::circle(*layers["background"], hand_position, 25,
+               cv::Scalar(255, 255, 255), -1);
   }
+
+  publish_image();
 }
 
 void CameraView::updateDisplayAreas(
     const std::vector<std::shared_ptr<DisplayArea>>& zones) {
-  for (auto& zone : zones) { 
-    if (!zone->camera_frame_area.empty()){
+  for (auto& zone : zones) {
+    if (!zone->camera_frame_area.empty()) {
       cv::Point tl(zone->camera_frame_area[0].x, zone->camera_frame_area[0].y);
       cv::Point tr(zone->camera_frame_area[1].x, zone->camera_frame_area[1].y);
       cv::Point br(zone->camera_frame_area[2].x, zone->camera_frame_area[2].y);
@@ -113,5 +115,6 @@ void CameraView::depthSceneCallback(
       cv_bridge::toCvCopy(depth_msg, sensor_msgs::image_encodings::TYPE_16UC1);
   cv::normalize(bridge_cv_depth->image, depth_normalized, 0, 255,
                 cv::NORM_MINMAX, CV_8U);
-  cv::applyColorMap(depth_normalized, *layers["background"], cv::COLORMAP_JET);
+  // cv::applyColorMap(depth_normalized, *layers["background"],
+  // cv::COLORMAP_JET);
 }

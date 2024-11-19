@@ -18,11 +18,11 @@ from cv_bridge import CvBridge, CvBridgeError
 from std_msgs.msg import Int32
 
 class HandTracker(object):
-    def __init__(self, mode=False, maxHands=2, detectionCon=0.5, modelComplexity=0, trackCon=0.5):
+    def __init__(self, mode=False, maxHands=2, detectionCon=0.15, modelComplexity=0, trackCon=0.15):
         rospy.init_node('hand_tracking')
         self.pub_hands_poi = rospy.Publisher(
             "/odin/internal/hand_detection", HandsState, queue_size=10)
-
+        self.background = False
         self.mode = mode
         self.maxHands = maxHands
         self.detectionCon = detectionCon
@@ -32,7 +32,9 @@ class HandTracker(object):
         self.hands = self.mpHands.Hands(
             self.mode, self.maxHands, self.modelComplex, self.detectionCon, self.trackCon)
         self.bridge = CvBridge()
-
+        self.previous_center_x = 0
+        self.previous_center_y = 0
+        self.threshold = 0
         self.tracking_sub = rospy.Subscriber("/odin/object_detection/set_tracking_confidence", Int32, self.callback_tracking_confidence)
         self.detection_sub = rospy.Subscriber("/odin/object_detection/set_detection_confidence", Int32, self.callback_detection_confidence)
         self.complexity_sub = rospy.Subscriber("/odin/object_detection/set_complexity", Int32, self.callback_complexity)
@@ -62,9 +64,19 @@ class HandTracker(object):
         self.hands = self.mpHands.Hands(
             self.mode, self.maxHands, self.modelComplex, self.detectionCon, self.trackCon)
 
+    def has_moved(self, center_x, center_y):
+        result = False
+        dx = center_x - self.previous_center_x
+        dy = center_y - self.previous_center_y
+        distance = math.sqrt(dx * dx + dy * dy)
+        if (distance > self.threshold):
+            result = True
+        return result
+
     def callback_image(self, msg, depth_msg, draw=False):
         rgb_img = self.bridge.imgmsg_to_cv2(msg, "rgb8")
         depth_image = self.bridge.imgmsg_to_cv2(depth_msg, "16UC1")
+
         self.results = self.hands.process(rgb_img)
         if self.results.multi_handedness:
             nb_hand = len(self.results.multi_handedness)
@@ -87,13 +99,19 @@ class HandTracker(object):
                     cx = int(min(max(lm.x * w, 0), w - 1))
                     cy = int(min(max(lm.y * h, 0), h - 1))
                     if id == 12:
-                        msg_hands.name.append(handType.lower())
-                        tmp_pos = Point()
-                        tmp_pos.x = cx
-                        tmp_pos.y = cy
-                        tmp_pos.z = depth_image[cy, cx]
-                        msg_hands.position.append(tmp_pos)
-                        break
+                        if self.has_moved(cx, cy) or self.previous_center_x is None or self.previous_center_y is None:
+                            print("sent")
+                            print(cx)
+                            print(cy)
+                            msg_hands.name.append(handType.lower())
+                            tmp_pos = Point()
+                            tmp_pos.x = cx
+                            tmp_pos.y = cy
+                            tmp_pos.z = depth_image[cy, cx]
+                            msg_hands.position.append(tmp_pos)
+                            self.previous_center_x = cx
+                            self.previous_center_y = cy
+                            break
             self.pub_hands_poi.publish(msg_hands)
 
 

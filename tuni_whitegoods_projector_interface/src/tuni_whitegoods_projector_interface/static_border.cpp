@@ -113,8 +113,12 @@ float StaticBorder::getBorderDiagonal() {
 // get the center of the border
 cv::Point StaticBorder::getCenter() {
   cv::Point p;
-  p.x = (top_left_cam_point.x + bottom_right_cam_point.x) / 2;
-  p.y = (top_left_cam_point.y + bottom_right_cam_point.y) / 2;
+  p.x = (top_left_cam_point.x + top_right_cam_point.x +
+         bottom_right_cam_point.x + bottom_left_cam_point.x) /
+        4;
+  p.y = (top_left_cam_point.y + top_right_cam_point.y +
+         bottom_right_cam_point.y + bottom_left_cam_point.y) /
+        4;
 
   return p;
 }
@@ -123,7 +127,7 @@ bool StaticBorder::checkForInteractions(const std::string& name,
                                         const cv::Point& hand_position) {
   bool result = false;
   float distance = cv::norm(hand_position - getCenter());
-  bool is_crossed = distance < getBorderDiagonal() * 0.5;
+  bool is_crossed = distance < getBorderDiagonal() * 0.4;
   if (name == "left") {
     left_hand_crossed = is_crossed;
   } else if (name == "right") {
@@ -150,7 +154,7 @@ void StaticBorder::resetInteractions() {
   right_hand_crossed = false;
   border_violated = false;
   border_already_crossed = false;
-
+  ROS_INFO("border resetInteractions");
   thickness = 1;
 
   integration::SafetyBorderViolation msg_border;

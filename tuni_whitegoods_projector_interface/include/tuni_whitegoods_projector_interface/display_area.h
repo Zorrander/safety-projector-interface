@@ -40,6 +40,8 @@ class DisplayArea {
   std::vector<cv::Point> bottom_side_points;
 
  public:
+  double projector_rotation_angle;
+  double rotation_angle;
   std::string name;
   bool filling;
   std::string instructions;
@@ -70,7 +72,7 @@ class DisplayArea {
   void setProjectorFrame(std::vector<cv::Point> projector_frame);
   geometry_msgs::Pose compute_absolute_world_position(
       geometry_msgs::Pose center);
-
+  cv::Point2f getProjectionCenter();
   BorderLayout border_layout;
   bool containsBorder(std::string border_id);
   void compute_border_dimensions(int rows, int columns);

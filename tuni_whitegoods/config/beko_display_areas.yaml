@@ -1,20 +1,20 @@
 1:
   shelf:
     top_left:
-      x: 739
-      y: 762
+      x: 680
+      y: 840
       z: 1507
     top_right:
-      x: 1483
-      y: 763
+      x: 1380
+      y: 840
       z: 1489
     bottom_right:
-      x: 1533
-      y: 973
+      x: 1340
+      y: 1030
       z: 1376
     bottom_left:
-      x: 720
-      y: 970
+      x: 680
+      y: 1030
       z: 1392
 
   moving_table:

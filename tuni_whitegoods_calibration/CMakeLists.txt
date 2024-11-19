@@ -18,11 +18,8 @@ find_package(catkin REQUIRED COMPONENTS
   sensor_msgs
   std_msgs
   message_filters
-  unity_msgs
   tuni_whitegoods_perception
   tuni_whitegoods_msgs
-  pcl_conversions
-  pcl_ros
   integration
   tf2
   tf2_msgs
@@ -38,13 +35,10 @@ catkin_package(
                    std_msgs
                    cv_bridge
                    image_transport
-                   unity_msgs
                    message_filters
                    tuni_whitegoods_perception
                    tuni_whitegoods_msgs
                    integration
-                   pcl_conversions
-                   pcl_ros
                    tf2
                    tf2_msgs
                    tf2_ros

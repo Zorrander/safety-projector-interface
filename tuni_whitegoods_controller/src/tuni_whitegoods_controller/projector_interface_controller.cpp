@@ -16,7 +16,6 @@
  */
 ProjectorInterfaceController::ProjectorInterfaceController(ros::NodeHandle *nh)
     : nh_(nh) {
-  init_done = false;
   // Initialize model
   model_ = std::make_unique<ProjectorInterfaceModel>(nh_);
 
@@ -30,9 +29,12 @@ ProjectorInterfaceController::ProjectorInterfaceController(ros::NodeHandle *nh)
 
   projector_view = std::make_shared<Projector>(nh_, 1);
   projector_view->window_name = "Projector 1";
+
   second_projector_view = std::make_shared<Projector>(nh_, 2);
   projector_view->window_name = "Projector 2";
+
   camera_view = std::make_shared<CameraView>(nh_);
+
   robot_view = std::make_shared<RobotView>(nh_);
 
   // Initialize views
@@ -55,17 +57,12 @@ ProjectorInterfaceController::ProjectorInterfaceController(ros::NodeHandle *nh)
 
   // Subscribe to hand detections
   hand_pose_sub =
-      nh_->subscribe("/odin/internal/hand_detection", 10,
+      nh_->subscribe("/odin/internal/hand_detection", 20,
                      &ProjectorInterfaceController::handTrackerCallback, this);
 
   transform_callback =
       nh->subscribe("/odin/projector_interface/moving_table/transform", 10,
                     &ProjectorInterfaceController::transformCallback, this);
-
-  // Subscribe to robot coordinates if needed for dynamic border display
-  /*
-  TODO
-  */
 
   ros::param::get("projector_resolution", projector_resolution);
   ros::param::get("camera_resolution", camera_resolution);
@@ -87,8 +84,6 @@ void ProjectorInterfaceController::init() {
 
   YAML::Node display_areas_calibration =
       YAML::LoadFile(display_areas_calibration_file);
-
-  ros::Duration(1.0).sleep();
 
   for (const auto &projector : display_areas_calibration) {
     int projector_id = std::stoi(projector.first.as<std::string>());
@@ -123,125 +118,27 @@ void ProjectorInterfaceController::init() {
       points.push_back(tr);
       points.push_back(br);
       points.push_back(bl);
-      ROS_INFO("Projector %d given %s", projector_id, area_name.c_str());
+
       model_->add_zone(
           std::make_shared<DisplayArea>(nh_, area_name, projector_id), points);
     }
   }
 
-  ROS_INFO("Registered display areas");
-
-  ros::Duration(1.0).sleep();
-
-  // Add the camera field of view (for visualization only)
+  std::for_each(views.begin(), views.end(),
+                [this](auto &view) { view->init(model_->getDisplayAreas()); });
   /*
-  std::vector<geometry_msgs::Point> camera_corners;
-  geometry_msgs::Point camera_tl;
-  geometry_msgs::Point camera_tr;
-  geometry_msgs::Point camera_br;
-  geometry_msgs::Point camera_bl;
-
-  camera_tl.x = 0;
-  camera_tl.y = 0;
-  camera_tl.z = 1.361;
-
-  camera_tr.x = 0;
-  camera_tr.y = camera_resolution[1];
-  camera_tr.z = 1.361;
-
-  camera_br.x = camera_resolution[0];
-  camera_br.y = camera_resolution[1];
-  camera_br.z = 1.361;
-
-  camera_bl.x = camera_resolution[0];
-  camera_bl.y = 0;
-  camera_bl.z = 1.361;
-
-  camera_corners.push_back(camera_tl);
-  camera_corners.push_back(camera_tr);
-  camera_corners.push_back(camera_br);
-  camera_corners.push_back(camera_bl);
-
-  std::shared_ptr<DisplayArea> camera_area =
-      std::make_shared<DisplayArea>(nh_, "camera");
-  model_->add_zone(camera_area, camera_corners);
-
-  ROS_INFO("Registered camera field of view");
-
-  // Add the projection area (for visualization only)
-
-  cv::Point projector_top_left(0, 0);
-  cv::Point projector_top_right(0, projector_resolution[1]);
-  cv::Point projector_bottom_right(projector_resolution[0],
-                                   projector_resolution[1]);
-  cv::Point projector_bottom_left(projector_resolution[0], 0);
-
-  ROS_INFO("Found projector calibration");
-
-  cv::Point transformed_projector_top_left =
-      model_->fromProjector2Camera(projector_top_left);
-  cv::Point transformed_projector_top_right =
-      model_->fromProjector2Camera(projector_top_right);
-  cv::Point transformed_projector_bottom_right =
-      model_->fromProjector2Camera(projector_bottom_right);
-  cv::Point transformed_projector_bottom_left =
-      model_->fromProjector2Camera(projector_bottom_left);
-
-  ROS_INFO("Processed projector calibration");
-
-  std::vector<geometry_msgs::Point> projector_corners;
-  geometry_msgs::Point projector_tl;
-  geometry_msgs::Point projector_tr;
-  geometry_msgs::Point projector_br;
-  geometry_msgs::Point projector_bl;
-
-  projector_tl.x = transformed_projector_top_left.x;
-  projector_tl.y = transformed_projector_top_left.y;
-  projector_tl.z = 1.361;
-
-  projector_tr.x = transformed_projector_top_right.x;
-  projector_tr.y = transformed_projector_top_right.y;
-  projector_tr.z = 1.361;
-
-  projector_br.x = transformed_projector_bottom_right.x;
-  projector_br.y = transformed_projector_bottom_right.y;
-  projector_br.z = 1.361;
-
-  projector_bl.x = transformed_projector_bottom_left.x;
-  projector_bl.y = transformed_projector_bottom_left.y;
-  projector_bl.z = 1.361;
-
-  projector_corners.push_back(projector_tl);
-  projector_corners.push_back(projector_tr);
-  projector_corners.push_back(projector_br);
-  projector_corners.push_back(projector_bl);
-
-  std::shared_ptr<DisplayArea> projector_area =
-      std::make_shared<DisplayArea>(nh_, "projector");
-  model_->add_zone(projector_area, projector_corners);
-
-  ROS_INFO("Registered projection area");
-  */
-  for (auto &view : views) {
-    view->init(model_->getDisplayAreas());
-  }
-
-  ros::Duration(1.0).sleep();
-
-  for (auto &view : views) {
+  std::for_each(views.begin(), views.end(), [this](auto &view) {
     view->updateDisplayAreas(model_->getDisplayAreas());
-  }
-
-  init_done = true;
+  });*/
 }
 
 void ProjectorInterfaceController::transformCallback(
     const tuni_whitegoods_msgs::DynamicArea::ConstPtr &msg) {
   model_->updateMovingTable(*msg);
 
-  for (auto &view : views) {
+  std::for_each(views.begin(), views.end(), [this](auto &view) {
     view->updateDisplayAreas(model_->getDisplayAreas());
-  }
+  });
 }
 
 void ProjectorInterfaceController::depthImageCallback(
@@ -271,7 +168,6 @@ void ProjectorInterfaceController::createBorderLayout(
     int rows, int cols, float sf_factor, bool adjacent,
     std_msgs::ColorRGBA status_booked, std_msgs::ColorRGBA status_free,
     std_msgs::ColorRGBA status_operator) {
-  ROS_INFO("createBorderLayout");
   model_->create_border_layout(rows, cols, sf_factor, adjacent, status_booked,
                                status_free, status_operator);
 }
@@ -279,27 +175,19 @@ void ProjectorInterfaceController::createBorderLayout(
 void ProjectorInterfaceController::handTrackerCallback(
     const tuni_whitegoods_msgs::HandsState &msg) {
   for (int i = 0; i < msg.name.size(); i++) {
-    geometry_msgs::Point position = msg.position[i];
-    model_->updateHandPose(msg.name[i], position);
+    model_->updateHandPose(msg.name[i], msg.position[i]);
   }
-  /*
-  for (auto &view : views) {
-    view->updateHands(model_->getHands());
-  }
-  */
+
+  // std::for_each(views.begin(), views.end(),
+  //              [this](auto &view) { view->updateHands(model_->getHands());
+  //              });
 }
 
 void ProjectorInterfaceController::modelUpdateCallback(
     const std_msgs::Empty &msg) {
-  ROS_INFO("modelUpdateCallback");
-  // if (init_done) {
-  for (auto &view : views) {
-    // view->updateButtons(model_->getButtons());
-    // view->updateBorders(model_->getBorders());
-    // view->updateHands(model_->getHands());
+  std::for_each(views.begin(), views.end(), [this](auto &view) {
     view->updateDisplayAreas(model_->getDisplayAreas());
-  }
-  //}
+  });
 }
 
 void ProjectorInterfaceController::addInstructions(
@@ -379,30 +267,30 @@ void ProjectorInterfaceController::addDynamicBorder(
     std_msgs::ColorRGBA b_color, bool filling, int thic, ros::Duration life,
     bool track) {}
 
-// Book a robot border by its id
-//
-// @param[in]  id    The identifier
-//
+/* Book a robot border by its id
+ *
+ * @param[in]  id    The identifier
+ */
 void ProjectorInterfaceController::robot_book_border(std::string id) {
   ROS_INFO("BOOKING BORDER %s", id.c_str());
   model_->robot_book_border(id);
 }
 
-// Book a border for the operator. It signals the operator that an object can be
-// picked by using a different color.
-//
-// @param[in]  id    The identifier
-//
+/** Book a border for the operator. It signals the operator that an object can
+ * be picked by using a different color.
+ *
+ * @param[in]  id    The identifier
+ */
 void ProjectorInterfaceController::operator_book_border(std::string id) {
   ROS_INFO("bookBorderOperator");
   model_->operator_book_border(id);
 }
 
-// release a border booked by the robot
-//
-// @param[in]  id      The identifier
-// @param[in]  status  The status
-//
+/* release a border booked by the robot
+ *
+ * @param[in]  id      The identifier
+ * @param[in]  status  The status
+ */
 void ProjectorInterfaceController::robot_release_border(std::string id,
                                                         int status) {
   // release booking and change color
@@ -410,11 +298,11 @@ void ProjectorInterfaceController::robot_release_border(std::string id,
   model_->robot_release_border(id, status);
 }
 
-// release a booking made by the operator
-//
-// @param[in]  id      The identifier
-// @param[in]  status  The status
-//
+/* release a booking made by the operator
+ *
+ * @param[in]  id      The identifier
+ * @param[in]  status  The status
+ */
 void ProjectorInterfaceController::operator_release_border(std::string id,
                                                            int status) {
   ROS_INFO("releaseOperatorBorder");
@@ -444,8 +332,10 @@ bool ProjectorInterfaceController::getBordersService(
       border->changeThickness(6);
     } else if (border->robot_booked) {
       sbs.status = 1;
+      border->changeThickness(1);
     } else {
       sbs.status = 0;
+      border->changeThickness(1);
     }
 
     ROS_INFO("border %s status: %d", sbs.id.c_str(), sbs.status);

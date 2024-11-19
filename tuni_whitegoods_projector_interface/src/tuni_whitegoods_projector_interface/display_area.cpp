@@ -9,8 +9,8 @@ DisplayArea::DisplayArea(ros::NodeHandle *nh, std::string name,
                          int projector_id)
     : nh_(nh),
       name(name),
-      margin(30),
-      inner_margin(50),
+      margin(20),
+      inner_margin(25),
       projector_id_(projector_id) {
   pub_border_violation = nh->advertise<integration::SafetyBorderViolation>(
       "/execution/projector_interface/integration/topics/"
@@ -24,6 +24,20 @@ DisplayArea::DisplayArea(ros::NodeHandle *nh, std::string name,
   color = cv::Scalar(255, 0, 0);
 }
 
+cv::Point2f DisplayArea::getProjectionCenter() {
+  cv::Point2f center;
+
+  double centerX = (projector_frame_area[0].x + projector_frame_area[1].x +
+                    projector_frame_area[2].x + projector_frame_area[3].x) /
+                   4.0;
+  double centerY = (projector_frame_area[0].y + projector_frame_area[1].y +
+                    projector_frame_area[2].y + projector_frame_area[3].y) /
+                   4.0;
+
+  center = cv::Point2f(centerX, centerY);
+  return center;
+}
+
 void DisplayArea::create_border_layout(int rows, int cols, float sf_factor,
                                        bool adjacent,
                                        std_msgs::ColorRGBA status_booked,
@@ -35,15 +49,6 @@ void DisplayArea::create_border_layout(int rows, int cols, float sf_factor,
 }
 
 void DisplayArea::compute_border_dimensions(int rows, int columns) {
-  ROS_INFO("table projector_frame_area top left: x = %d, y = %d",
-           projector_frame_area[0].x, projector_frame_area[0].y);
-  ROS_INFO("table projector_frame_area top right: x = %d, y = %d",
-           projector_frame_area[1].x, projector_frame_area[1].y);
-  ROS_INFO("table projector_frame_area bottom right: x = %d, y = %d",
-           projector_frame_area[2].x, projector_frame_area[2].y);
-  ROS_INFO("table projector_frame_area bottom left: x = %d, y = %d",
-           projector_frame_area[3].x, projector_frame_area[3].y);
-
   // Calculate rectangle width and height with inner margins
   int width_with_margin = static_cast<int>(
       cv::norm(projector_frame_area[1] - projector_frame_area[0]) - 2 * margin);
@@ -52,8 +57,6 @@ void DisplayArea::compute_border_dimensions(int rows, int columns) {
 
   rect_width = (width_with_margin - columns * inner_margin) / columns;
   rect_height = (height_with_margin - rows * inner_margin) / rows;
-  ROS_INFO("rect_width: %d", rect_width);
-  ROS_INFO("rect_height: %d", rect_height);
 
   cv::Point inner_top_left;
   cv::Point inner_top_right;
@@ -61,11 +64,9 @@ void DisplayArea::compute_border_dimensions(int rows, int columns) {
   cv::Point inner_bottom_right;
 
   if (projector_frame_area[0].x < projector_frame_area[1].x) {
-    ROS_INFO("left > right");
     inner_top_left.x = projector_frame_area[0].x + margin;
     inner_top_right.x = projector_frame_area[1].x - margin;
   } else {
-    ROS_INFO("right > left");
     inner_top_left.x = projector_frame_area[1].x + margin;
     inner_top_right.x = projector_frame_area[0].x - margin;
   }
@@ -74,11 +75,9 @@ void DisplayArea::compute_border_dimensions(int rows, int columns) {
   inner_bottom_left.x = inner_top_left.x;
 
   if (projector_frame_area[0].y < projector_frame_area[3].y) {
-    ROS_INFO("top > down");
     inner_top_left.y = projector_frame_area[0].y + margin;
     inner_bottom_left.y = projector_frame_area[3].y - margin;
   } else {
-    ROS_INFO("bottom > up");
     inner_top_left.y = projector_frame_area[3].y + margin;
     inner_bottom_left.y = projector_frame_area[0].y - margin;
   }
@@ -88,15 +87,6 @@ void DisplayArea::compute_border_dimensions(int rows, int columns) {
 
   inner_projector_frame_area = {inner_top_left, inner_top_right,
                                 inner_bottom_right, inner_bottom_left};
-
-  ROS_INFO("table inner projector_frame_area top left: x = %d, y = %d",
-           inner_projector_frame_area[0].x, inner_projector_frame_area[0].y);
-  ROS_INFO("table inner projector_frame_area top left: x = %d, y = %d",
-           inner_projector_frame_area[1].x, inner_projector_frame_area[1].y);
-  ROS_INFO("table inner projector_frame_area top left: x = %d, y = %d",
-           inner_projector_frame_area[2].x, inner_projector_frame_area[2].y);
-  ROS_INFO("table inner projector_frame_area top left: x = %d, y = %d",
-           inner_projector_frame_area[3].x, inner_projector_frame_area[3].y);
 
   left_side_points =
       interpolate(inner_projector_frame_area[0], inner_projector_frame_area[3],
@@ -173,7 +163,7 @@ bool DisplayArea::checkForInteractions(
         msg_border.request_id = border->getId();
         msg_border.violation_active = false;
         pub_border_violation.publish(msg_border);
-
+        border->thickness = 1;
         border->setAlreadyCrossed(false);
       }
     }
@@ -187,6 +177,7 @@ bool DisplayArea::checkForInteractions(
         result = true;
         button->setAlreadyPressed(true);
         integration::VirtualButtonEvent msg_event;
+        ROS_INFO("button pressed");
         msg_event.virtual_button_id = button->getId();
         msg_event.event_type = msg_event.PRESSED;
         events.virtual_button_events.push_back(msg_event);
@@ -195,6 +186,7 @@ bool DisplayArea::checkForInteractions(
     } else {
       if (button->isAlreadyPressed()) {
         integration::VirtualButtonEvent msg_event;
+        ROS_INFO("button released");
         msg_event.virtual_button_id = button->getId();
         msg_event.event_type = msg_event.RELEASED;
         events.virtual_button_events.push_back(msg_event);
@@ -269,9 +261,20 @@ geometry_msgs::Pose DisplayArea::compute_absolute_world_position(
     width = camera_frame_area[1].x - camera_frame_area[0].x;
     height = camera_frame_area[3].y - camera_frame_area[0].y;
   }
-  result.position.x = centerX + (center.position.x - 0.5) * width;
-  // Y direction:
-  result.position.y = centerY + (center.position.y - 0.5) * height;
+
+  // Compute relative position offsets
+  double local_x_offset = (center.position.x - 0.5) * width;
+  double local_y_offset = (center.position.y - 0.5) * height;
+
+  // Apply rotation transformation
+  double rotated_x_offset = local_x_offset * cos(rotation_angle) -
+                            local_y_offset * sin(rotation_angle);
+  double rotated_y_offset = local_x_offset * sin(rotation_angle) +
+                            local_y_offset * cos(rotation_angle);
+
+  // Calculate final position
+  result.position.x = centerX + rotated_x_offset;
+  result.position.y = centerY + rotated_y_offset;
   result.position.z = center.position.z;
 
   return result;

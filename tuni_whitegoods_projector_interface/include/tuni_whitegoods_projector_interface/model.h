@@ -27,9 +27,7 @@ class ProjectorInterfaceModel {
       client_reverse_projector_point, client_projector_smart_interface;
 
   ros::Timer interaction_timer_;
-  cv::Size2f size;
-  double max_width;
-  double max_height;
+
   std::vector<cv::Point2f> original_table_projector_position;
 
   bool hands_detected, action_triggered, hand_visualization;
@@ -78,6 +76,12 @@ class ProjectorInterfaceModel {
   void operator_book_border(std::string id);
   void operator_release_border(std::string id, int status);
 
+  cv::Point2f getProjectionCenter(std::vector<cv::Point2f> projection_area);
+  double getProjectionAngle(cv::Point2f center, cv::Size2f size,
+                            std::vector<cv::Point2f> projection_area,
+                            std::shared_ptr<DisplayArea> zone);
+  cv::Size2f getProjectionSize(std::vector<cv::Point2f> projection_area);
+  bool isPortrait(double width, double height);
   std::vector<std::shared_ptr<Button>> getButtons();
   std::vector<std::shared_ptr<StaticBorder>> getBorders();
   std::vector<std::shared_ptr<Hand>> getHands();

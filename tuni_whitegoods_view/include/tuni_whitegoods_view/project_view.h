@@ -2,7 +2,6 @@
 #define Projector_H
 
 #include <cv_bridge/cv_bridge.h>
-
 #include <std_msgs/Float64MultiArray.h>
 #include <tuni_whitegoods_msgs/Projection.h>
 
@@ -41,7 +40,7 @@ class Projector : public View {
       bottom_left_moving_table_x, bottom_left_moving_table_y,
       bottom_right_moving_table_x, bottom_right_moving_table_y;
 
-  std::vector<std::shared_ptr<DisplayArea>> display_areas;   
+  std::vector<std::shared_ptr<DisplayArea>> display_areas;
 
   int height_moving_table, width_moving_table;
   int TEXT_FACE;
@@ -70,8 +69,6 @@ class Projector : public View {
       const tuni_whitegoods_msgs::DynamicArea::ConstPtr& msg);
 
   int id_;
-
-
 };
 
 #endif

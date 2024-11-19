@@ -258,7 +258,7 @@ class TransformTablePointServer {
         // Check if the vectors are aligned (dot product close to 1 or -1)
         float dot_product =
             normalized_edge.x * rect1_edge.x + normalized_edge.y * rect1_edge.y;
-        ROS_INFO("parallelism angle (%f)", std::fabs(dot_product));
+
         if (std::fabs(dot_product) > 0.90) {
           // Adjust the angle of rotatedRect2 to align it
           new_angle = atan2(rect1_edge.y, rect1_edge.x) * 180.0 / CV_PI;
@@ -286,6 +286,8 @@ class TransformTablePointServer {
         static_cast<double>(alignedVertices[3].x);
     res.table_corners.bottom_left[1] =
         static_cast<double>(alignedVertices[3].y);
+
+    res.table_corners.rotation_angle = new_angle + gui_angle;
 
     return true;
   }

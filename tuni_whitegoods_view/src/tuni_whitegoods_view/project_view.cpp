@@ -1,5 +1,6 @@
 #include "tuni_whitegoods_view/project_view.h"
 
+#include <cairomm/cairomm.h>
 #include <sensor_msgs/image_encodings.h>
 #include <std_msgs/Empty.h>
 #include <std_msgs/Int32.h>
@@ -16,10 +17,8 @@ using namespace std;
 Projector::Projector(ros::NodeHandle *nh, int id) : nh_(nh), id_(id) {
   if (!ros::param::get("shiftX", shift)) {
     shift = 0;  // Default value
-    ROS_WARN("Parameter 'shiftX' not found, using default value 0.");
   } else {
     shift = shift * id_;
-    ROS_INFO("Using shift %d", shift);
   }
   ros::param::get("projector_resolution", projector_resolution);
 
@@ -38,8 +37,6 @@ Projector::Projector(ros::NodeHandle *nh, int id) : nh_(nh), id_(id) {
   TEXT_THICKNESS = 2;
 
   combined = layers["background"].mat->clone();
-
-  ROS_INFO("ProjectorView running");
 }
 
 Projector::~Projector() { cv::destroyWindow(window_name); }
@@ -60,7 +57,6 @@ void Projector::init(std::vector<std::shared_ptr<DisplayArea>> zones) {
   cv::setWindowProperty(window_name, cv::WND_PROP_FULLSCREEN,
                         cv::WINDOW_FULLSCREEN);
   project_image();
-  ROS_INFO("init done");
 }
 
 void Projector::moveWindow() {
@@ -73,22 +69,14 @@ void Projector::moveWindow() {
 void Projector::updateButtons(
     const std::vector<std::shared_ptr<Button>> &buttons,
     std::shared_ptr<cv::Mat> layer) {
+  int width = layer->cols;
+  int height = layer->rows;
+
+  auto surface =
+      Cairo::ImageSurface::create(Cairo::Format::FORMAT_RGB24, width, height);
+  auto cr = Cairo::Context::create(surface);
+
   for (auto &button : buttons) {
-    cv::circle(*layer, button->center_projected_point, button->radius,
-               button->btn_color, -1);
-    int fontFace = cv::FONT_HERSHEY_SIMPLEX;
-
-    cv::Size textSize =
-        cv::getTextSize(button->text, fontFace, button->fontScale,
-                        button->thickness, &button->baseline);
-
-    cv::Mat textImage = cv::Mat::zeros(textSize.height + button->baseline,
-                                       textSize.width, CV_8UC3);
-    cv::putText(textImage, button->text,
-                cv::Point(button->origin_text_x, button->origin_text_y),
-                fontFace, button->fontScale, button->txt_color,
-                button->thickness);
-
     // rectangle around that to see what the projection area would be if
     // straight
     int top_left_straight_table_x, top_left_straight_table_y,
@@ -129,57 +117,69 @@ void Projector::updateButtons(
         normLine1.x() * normLine2.y() - normLine1.y() * normLine2.x();
 
     if (button->flipTextRotation) {
-      if (crossProductZ > 0) {
-        angleDegrees = -angleDegrees;
-      }
-    } else {
       if (crossProductZ < 0) {
         angleDegrees = -angleDegrees;
       }
+    } else {
+      if (crossProductZ > 0) {
+        angleDegrees = -angleDegrees;
+      }
     }
-    // Compute rotation matrix
-    // Estimate the bounding box for the rotated text
-    int padding = static_cast<int>(std::sqrt(
-        textSize.width * textSize.width + textSize.height * textSize.height));
 
-    cv::Mat paddedTextImage = cv::Mat::zeros(
-        textImage.rows + padding, textImage.cols + padding, textImage.type());
+    // Get button's circle properties
+    double x = button->center_projected_point.x;
+    double y = button->center_projected_point.y;
+    double radius = button->radius;
+    cv::Scalar btn_color = button->btn_color;  // BGR color
 
-    // Center the original text in the new padded image
-    textImage.copyTo(paddedTextImage(
-        cv::Rect(padding / 2, padding / 2, textImage.cols, textImage.rows)));
+    // Convert OpenCV BGR color to Cairo RGB
+    double red = btn_color[2] / 255.0;
+    double green = btn_color[1] / 255.0;
+    double blue = btn_color[0] / 255.0;
 
-    // Update the rotation matrix to rotate around the center of the new
-    // padded image
-    cv::Point2f center(paddedTextImage.cols / 2.0f,
-                       paddedTextImage.rows / 2.0f);
-    cv::Mat rotationMatrix = cv::getRotationMatrix2D(center, angleDegrees, 1.0);
+    // Set Cairo color (RGB)
+    cr->set_source_rgb(red, green, blue);
 
-    cv::Mat rotatedText;
-    cv::warpAffine(paddedTextImage, rotatedText, rotationMatrix,
-                   paddedTextImage.size(), cv::INTER_LANCZOS4,
-                   cv::BORDER_TRANSPARENT);
+    // Draw and fill the circle (button) in Cairo
+    cr->arc(x, y, radius, 0, 2 * M_PI);  // Circle with center (x, y) and radius
+    cr->fill();                          // Fill the circle with color
 
-    // Calculate the new ROI based on the expanded rotated text dimensions
-    cv::Rect roi(button->center_projected_point.x - rotatedText.cols / 2,
-                 button->center_projected_point.y - rotatedText.rows / 2,
-                 rotatedText.cols, rotatedText.rows);
+    // Draw the text at the center of the circle
+    cr->set_source_rgb(1.0, 1.0,
+                       1.0);  // Set text color to white (or any other color)
+    cr->select_font_face("Arial", Cairo::FONT_SLANT_NORMAL,
+                         Cairo::FONT_WEIGHT_BOLD);
+    cr->set_font_size(24);  // Set font size
 
-    // Ensure ROI stays within the bounds of `layer`
-    int x = std::max(0, roi.x);
-    int y = std::max(0, roi.y);
-    int width = std::min(roi.width, layer->cols - x);
-    int height = std::min(roi.height, layer->rows - y);
+    // Calculate the width and height of the text to center it
+    std::string text = button->text;
+    Cairo::TextExtents extents;  // Declare the TextExtents object
+    cr->get_text_extents(text,
+                         extents);  // Pass the object to get the text extents
 
-    cv::Rect validRoi(x, y, width, height);
+    // Use the extents to position the text at the center of the circle
+    double text_width = extents.width;
+    double text_height = extents.height;
 
-    // Copy the rotated text into the layer, using the valid ROI to handle
-    // boundaries
-    rotatedText(cv::Rect(0, 0, validRoi.width, validRoi.height))
-        .copyTo((*layer)(validRoi), rotatedText);
+    // Move the text to the center of the circle (adjusting for text size)
+    cr->move_to(x - text_width / 2, y + text_height / 2);
+
+    // Draw the text
+    cr->show_text(text);
+  }
+  // Step 4: Convert Cairo image surface data back to OpenCV Mat
+  unsigned char *data = surface->get_data();
+
+  // Convert the Cairo surface data (RGB) to OpenCV Mat (BGR)
+  for (int y = 0; y < height; ++y) {
+    for (int x = 0; x < width; ++x) {
+      int offset = (y * width + x) * 4;
+      layer->at<cv::Vec3b>(y, x)[0] = data[offset + 2];  // B
+      layer->at<cv::Vec3b>(y, x)[1] = data[offset + 1];  // G
+      layer->at<cv::Vec3b>(y, x)[2] = data[offset + 0];  // R
+    }
   }
 }
-
 void Projector::updateBorders(
     const std::vector<std::shared_ptr<StaticBorder>> &borders,
     std::shared_ptr<cv::Mat> layer) {
@@ -199,8 +199,6 @@ void Projector::updateDisplayAreas(
   for (auto &zone : zones) {
     if (!(zone->name == "projector" || zone->name == "camera")) {
       if (id_ == zone->projector_id_) {
-        ROS_INFO("Projector(%d) -> updateDisplayAreas(%s)", zone->projector_id_,
-                 zone->name.c_str());
         cv::Point tl(zone->projector_frame_area[0].x,
                      zone->projector_frame_area[0].y);
         cv::Point tr(zone->projector_frame_area[1].x,
@@ -240,13 +238,8 @@ void Projector::updateDisplayAreas(
                       TEXT_SCALE_TITLE, cv::Scalar(255, 255, 255),
                       TEXT_THICKNESS, cv::LINE_AA);
 
-          // Rotate the temporary Mat by 180 degrees
           cv::Mat rotatedTextLayer;
           cv::flip(textLayer, rotatedTextLayer, 0);  // Flips vertically only
-          // cv::flip(rotatedTextLayer, rotatedTextLayer, 1); // Flips
-          // horizontally only (ensures left-to-right orientation)
-
-          // Add the rotated text layer onto the original layer
           cv::addWeighted(*layers[zone->name].mat, 1.0, rotatedTextLayer, 1.0,
                           0.0, *layers[zone->name].mat);
         }

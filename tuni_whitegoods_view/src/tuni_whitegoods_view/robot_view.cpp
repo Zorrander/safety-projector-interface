@@ -12,13 +12,11 @@ RobotView::RobotView(ros::NodeHandle* nh) {
   hand_color.g = 1.0;
   hand_color.b = 1.0;
   hand_color.a = 1.0;
-  ROS_INFO("RobotView running");
 }
 
 void RobotView::init(std::vector<std::shared_ptr<DisplayArea>> zones) {
   for (auto& zone : zones) {
-    ROS_INFO("Robot view -> add (%s)", zone->name.c_str());
-    if (!zone->robot_frame_area.empty()){
+    if (!zone->robot_frame_area.empty()) {
       createRvizMarker(zone->robot_frame_area, hand_color, zone->name);
       ros::Duration(1.0).sleep();
     }

@@ -23,6 +23,9 @@ find_package(catkin REQUIRED COMPONENTS
 )
 
 find_package(OpenCV 4 REQUIRED)
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(CAIROMM REQUIRED cairomm-1.0)
+pkg_check_modules(CAIRO REQUIRED cairo)
 find_package(Eigen3 REQUIRED)
 
 
@@ -46,6 +49,7 @@ include_directories(
   include 
   ${catkin_INCLUDE_DIRS}
   ${OpenCV_INCLUDE_DIRS}
+  ${CAIROMM_INCLUDE_DIRS}
 )
 
 
@@ -59,7 +63,8 @@ add_library(view
 
 target_link_libraries(view
   ${catkin_LIBRARIES} 
-  ${OpenCV_LIBS} 
+  ${OpenCV_LIBS}
+  ${CAIROMM_LIBRARIES}
   Eigen3::Eigen
 )
 
