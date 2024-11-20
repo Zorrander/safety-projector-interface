@@ -25,7 +25,7 @@ class ProjectorInterfaceModel {
   ros::ServiceClient client_world_coordinates, client_3D_to_pixel,
       client_pixel_to_3D, client_projector_point,
       client_reverse_projector_point, client_projector_smart_interface;
-
+  ros::Time startTime;
   ros::Timer interaction_timer_;
 
   std::vector<cv::Point2f> original_table_projector_position;

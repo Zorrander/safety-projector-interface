@@ -22,6 +22,7 @@ DisplayArea::DisplayArea(ros::NodeHandle *nh, std::string name,
       1);
   filling = false;
   color = cv::Scalar(255, 0, 0);
+  last_detection_time = ros::Time::now();
 }
 
 cv::Point2f DisplayArea::getProjectionCenter() {
@@ -155,14 +156,14 @@ bool DisplayArea::checkForInteractions(
         integration::SafetyBorderViolation msg_border;
         msg_border.request_id = border->getId();
         msg_border.violation_active = true;
-        pub_border_violation.publish(msg_border);
+        // pub_border_violation.publish(msg_border);
       }
     } else {
       if (border->isAlreadyCrossed()) {
         integration::SafetyBorderViolation msg_border;
         msg_border.request_id = border->getId();
         msg_border.violation_active = false;
-        pub_border_violation.publish(msg_border);
+        // pub_border_violation.publish(msg_border);
         border->thickness = 1;
         border->setAlreadyCrossed(false);
       }
@@ -171,11 +172,15 @@ bool DisplayArea::checkForInteractions(
 
   for (auto &button : buttons_) {
     integration::VirtualButtonEventArray events;
-
-    if (button->checkForInteractions(name, cv_hand_position)) {
+    ros::Duration diff = ros::Time::now() - last_detection_time;
+    if (!(last_button_pressed == button->getId()) && diff.toSec() > 2.0 &&
+        hand_position.z > 2100 &&
+        button->checkForInteractions(name, cv_hand_position)) {
       if (!button->isAlreadyPressed()) {
         result = true;
         button->setAlreadyPressed(true);
+        last_button_pressed = button->getId();
+        last_detection_time = ros::Time::now();
         integration::VirtualButtonEvent msg_event;
         ROS_INFO("button pressed");
         msg_event.virtual_button_id = button->getId();
@@ -191,7 +196,6 @@ bool DisplayArea::checkForInteractions(
         msg_event.event_type = msg_event.RELEASED;
         events.virtual_button_events.push_back(msg_event);
         pub_button_event.publish(events);
-
         button->setAlreadyPressed(false);
       }
     }
@@ -254,6 +258,7 @@ geometry_msgs::Pose DisplayArea::compute_absolute_world_position(
   int height;
 
   // Map normalized coordinates back to absolute position
+
   if (isPortrait) {
     width = camera_frame_area[2].x - camera_frame_area[0].x;
     height = camera_frame_area[1].y - camera_frame_area[0].y;

@@ -163,7 +163,6 @@ void Projector::updateButtons(
 
     // Move the text to the center of the circle (adjusting for text size)
     cr->move_to(x - text_width / 2, y + text_height / 2);
-
     // Draw the text
     cr->show_text(text);
   }
@@ -223,10 +222,9 @@ void Projector::updateDisplayAreas(
           cv::polylines(*layers[zone->name].mat, rectanglePoints, true,
                         cv::Scalar(255), 10, cv::LINE_8);
         } else {
-          cv::rectangle(*layers[zone->name].mat, tl, br, zone->color,
-                        cv::FILLED);
+          cv::polylines(*layers[zone->name].mat, rectanglePoints, true,
+                        cv::Scalar(255), 10, cv::LINE_8);
         }
-
         if (!zone->instructions.empty()) {
           // Create a temporary Mat to hold the text only
           cv::Mat textLayer = cv::Mat::zeros(layers[zone->name].mat->size(),

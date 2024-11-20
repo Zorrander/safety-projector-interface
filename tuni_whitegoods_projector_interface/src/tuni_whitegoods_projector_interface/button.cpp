@@ -50,12 +50,12 @@ bool Button::checkForInteractions(const std::string& name,
                                   const cv::Point& hand_position) {
   bool result = false;
   float distance = cv::norm(hand_position - center_cam_point);
-  ROS_INFO("Hand Position: [%d, %d]", hand_position.x, hand_position.y);
-  ROS_INFO("Center Cam Point: [%d, %d]", center_cam_point.x,
-           center_cam_point.y);
-  ROS_INFO("Distance: %.2f", distance);
-  ROS_INFO("radius: %.2f", radius * 1.7);
-  bool is_crossed = distance < radius * 1.7;
+  // ROS_INFO("Hand Position: [%d, %d]", hand_position.x, hand_position.y);
+  // ROS_INFO("Center Cam Point: [%d, %d]", center_cam_point.x,
+  //         center_cam_point.y);
+  // ROS_INFO("Distance: %.2f", distance);
+  // ROS_INFO("radius: %.2f", radius * 1.7);
+  bool is_crossed = distance < radius * 1.5;
   if (name == "left") {
     left_hand_press = is_crossed;
   } else if (name == "right") {

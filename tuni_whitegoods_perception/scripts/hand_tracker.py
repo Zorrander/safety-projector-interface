@@ -98,11 +98,9 @@ class HandTracker(object):
                 for id, lm in enumerate(Hand.landmark):
                     cx = int(min(max(lm.x * w, 0), w - 1))
                     cy = int(min(max(lm.y * h, 0), h - 1))
+                    cz = depth_image[cy, cx]
                     if id == 12:
                         if self.has_moved(cx, cy) or self.previous_center_x is None or self.previous_center_y is None:
-                            print("sent")
-                            print(cx)
-                            print(cy)
                             msg_hands.name.append(handType.lower())
                             tmp_pos = Point()
                             tmp_pos.x = cx

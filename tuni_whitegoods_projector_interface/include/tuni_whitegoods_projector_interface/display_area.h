@@ -33,7 +33,7 @@ class DisplayArea {
   int inner_margin;
   int rect_width;
   int rect_height;
-
+  ros::Time last_detection_time;
   std::vector<cv::Point> left_side_points;
   std::vector<cv::Point> right_side_points;
   std::vector<cv::Point> top_side_points;
@@ -43,6 +43,7 @@ class DisplayArea {
   double projector_rotation_angle;
   double rotation_angle;
   std::string name;
+  std::string last_button_pressed;
   bool filling;
   std::string instructions;
   cv::Scalar color;

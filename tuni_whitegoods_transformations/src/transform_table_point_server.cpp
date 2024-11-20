@@ -92,6 +92,9 @@ class TransformTablePointServer {
       // horizontal
       std::swap(original_max_width, original_max_height);
     }
+
+    // original_max_width = 100;
+    // original_max_height = 100;
   }
 
   cv::Mat moving_table_homography;
@@ -169,8 +172,19 @@ class TransformTablePointServer {
     double x2 = x1 + scaled_dx;
     double y2 = y1 + scaled_dy;
     cv::Point2f center(x2, y2);
-    // cv::Point2f center(centerX, centerY);
 
+    // cv::Point2f center(centerX, centerY);
+    /*
+    double x1 = marker_centerX;
+    double y1 = marker_centerY;
+    double dx = new_position[0].x - new_position[3].x;
+    double dy = new_position[0].y - new_position[3].y;
+    double scaled_dx = dx * 3;
+    double scaled_dy = dy * 3;
+    double x2 = new_position[3].x - scaled_dx;
+    double y2 = new_position[3].y - scaled_dy;
+    cv::Point2f center(x2, y2);
+    */
     // Calculate side lengths
     double width1 =
         std::hypot(transformed_corners[1].x - transformed_corners[0].x,

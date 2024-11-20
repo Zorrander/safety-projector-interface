@@ -150,17 +150,18 @@ bool StaticBorder::checkForInteractions(const std::string& name,
 }
 
 void StaticBorder::resetInteractions() {
-  left_hand_crossed = false;
-  right_hand_crossed = false;
-  border_violated = false;
-  border_already_crossed = false;
-  ROS_INFO("border resetInteractions");
-  thickness = 1;
-
-  integration::SafetyBorderViolation msg_border;
-  msg_border.request_id = request_id;
-  msg_border.violation_active = false;
-  pub_border_violation.publish(msg_border);
+  if (border_violated) {
+    left_hand_crossed = false;
+    right_hand_crossed = false;
+    border_violated = false;
+    border_already_crossed = false;
+    ROS_INFO("border resetInteractions");
+    thickness = 1;
+    integration::SafetyBorderViolation msg_border;
+    msg_border.request_id = request_id;
+    msg_border.violation_active = false;
+    // pub_border_violation.publish(msg_border);
+  }
 }
 
 bool StaticBorder::isAdjacent(std::shared_ptr<StaticBorder> sb) {

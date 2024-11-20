@@ -74,6 +74,8 @@ ProjectorInterfaceModel::ProjectorInterfaceModel(ros::NodeHandle *nh)
   interaction_timer_ = nh->createTimer(
       ros::Duration(0.5), &ProjectorInterfaceModel::reset_interactions, this);
 
+  startTime = ros::Time::now();
+
   left_hand = std::make_shared<Hand>("left");
   right_hand = std::make_shared<Hand>("right");
 
@@ -518,17 +520,20 @@ void ProjectorInterfaceModel::updateHandPose(
   }
 
   bool interaction_detected = false;
-  // Check for interaction
-  for (auto &zone : zones) {
-    if (zone->checkForInteractions(name, position)) {
-      interaction_detected = true;
-      break;
-    }
-  }
 
-  if (interaction_detected) {
-    // Notify controller
-    notify();
+  // Check for interaction
+  if ((ros::Time::now() - startTime).toSec() > 30.0) {
+    for (auto &zone : zones) {
+      if (zone->checkForInteractions(name, position)) {
+        interaction_detected = true;
+        break;
+      }
+    }
+
+    if (interaction_detected) {
+      // Notify controller
+      notify();
+    }
   }
 }
 
