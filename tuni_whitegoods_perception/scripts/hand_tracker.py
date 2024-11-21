@@ -21,7 +21,7 @@ class HandTracker(object):
     def __init__(self, mode=False, maxHands=2, detectionCon=0.15, modelComplexity=0, trackCon=0.15):
         rospy.init_node('hand_tracking')
         self.pub_hands_poi = rospy.Publisher(
-            "/odin/internal/hand_detection", HandsState, queue_size=10)
+            "/odin/internal/hand_detection", HandsState, queue_size=20)
         self.background = False
         self.mode = mode
         self.maxHands = maxHands
@@ -100,16 +100,15 @@ class HandTracker(object):
                     cy = int(min(max(lm.y * h, 0), h - 1))
                     cz = depth_image[cy, cx]
                     if id == 12:
-                        if self.has_moved(cx, cy) or self.previous_center_x is None or self.previous_center_y is None:
-                            msg_hands.name.append(handType.lower())
-                            tmp_pos = Point()
-                            tmp_pos.x = cx
-                            tmp_pos.y = cy
-                            tmp_pos.z = depth_image[cy, cx]
-                            msg_hands.position.append(tmp_pos)
-                            self.previous_center_x = cx
-                            self.previous_center_y = cy
-                            break
+                        msg_hands.name.append(handType.lower())
+                        tmp_pos = Point()
+                        tmp_pos.x = cx
+                        tmp_pos.y = cy
+                        tmp_pos.z = depth_image[cy, cx]
+                        msg_hands.position.append(tmp_pos)
+                        self.previous_center_x = cx
+                        self.previous_center_y = cy
+                        break
             self.pub_hands_poi.publish(msg_hands)
 
 

@@ -40,8 +40,8 @@ ProjectorInterfaceController::ProjectorInterfaceController(ros::NodeHandle *nh)
   // Initialize views
   views.push_back(projector_view);
   views.push_back(second_projector_view);
-  views.push_back(camera_view);
-  views.push_back(robot_view);
+  // views.push_back(camera_view);
+  // views.push_back(robot_view);
 
   init_sub = nh_->subscribe("/odin/start", 1,
                             &ProjectorInterfaceController::initCallback, this);
@@ -174,8 +174,15 @@ void ProjectorInterfaceController::createBorderLayout(
 
 void ProjectorInterfaceController::handTrackerCallback(
     const tuni_whitegoods_msgs::HandsState &msg) {
+  bool result = false;
   for (int i = 0; i < msg.name.size(); i++) {
-    model_->updateHandPose(msg.name[i], msg.position[i]);
+    if (model_->updateHandPose(msg.name[i], msg.position[i])) {
+      result = true;
+    }
+
+    if (!result) {
+      model_->reset_interactions();
+    }
   }
 
   // std::for_each(views.begin(), views.end(),
@@ -341,6 +348,9 @@ bool ProjectorInterfaceController::getBordersService(
     ROS_INFO("border %s status: %d", sbs.id.c_str(), sbs.status);
     res.status_borders.push_back(sbs);
   }
+  std::for_each(views.begin(), views.end(), [this](auto &view) {
+    view->updateDisplayAreas(model_->getDisplayAreas());
+  });
 
   ROS_INFO("Border status check complete.");
   return true;

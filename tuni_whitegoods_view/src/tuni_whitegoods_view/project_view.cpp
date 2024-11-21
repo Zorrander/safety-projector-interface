@@ -223,19 +223,26 @@ void Projector::updateDisplayAreas(
                         cv::Scalar(255), 10, cv::LINE_8);
         } else {
           cv::polylines(*layers[zone->name].mat, rectanglePoints, true,
-                        cv::Scalar(255), 10, cv::LINE_8);
+                        zone->color, 10, cv::LINE_8);
         }
         if (!zone->instructions.empty()) {
           // Create a temporary Mat to hold the text only
           cv::Mat textLayer = cv::Mat::zeros(layers[zone->name].mat->size(),
                                              layers[zone->name].mat->type());
 
+          string del = "|";
+          string instrc = zone->instructions;
+          auto pos = instrc.find(del);
+          std::string first_line = instrc.substr(0, pos);
+          instrc.erase(0, pos + del.length());
+          std::string second_line = instrc;
           // Draw the text on the temporary Mat
-          cv::putText(textLayer, zone->instructions,
-                      cv::Point(tl.x + 10, tl.y + 200), TEXT_FACE,
-                      TEXT_SCALE_TITLE, cv::Scalar(255, 255, 255),
+          cv::putText(textLayer, first_line, cv::Point(tl.x + 50, tl.y + 230),
+                      TEXT_FACE, TEXT_SCALE_TITLE, cv::Scalar(255, 255, 255),
                       TEXT_THICKNESS, cv::LINE_AA);
-
+          cv::putText(textLayer, second_line, cv::Point(tl.x + 50, tl.y + 330),
+                      TEXT_FACE, TEXT_SCALE_TITLE, cv::Scalar(255, 255, 255),
+                      TEXT_THICKNESS, cv::LINE_AA);
           cv::Mat rotatedTextLayer;
           cv::flip(textLayer, rotatedTextLayer, 0);  // Flips vertically only
           cv::addWeighted(*layers[zone->name].mat, 1.0, rotatedTextLayer, 1.0,

@@ -79,6 +79,8 @@ ProjectorInterfaceModel::ProjectorInterfaceModel(ros::NodeHandle *nh)
   left_hand = std::make_shared<Hand>("left");
   right_hand = std::make_shared<Hand>("right");
 
+  right_hand_detected = false;
+  left_hand_detected = false;
   hands_detected = false;
   original_max_width = 0;
   original_max_height = 0;
@@ -104,13 +106,20 @@ void ProjectorInterfaceModel::reset_interactions(const ros::TimerEvent &) {
       for (auto &zone : zones) {
         zone->resetInteractions();
       }
+
       // Notify controller
-      notify();
       action_triggered = true;
     }
   } else {
     // Reset the variable for the next check
     hands_detected = false;
+  }
+  notify();
+}
+
+void ProjectorInterfaceModel::reset_interactions() {
+  for (auto &zone : zones) {
+    zone->resetInteractions();
   }
 }
 
@@ -154,13 +163,35 @@ void ProjectorInterfaceModel::add_zone(
 void ProjectorInterfaceModel::addInstructions(std::string zone,
                                               std::string title,
                                               std_msgs::ColorRGBA title_color) {
-  for (auto &z : zones) {
-    if (z->name == zone) {
-      z->instructions = title;
-      break;
+  ROS_INFO("%s NEED TO ADD %s", zone.c_str(), title.c_str());
+  auto search = title.find("active");
+  if (search != std::string::npos) {
+    title = "Light curtain|reset needed";
+    for (auto &z : zones) {
+      if (z->name == zone) {
+        z->instructions = title;
+        break;
+      }
     }
+    notify();
   }
-  notify();
+
+  search = title.find("out");
+  if (search != std::string::npos) {
+    title = "Watch out|light curtain";
+    for (auto &z : zones) {
+      if (z->name == zone) {
+        z->instructions = title;
+        break;
+      }
+    }
+    notify();
+  }
+
+  search = title.find("needed");
+  if (search != std::string::npos) {
+    title = "Light curtain|reset needed";
+  }
 }
 
 void ProjectorInterfaceModel::addButton(
@@ -504,11 +535,9 @@ void ProjectorInterfaceModel::updateMovingTable(
   }
 }
 
-void ProjectorInterfaceModel::updateHandPose(
+bool ProjectorInterfaceModel::updateHandPose(
     const std::string &name, const geometry_msgs::Point &position) {
   hands_detected = true;
-  action_triggered = false;
-
   if (hand_visualization) {
     geometry_msgs::Pose hand_pose = fromPixel2Robot(position);
 
@@ -519,22 +548,17 @@ void ProjectorInterfaceModel::updateHandPose(
     }
   }
 
-  bool interaction_detected = false;
-
   // Check for interaction
-  if ((ros::Time::now() - startTime).toSec() > 30.0) {
-    for (auto &zone : zones) {
-      if (zone->checkForInteractions(name, position)) {
-        interaction_detected = true;
-        break;
-      }
-    }
-
-    if (interaction_detected) {
-      // Notify controller
+  bool interaction = false;
+  for (auto &zone : zones) {
+    if (zone->checkForInteractions(name, position)) {
+      interaction = true;
       notify();
+      break;
     }
   }
+
+  return interaction;
 }
 
 std::vector<std::shared_ptr<Button>> ProjectorInterfaceModel::getButtons() {

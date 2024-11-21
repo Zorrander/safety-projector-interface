@@ -146,6 +146,7 @@ class TransformTablePointServer {
                      4.0;
 
     /*test*/
+
     // Centers of the detected and inferred rectangles
     double x1 = marker_centerX;
     double y1 = marker_centerY;
@@ -180,8 +181,8 @@ class TransformTablePointServer {
     double dx = new_position[0].x - new_position[3].x;
     double dy = new_position[0].y - new_position[3].y;
     double scaled_dx = dx * 3;
-    double scaled_dy = dy * 3;
-    double x2 = new_position[3].x - scaled_dx;
+    double scaled_dy = dy * 2;
+    double x2 = new_position[3].x + scaled_dx;
     double y2 = new_position[3].y - scaled_dy;
     cv::Point2f center(x2, y2);
     */
@@ -211,6 +212,7 @@ class TransformTablePointServer {
       // horizontal
       std::swap(max_width, max_height);
     }
+
     cv::Size2f size(max_width, max_height);
 
     int top_left_straight_table_x, top_left_straight_table_y,

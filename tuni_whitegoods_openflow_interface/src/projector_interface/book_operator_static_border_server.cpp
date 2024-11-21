@@ -25,6 +25,7 @@ BookOperatorStaticBorderServer::BookOperatorStaticBorderServer(
 // book operator border
 void BookOperatorStaticBorderServer::executeBookOperator(
     const BookOperatorStaticBorderGoalConstPtr& goal) {
+  ROS_INFO("OPERATOR");
   controller->operator_book_border(goal->id);
   bool success = true;
   sendFeedbackBookOperator(goal->request_id);

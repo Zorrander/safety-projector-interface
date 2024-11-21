@@ -1,0 +1,38 @@
+1:
+
+  shelf:
+    top_left:
+      x: 680
+      y: 840
+      z: 1507
+    top_right:
+      x: 1380
+      y: 840
+      z: 1489
+    bottom_right:
+      x: 1340
+      y: 1030
+      z: 1376
+    bottom_left:
+      x: 680
+      y: 1030
+      z: 1392
+      
+  moving_table:
+    top_left:
+      x: 0
+      y: 0
+      z: 0
+    top_right:
+      x: 0
+      y: 0
+      z: 0
+    bottom_right:
+      x: 0
+      y: 0
+      z: 0
+    bottom_left:
+      x: 0
+      y: 0
+      z: 0
+

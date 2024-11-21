@@ -19,11 +19,11 @@ GUI::GUI(ros::NodeHandle *nh,
           true),
       client_book_border_human(
           "execution/projector_interface/integration/actions/"
-          "book_human_static_border",
+          "book_operator_static_border",
           true),
       client_release_border_human(
           "execution/projector_interface/integration/actions/"
-          "release_human_static_border",
+          "release_operator_static_border",
           true),
       project_client(
           "/execution/projector_interface/integration/actions/"

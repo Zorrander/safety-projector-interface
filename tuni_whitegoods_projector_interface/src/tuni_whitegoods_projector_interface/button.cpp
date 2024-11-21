@@ -44,6 +44,9 @@ bool Button::isAlreadyPressed() { return button_already_pressed; }
 
 void Button::setAlreadyPressed(bool alreadyPressed) {
   button_already_pressed = alreadyPressed;
+  if (!alreadyPressed) {
+    btn_color = base_btn_color;
+  }
 }
 
 bool Button::checkForInteractions(const std::string& name,

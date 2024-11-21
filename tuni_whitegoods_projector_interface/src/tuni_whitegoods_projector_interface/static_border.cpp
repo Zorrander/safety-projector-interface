@@ -57,6 +57,7 @@ StaticBorder::StaticBorder(ros::NodeHandle* nh, std::string r_id, int pos_row,
   right_hand_crossed = false;
   robot_booked = false;
   operator_booked = false;
+  border_violated = false;
 }
 
 bool StaticBorder::isAlreadyCrossed() { return border_already_crossed; }
@@ -136,31 +137,25 @@ bool StaticBorder::checkForInteractions(const std::string& name,
 
   border_violated = (right_hand_crossed || left_hand_crossed);
 
-  if (!border_violated) {
-    thickness = 1;
-  } else {
-    if (robot_booked) {
-      result = true;
-      thickness = -1;
-    } else if (operator_booked) {
-      thickness = 3;
-    }
+  if (border_violated && robot_booked) {
+    result = true;
+    thickness = -1;
   }
   return result;
 }
 
 void StaticBorder::resetInteractions() {
   if (border_violated) {
+    ROS_INFO("StaticBorder %s is violated and being reset", request_id.c_str());
     left_hand_crossed = false;
     right_hand_crossed = false;
     border_violated = false;
     border_already_crossed = false;
-    ROS_INFO("border resetInteractions");
     thickness = 1;
     integration::SafetyBorderViolation msg_border;
     msg_border.request_id = request_id;
     msg_border.violation_active = false;
-    // pub_border_violation.publish(msg_border);
+    pub_border_violation.publish(msg_border);
   }
 }
 

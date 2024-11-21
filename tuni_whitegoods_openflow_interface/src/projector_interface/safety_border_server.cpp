@@ -21,20 +21,21 @@ void SafetyBorderServer::executeSafetyBorder(
     const SetSafetyBorderProjectionGoalConstPtr &goal) {
   bool success = true;
 
-  if (goal->zone == "cell_left" || goal->zone == "cell_right"){
-    for (auto &zone : controller->model_->getDisplayAreas()){
-      if (zone->name == goal->zone){
-        zone->color = cv::Scalar(goal->border_color.b * 255, goal->border_color.g * 255, goal->border_color.r * 255);
-        for (auto &view : controller->views) {
-          view->updateDisplayAreas(controller->model_->getDisplayAreas());
-        }
+  if (goal->zone == "cell_left" || goal->zone == "cell_right") {
+    for (auto &zone : controller->model_->getDisplayAreas()) {
+      if (zone->name == goal->zone) {
+        ROS_INFO("New color - b:%f, g:%f, r:%f", goal->border_color.b,
+                 goal->border_color.g, goal->border_color.r);
+        zone->color =
+            cv::Scalar(goal->border_color.b * 255, goal->border_color.g * 255,
+                       goal->border_color.r * 255);
       }
     }
   } else {
     controller->addStaticBorder(
-      goal->request_id, goal->zone, goal->position_row, goal->position_col,
-      goal->border, goal->border_topic, goal->border_color, goal->is_filled,
-      goal->thickness, goal->lifetime, goal->track_violations);  
+        goal->request_id, goal->zone, goal->position_row, goal->position_col,
+        goal->border, goal->border_topic, goal->border_color, goal->is_filled,
+        goal->thickness, goal->lifetime, goal->track_violations);
   }
 
   /*

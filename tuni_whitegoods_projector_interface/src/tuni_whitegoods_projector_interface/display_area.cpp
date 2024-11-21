@@ -21,7 +21,12 @@ DisplayArea::DisplayArea(ros::NodeHandle *nh, std::string name,
       "virtual_button_event_array",
       1);
   filling = false;
-  color = cv::Scalar(255, 0, 0);
+
+  if (name == "cell_left" || name == "cell_right") {
+    color = cv::Scalar(0, 255 / 2, 255);
+    instructions = "Watch out|light curtain";
+  }
+
   last_detection_time = ros::Time::now();
 }
 
@@ -147,25 +152,29 @@ bool DisplayArea::checkForInteractions(
                              static_cast<int>(hand_position.y));
 
   for (auto &border : borders_) {
-    if (border->robot_booked &&
-        border->checkForInteractions(name, cv_hand_position)) {
-      if (!border->isAlreadyCrossed()) {
-        result = true;
-        border->setAlreadyCrossed(true);
-        // OpenFlow signal
-        integration::SafetyBorderViolation msg_border;
-        msg_border.request_id = border->getId();
-        msg_border.violation_active = true;
-        // pub_border_violation.publish(msg_border);
+    bool booked = border->robot_booked;
+    bool interaction = border->checkForInteractions(name, cv_hand_position);
+    bool past_interaction = border->isAlreadyCrossed();
+    if (booked && interaction && !past_interaction) {
+      result = true;
+      border->setAlreadyCrossed(true);
+      integration::SafetyBorderViolation msg_border;
+      msg_border.request_id = border->getId();
+      msg_border.violation_active = true;
+      pub_border_violation.publish(msg_border);
+      break;
+    } else if (!interaction && past_interaction) {
+      bool reset = false;
+      if (name == "left" && border->left_hand_crossed) {
+        reset = true;
+      } else if (name == "right" && border->right_hand_crossed) {
+        reset = true;
       }
-    } else {
-      if (border->isAlreadyCrossed()) {
-        integration::SafetyBorderViolation msg_border;
-        msg_border.request_id = border->getId();
-        msg_border.violation_active = false;
-        // pub_border_violation.publish(msg_border);
-        border->thickness = 1;
-        border->setAlreadyCrossed(false);
+
+      if (reset) {
+        ROS_INFO("border %s was violated and being reset",
+                 border->getId().c_str());
+        border->resetInteractions();
       }
     }
   }

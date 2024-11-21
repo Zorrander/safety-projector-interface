@@ -30,7 +30,8 @@ class ProjectorInterfaceModel {
 
   std::vector<cv::Point2f> original_table_projector_position;
 
-  bool hands_detected, action_triggered, hand_visualization;
+  bool right_hand_detected, left_hand_detected, action_triggered,
+      hand_visualization, hands_detected;
   cv::Matx33d button_homography;
   std::vector<double> button_homography_array;
   double original_max_width;
@@ -63,11 +64,11 @@ class ProjectorInterfaceModel {
                         ros::Duration life, bool track);
   void notify();
 
-  void updateHandPose(const std::string& name,
+  bool updateHandPose(const std::string& name,
                       const geometry_msgs::Point& position);
 
   void updateMovingTable(const tuni_whitegoods_msgs::DynamicArea& moving_table);
-
+  void reset_interactions();
   void reset_interactions(const ros::TimerEvent&);
 
   void robot_book_border(std::string id);
