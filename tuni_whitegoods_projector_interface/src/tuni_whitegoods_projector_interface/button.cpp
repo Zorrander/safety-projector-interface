@@ -53,25 +53,12 @@ bool Button::checkForInteractions(const std::string& name,
                                   const cv::Point& hand_position) {
   bool result = false;
   float distance = cv::norm(hand_position - center_cam_point);
-  // ROS_INFO("Hand Position: [%d, %d]", hand_position.x, hand_position.y);
-  // ROS_INFO("Center Cam Point: [%d, %d]", center_cam_point.x,
-  //         center_cam_point.y);
-  // ROS_INFO("Distance: %.2f", distance);
-  // ROS_INFO("radius: %.2f", radius * 1.7);
+
   bool is_crossed = distance < radius * 1.5;
-  if (name == "left") {
-    left_hand_press = is_crossed;
-  } else if (name == "right") {
-    right_hand_press = is_crossed;
-  }
 
-  button_pressed = (left_hand_press || right_hand_press);
-
-  if (button_pressed) {
+  if (is_crossed) {
     btn_color = cv::Scalar(255, 0, 0);
     result = true;
-  } else {
-    btn_color = base_btn_color;
   }
   return result;
 }
@@ -79,8 +66,9 @@ bool Button::checkForInteractions(const std::string& name,
 void Button::resetInteractions() {
   left_hand_press = false;
   right_hand_press = false;
-  button_pressed = false;
+  ROS_INFO("color back to normal");
   btn_color = base_btn_color;
+  button_already_pressed = false;
 }
 
 std::string Button::get_name() { return name; }
@@ -89,8 +77,7 @@ void Button::set_button_color(std_msgs::ColorRGBA button_color) {
   ros_btn_color = button_color;
   base_btn_color = cv::Scalar(button_color.b * 255, button_color.g * 255,
                               button_color.r * 255, button_color.a * 255);
-  btn_color = cv::Scalar(button_color.b * 255, button_color.g * 255,
-                         button_color.r * 255, button_color.a * 255);
+  btn_color = base_btn_color;
 }
 
 void Button::set_text_color(std_msgs::ColorRGBA text_color) {

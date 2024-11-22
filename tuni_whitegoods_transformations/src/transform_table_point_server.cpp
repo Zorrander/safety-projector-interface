@@ -173,17 +173,12 @@ class TransformTablePointServer {
     double x2 = x1 + scaled_dx;
     double y2 = y1 + scaled_dy;
     cv::Point2f center(x2, y2);
-
-    // cv::Point2f center(centerX, centerY);
     /*
-    double x1 = marker_centerX;
-    double y1 = marker_centerY;
-    double dx = new_position[0].x - new_position[3].x;
-    double dy = new_position[0].y - new_position[3].y;
-    double scaled_dx = dx * 3;
-    double scaled_dy = dy * 2;
-    double x2 = new_position[3].x + scaled_dx;
-    double y2 = new_position[3].y - scaled_dy;
+    double dx_prime = original_table_centerX - original_marker_centerX
+    double dx = new_position[3].x - new_position[0].x;
+    double dy = new_position[3].y - new_position[0].y;
+    double x2 = new_position[3].x + dx * center_distance;
+    double y2 = new_position[3].y + dy * center_distance;
     cv::Point2f center(x2, y2);
     */
     // Calculate side lengths

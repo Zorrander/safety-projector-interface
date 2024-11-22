@@ -147,15 +147,21 @@ std::vector<cv::Point> DisplayArea::generate_border(int row, int column) {
 bool DisplayArea::checkForInteractions(
     const std::string &name, const geometry_msgs::Point &hand_position) {
   bool result = false;
-  float distance;
   cv::Point cv_hand_position(static_cast<int>(hand_position.x),
                              static_cast<int>(hand_position.y));
-
   for (auto &border : borders_) {
-    bool booked = border->robot_booked;
     bool interaction = border->checkForInteractions(name, cv_hand_position);
     bool past_interaction = border->isAlreadyCrossed();
-    if (booked && interaction && !past_interaction) {
+    if (interaction && !past_interaction) {
+      if (name == "left") {
+        ROS_INFO("border %s was CROSSED %s", border->getId().c_str(),
+                 name.c_str());
+        border->left_hand_crossed = true;
+      } else if (name == "right") {
+        ROS_INFO("border %s was CROSSED %s", border->getId().c_str(),
+                 name.c_str());
+        border->right_hand_crossed = true;
+      }
       result = true;
       border->setAlreadyCrossed(true);
       integration::SafetyBorderViolation msg_border;
@@ -166,14 +172,16 @@ bool DisplayArea::checkForInteractions(
     } else if (!interaction && past_interaction) {
       bool reset = false;
       if (name == "left" && border->left_hand_crossed) {
+        ROS_INFO("border %s was violated %s and being reset",
+                 border->getId().c_str(), name.c_str());
         reset = true;
       } else if (name == "right" && border->right_hand_crossed) {
+        ROS_INFO("border %s was violated %s and being reset",
+                 border->getId().c_str(), name.c_str());
         reset = true;
       }
 
       if (reset) {
-        ROS_INFO("border %s was violated and being reset",
-                 border->getId().c_str());
         border->resetInteractions();
       }
     }
@@ -182,10 +190,15 @@ bool DisplayArea::checkForInteractions(
   for (auto &button : buttons_) {
     integration::VirtualButtonEventArray events;
     ros::Duration diff = ros::Time::now() - last_detection_time;
-    if (!(last_button_pressed == button->getId()) && diff.toSec() > 2.0 &&
-        hand_position.z > 2100 &&
-        button->checkForInteractions(name, cv_hand_position)) {
+    bool interaction = button->checkForInteractions(name, cv_hand_position);
+    if (last_button_pressed != button->getId() && diff.toSec() > 2.0 &&
+        hand_position.z > 2100 && interaction) {
       if (!button->isAlreadyPressed()) {
+        if (name == "left") {
+          button->left_hand_press = true;
+        } else if (name == "right") {
+          button->right_hand_press = true;
+        }
         result = true;
         button->setAlreadyPressed(true);
         last_button_pressed = button->getId();
@@ -196,16 +209,26 @@ bool DisplayArea::checkForInteractions(
         msg_event.event_type = msg_event.PRESSED;
         events.virtual_button_events.push_back(msg_event);
         pub_button_event.publish(events);
+        break;
       }
     } else {
-      if (button->isAlreadyPressed()) {
-        integration::VirtualButtonEvent msg_event;
-        ROS_INFO("button released");
-        msg_event.virtual_button_id = button->getId();
-        msg_event.event_type = msg_event.RELEASED;
-        events.virtual_button_events.push_back(msg_event);
-        pub_button_event.publish(events);
-        button->setAlreadyPressed(false);
+      if (!interaction && button->isAlreadyPressed()) {
+        bool reset = false;
+        if (name == "left" && button->left_hand_press) {
+          reset = true;
+        } else if (name == "right" && button->right_hand_press) {
+          reset = true;
+        }
+
+        if (reset) {
+          integration::VirtualButtonEvent msg_event;
+          ROS_INFO("button %s released", button->getId().c_str());
+          msg_event.virtual_button_id = button->getId();
+          msg_event.event_type = msg_event.RELEASED;
+          events.virtual_button_events.push_back(msg_event);
+          pub_button_event.publish(events);
+          button->resetInteractions();
+        }
       }
     }
   }

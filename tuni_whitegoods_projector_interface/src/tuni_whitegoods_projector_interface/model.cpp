@@ -72,12 +72,16 @@ ProjectorInterfaceModel::ProjectorInterfaceModel(ros::NodeHandle *nh)
 
   // Create a timer
   interaction_timer_ = nh->createTimer(
-      ros::Duration(0.5), &ProjectorInterfaceModel::reset_interactions, this);
+      ros::Duration(2), &ProjectorInterfaceModel::reset_interactions, this);
 
   startTime = ros::Time::now();
-
+  updating = false;
+  reseting = false;
   left_hand = std::make_shared<Hand>("left");
   right_hand = std::make_shared<Hand>("right");
+  action_triggered = false;
+  left_hand_triggered = false;
+  right_hand_triggered = false;
 
   right_hand_detected = false;
   left_hand_detected = false;
@@ -100,21 +104,58 @@ void ProjectorInterfaceModel::create_border_layout(
 }
 
 void ProjectorInterfaceModel::reset_interactions(const ros::TimerEvent &) {
+  while (updating) {
+    ros::Duration(0.1).sleep();
+  }
+  reseting = true;
+  if (!left_hand_detected) {
+    ROS_INFO("no left hand detected");
+    if (!left_hand_triggered) {
+      ROS_INFO("no left hand triggered");
+      left_hand_triggered = true;
+      ROS_INFO("resetting left hand interactions");
+      for (auto &zone : zones) {
+        zone->resetInteractions();
+      }
+      notify();
+    } else {
+      ROS_INFO("left hand already triggered");
+    }
+  } else {
+    left_hand_detected = false;
+  }
+
+  if (!right_hand_detected) {
+    ROS_INFO("no right hand detected");
+    if (!right_hand_triggered) {
+      ROS_INFO("resetting right hand interactions");
+      for (auto &zone : zones) {
+        zone->resetInteractions();
+      }
+      notify();
+      right_hand_triggered = true;
+    } else {
+      ROS_INFO("right hand already triggered");
+    }
+  } else {
+    right_hand_detected = false;
+  }
+  reseting = false;
+  /*
   if (!hands_detected) {
     if (!action_triggered) {
       // Check for interaction
       for (auto &zone : zones) {
         zone->resetInteractions();
       }
-
+      notify();
       // Notify controller
       action_triggered = true;
     }
   } else {
     // Reset the variable for the next check
     hands_detected = false;
-  }
-  notify();
+  }*/
 }
 
 void ProjectorInterfaceModel::reset_interactions() {
@@ -537,7 +578,21 @@ void ProjectorInterfaceModel::updateMovingTable(
 
 bool ProjectorInterfaceModel::updateHandPose(
     const std::string &name, const geometry_msgs::Point &position) {
-  hands_detected = true;
+  while (reseting) {
+    ros::Duration(0.1).sleep();
+  }
+  updating = true;
+  left_hand_triggered = false;
+  right_hand_triggered = false;
+  ROS_INFO("hand id %s", name.c_str());
+  if (name == "left") {
+    ROS_INFO("found left");
+    left_hand_detected = true;
+  } else if (name == "right") {
+    ROS_INFO("found right");
+    right_hand_detected = true;
+  }
+
   if (hand_visualization) {
     geometry_msgs::Pose hand_pose = fromPixel2Robot(position);
 
@@ -553,11 +608,11 @@ bool ProjectorInterfaceModel::updateHandPose(
   for (auto &zone : zones) {
     if (zone->checkForInteractions(name, position)) {
       interaction = true;
-      notify();
       break;
     }
   }
-
+  notify();
+  updating = false;
   return interaction;
 }
 

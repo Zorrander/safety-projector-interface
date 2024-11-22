@@ -127,31 +127,26 @@ cv::Point StaticBorder::getCenter() {
 bool StaticBorder::checkForInteractions(const std::string& name,
                                         const cv::Point& hand_position) {
   bool result = false;
-  float distance = cv::norm(hand_position - getCenter());
-  bool is_crossed = distance < getBorderDiagonal() * 0.4;
-  if (name == "left") {
-    left_hand_crossed = is_crossed;
-  } else if (name == "right") {
-    right_hand_crossed = is_crossed;
-  }
+  if (robot_booked) {
+    float distance = cv::norm(hand_position - getCenter());
+    bool is_crossed = distance < getBorderDiagonal() * 0.4;
 
-  border_violated = (right_hand_crossed || left_hand_crossed);
-
-  if (border_violated && robot_booked) {
-    result = true;
-    thickness = -1;
+    if (is_crossed) {
+      result = true;
+      thickness = -1;
+      border_violated = true;
+    }
   }
   return result;
 }
 
 void StaticBorder::resetInteractions() {
+  thickness = 1;
   if (border_violated) {
-    ROS_INFO("StaticBorder %s is violated and being reset", request_id.c_str());
     left_hand_crossed = false;
     right_hand_crossed = false;
     border_violated = false;
     border_already_crossed = false;
-    thickness = 1;
     integration::SafetyBorderViolation msg_border;
     msg_border.request_id = request_id;
     msg_border.violation_active = false;

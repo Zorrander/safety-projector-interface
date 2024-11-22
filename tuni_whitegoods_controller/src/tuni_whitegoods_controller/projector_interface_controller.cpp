@@ -179,15 +179,7 @@ void ProjectorInterfaceController::handTrackerCallback(
     if (model_->updateHandPose(msg.name[i], msg.position[i])) {
       result = true;
     }
-
-    if (!result) {
-      model_->reset_interactions();
-    }
   }
-
-  // std::for_each(views.begin(), views.end(),
-  //              [this](auto &view) { view->updateHands(model_->getHands());
-  //              });
 }
 
 void ProjectorInterfaceController::modelUpdateCallback(

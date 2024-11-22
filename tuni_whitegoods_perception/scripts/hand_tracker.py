@@ -20,24 +20,24 @@ from std_msgs.msg import Int32
 class HandTracker(object):
     def __init__(self, mode=False, maxHands=2, detectionCon=0.15, modelComplexity=0, trackCon=0.15):
         rospy.init_node('hand_tracking')
-        self.pub_hands_poi = rospy.Publisher(
-            "/odin/internal/hand_detection", HandsState, queue_size=20)
-        self.background = False
+
         self.mode = mode
         self.maxHands = maxHands
         self.detectionCon = detectionCon
         self.modelComplex = modelComplexity
         self.trackCon = trackCon
         self.mpHands = mp.solutions.hands
+
         self.hands = self.mpHands.Hands(
             self.mode, self.maxHands, self.modelComplex, self.detectionCon, self.trackCon)
+
         self.bridge = CvBridge()
-        self.previous_center_x = 0
-        self.previous_center_y = 0
-        self.threshold = 0
+
         self.tracking_sub = rospy.Subscriber("/odin/object_detection/set_tracking_confidence", Int32, self.callback_tracking_confidence)
         self.detection_sub = rospy.Subscriber("/odin/object_detection/set_detection_confidence", Int32, self.callback_detection_confidence)
         self.complexity_sub = rospy.Subscriber("/odin/object_detection/set_complexity", Int32, self.callback_complexity)
+
+        self.pub_hands_poi = rospy.Publisher("/odin/internal/hand_detection", HandsState, queue_size=20)
 
         # Create message filters for synchronizing the RGB and Depth topics
         self.rgb_sub = message_filters.Subscriber("/rgb/image_raw", Image)
@@ -63,15 +63,6 @@ class HandTracker(object):
         self.modelComplex = msg.data
         self.hands = self.mpHands.Hands(
             self.mode, self.maxHands, self.modelComplex, self.detectionCon, self.trackCon)
-
-    def has_moved(self, center_x, center_y):
-        result = False
-        dx = center_x - self.previous_center_x
-        dy = center_y - self.previous_center_y
-        distance = math.sqrt(dx * dx + dy * dy)
-        if (distance > self.threshold):
-            result = True
-        return result
 
     def callback_image(self, msg, depth_msg, draw=False):
         rgb_img = self.bridge.imgmsg_to_cv2(msg, "rgb8")

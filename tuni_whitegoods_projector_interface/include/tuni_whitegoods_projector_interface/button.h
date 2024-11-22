@@ -16,10 +16,11 @@ class Button {
 
   std::string id;
   cv::Mat btn_img;
-  bool left_hand_press, right_hand_press, button_pressed;
+
   bool button_already_pressed;
 
  public:
+  bool left_hand_press, right_hand_press, button_pressed;
   std::string text;
   bool flipTextRotation;
   float x_ratio;

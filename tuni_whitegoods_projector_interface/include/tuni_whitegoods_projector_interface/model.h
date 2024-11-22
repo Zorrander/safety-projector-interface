@@ -31,11 +31,14 @@ class ProjectorInterfaceModel {
   std::vector<cv::Point2f> original_table_projector_position;
 
   bool right_hand_detected, left_hand_detected, action_triggered,
-      hand_visualization, hands_detected;
+      hand_visualization, hands_detected, left_hand_triggered,
+      right_hand_triggered;
   cv::Matx33d button_homography;
   std::vector<double> button_homography_array;
   double original_max_width;
   double original_max_height;
+  bool updating;
+  bool reseting;
 
  public:
   ProjectorInterfaceModel(ros::NodeHandle* nh);
