@@ -173,7 +173,7 @@ void GUI::update_imgui() {
   show_projector_manager();
   show_layer_manager();
   show_element_creator();
-  show_debug_borders();
+  //show_debug_borders();
 
   if (!goalQueue.empty()) {
     // Get the next goal from the queue
@@ -197,9 +197,9 @@ void GUI::update_imgui() {
     buttonQueue.pop();
   }
 
-  show_debug_hands();
-  show_debug_object_detection();
-  show_moving_table();
+  //show_debug_hands();
+  //show_debug_object_detection();
+  //show_moving_table();
   if (scan) {
     integration::ListStaticBordersStatus srv;
 
@@ -378,10 +378,12 @@ void GUI::show_projector_manager() {
     controller_->projector_view->moveWindow();
   }
 
+  /*
+
   if (ImGui::InputInt("Projector 2",
                       &controller_->second_projector_view->shift)) {
     controller_->projector_view->moveWindow();
-  }
+  }*/
   ImGui::End();
 }
 
@@ -541,8 +543,8 @@ void GUI::show_element_creator() {
 
     ImGui::Text("Set your options:");
 
-    ImGui::SliderInt("Number of rows", &rowValueSlider, 1, 5);
-    ImGui::SliderInt("Number of columns", &columnValueSlider, 1, 5);
+    ImGui::SliderInt("Number of rows", &rowValueSlider, 0, 5);
+    ImGui::SliderInt("Number of columns", &columnValueSlider, 0, 5);
 
     ImGui::Checkbox("Book adjacent", &checkboxValue);
 
@@ -671,8 +673,8 @@ void GUI::show_element_creator() {
     static float xValue = 0.0f;
     static float yValue = 0.0f;
     static float radius = 0.0f;
-    ImGui::InputFloat("x", &xValue, 0.0f, 1.0f, "%.1f");
-    ImGui::InputFloat("y", &yValue, 0.0f, 1.0f, "%.1f");
+    ImGui::InputFloat("x", &xValue, -5.0f, 5.0f, "%.3f");
+    ImGui::InputFloat("y", &yValue, -5.0f, 5.0f, "%.3f");
     ImGui::InputFloat("radius", &radius, 0.0f, 100.0f, "%.1f");
 
     // Set additional button properties
@@ -715,7 +717,7 @@ void GUI::show_node_starter() {
 }
 
 void GUI::launchTfNode() {
-  std::string command = "roslaunch tuni_whitegoods beko_tf.launch";
+  std::string command = "roslaunch tuni_whitegoods tuni_tf.launch";
   int result = std::system(command.c_str());
 
   if (result == 0) {

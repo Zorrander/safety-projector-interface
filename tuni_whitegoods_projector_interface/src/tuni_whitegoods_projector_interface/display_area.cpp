@@ -51,7 +51,10 @@ void DisplayArea::create_border_layout(int rows, int cols, float sf_factor,
                                        std_msgs::ColorRGBA status_operator) {
   border_layout = {rows,          cols,        sf_factor,      adjacent,
                    status_booked, status_free, status_operator};
-  compute_border_dimensions(rows, cols);
+  if (rows != 0 && cols != 0){
+    compute_border_dimensions(rows, cols);
+  }
+  
 }
 
 void DisplayArea::compute_border_dimensions(int rows, int columns) {

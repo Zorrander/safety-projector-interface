@@ -1,26 +1,19 @@
-table:
-  top_left:
-    x: 467
-    y: 275
-    z: 1361
-  top_right:
-    x: 1280
-    y: 252
-    z: 1369
-  bottom_right:
-    x: 1313
-    y: 857
-    z: 1306
-  bottom_left:
-    x: 465
-    y: 893
-    z: 1313
+1:
+  table:
+    top_left:
+      x: 467
+      y: 275
+      z: 1361
+    top_right:
+      x: 1280
+      y: 252
+      z: 1369
+    bottom_right:
+      x: 1313
+      y: 857
+      z: 1306
+    bottom_left:
+      x: 465
+      y: 893
+      z: 1313
 
-
- 
-
- 
-
- 
-
- 

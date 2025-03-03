@@ -30,8 +30,8 @@ ProjectorInterfaceController::ProjectorInterfaceController(ros::NodeHandle *nh)
   projector_view = std::make_shared<Projector>(nh_, 1);
   projector_view->window_name = "Projector 1";
 
-  second_projector_view = std::make_shared<Projector>(nh_, 2);
-  projector_view->window_name = "Projector 2";
+  // second_projector_view = std::make_shared<Projector>(nh_, 2);
+  // projector_view->window_name = "Projector 2";
 
   camera_view = std::make_shared<CameraView>(nh_);
 
@@ -39,8 +39,8 @@ ProjectorInterfaceController::ProjectorInterfaceController(ros::NodeHandle *nh)
 
   // Initialize views
   views.push_back(projector_view);
-  views.push_back(second_projector_view);
-  // views.push_back(camera_view);
+  // views.push_back(second_projector_view);
+  views.push_back(camera_view);
   // views.push_back(robot_view);
 
   init_sub = nh_->subscribe("/odin/start", 1,
@@ -52,7 +52,7 @@ ProjectorInterfaceController::ProjectorInterfaceController(ros::NodeHandle *nh)
                      &ProjectorInterfaceController::modelUpdateCallback, this);
 
   depth_sub =
-      nh_->subscribe("/depth_to_rgb/image_raw", 10,
+      nh_->subscribe("/camera1/depth_to_rgb/image_raw", 10,
                      &ProjectorInterfaceController::depthImageCallback, this);
 
   // Subscribe to hand detections
@@ -81,6 +81,8 @@ void ProjectorInterfaceController::init() {
                      display_areas_calibration_file)) {
     ROS_ERROR("display_areas calibration file is missing from configuration.");
   }
+
+  ROS_INFO("init");
 
   YAML::Node display_areas_calibration =
       YAML::LoadFile(display_areas_calibration_file);
@@ -119,13 +121,19 @@ void ProjectorInterfaceController::init() {
       points.push_back(br);
       points.push_back(bl);
 
+      ROS_INFO("loaded");
+
       model_->add_zone(
           std::make_shared<DisplayArea>(nh_, area_name, projector_id), points);
     }
   }
 
+  ROS_INFO("init 2");
+
   std::for_each(views.begin(), views.end(),
                 [this](auto &view) { view->init(model_->getDisplayAreas()); });
+
+  ROS_INFO("done");
   /*
   std::for_each(views.begin(), views.end(), [this](auto &view) {
     view->updateDisplayAreas(model_->getDisplayAreas());

@@ -1,0 +1,39 @@
+projector1:
+  projector_resolution: [1920, 1080]
+  shiftX: 2560
+  border_homography: []
+  button_homography: []
+
+projector2:
+  projector_resolution: [1920, 1080]
+  shiftX: 2560
+  border_homography: []
+  button_homography: []
+
+camera1:
+  camera_resolution: [1920, 1080]
+  moving_table_corner_homography: []
+  fx: 911.1669921875
+  fy: 911.3311157226562
+  cx: 961.0018310546875
+  cy: 544.41552734375
+
+camera2:
+  camera_resolution: [1920, 1080]
+  moving_table_corner_homography: []
+  fx: 911.1669921875
+  fy: 911.3311157226562
+  cx: 961.0018310546875
+  cy: 544.41552734375
+
+is_moving: true
+hand_visualization: false
+
+robot_frame: base
+camera_frame: rgb_camera_link
+
+camera_calibration_file: "/home/odin3/Desktop/test_calib.yaml"
+border_calibration_file: "/home/odin3/Desktop/test_homography.yaml"
+button_calibration_file: "/home/odin3/Desktop/test_homography.yaml"
+display_areas_calibration_file: "/home/odin3/Desktop/hrc_display_areas.yaml"
+

@@ -27,6 +27,7 @@ void RobotView::updateButtons(
     const std::vector<std::shared_ptr<Button>>& buttons,
     std::shared_ptr<cv::Mat> layer) {
   for (auto& button : buttons) {
+    ROS_INFO("create marker");
     std::vector<geometry_msgs::Point> points(1, button->center.position);
     createRvizMarker(points, button->ros_btn_color, button->get_name());
   }
@@ -54,8 +55,40 @@ void RobotView::updateHands(const std::vector<std::shared_ptr<Hand>>& hands) {
   }
 }
 
+void RobotView::updateRVIZ(const std::vector<std::shared_ptr<Button>>& buttons, std::vector<std::shared_ptr<StaticBorder>> borders){
+  for (auto& button : buttons) {
+    ROS_INFO("create marker");
+    std::vector<geometry_msgs::Point> points(1, button->center.position);
+    createRvizMarker(points, button->ros_btn_color, button->get_name());
+  }
+
+  for (auto& border : borders) {
+    ROS_INFO("create marker");
+    std::vector<geometry_msgs::Point> points;
+
+    points.push_back(border->topLeftCornerPt);
+    points.push_back(border->topRightCornerPt);
+    points.push_back(border->bottomRightCornerPt);
+    points.push_back(border->bottomLeftCornerPt);
+
+    createRvizMarker(points, border->border_color, "border");
+  }
+}
+
 void RobotView::updateDisplayAreas(
-    const std::vector<std::shared_ptr<DisplayArea>>& zones) {}
+    const std::vector<std::shared_ptr<DisplayArea>>& zones) {
+  for (auto &zone : zones) {
+
+        std::vector<std::shared_ptr<Button>> buttons;
+        zone->fetchButtons(buttons);
+
+        std::vector<std::shared_ptr<StaticBorder>> borders;
+        zone->fetchBorders(borders);
+  
+        updateRVIZ(buttons, borders);
+  }
+
+}
 
 void RobotView::createRvizMarker(std::vector<geometry_msgs::Point> points,
                                  std_msgs::ColorRGBA color,

@@ -124,6 +124,7 @@ cv::Point StaticBorder::getCenter() {
   return p;
 }
 
+
 bool StaticBorder::checkForInteractions(const std::string& name,
                                         const cv::Point& hand_position) {
   bool result = false;

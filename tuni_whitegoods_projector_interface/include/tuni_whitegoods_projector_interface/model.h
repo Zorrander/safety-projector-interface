@@ -14,6 +14,8 @@
 #include "tuni_whitegoods_projector_interface/hand.h"
 #include "tuni_whitegoods_projector_interface/static_border.h"
 
+#include "tuni_whitegoods_msgs/DisplayAreaStates.h"
+
 class ProjectorInterfaceModel {
  private:
   ros::NodeHandle* nh_;
@@ -28,6 +30,9 @@ class ProjectorInterfaceModel {
   ros::Time startTime;
   ros::Timer interaction_timer_;
 
+  bool publishStates(tuni_whitegoods_msgs::DisplayAreaStates::Request &req,
+                     tuni_whitegoods_msgs::DisplayAreaStates::Response &res);
+
   std::vector<cv::Point2f> original_table_projector_position;
 
   bool right_hand_detected, left_hand_detected, action_triggered,
@@ -39,6 +44,8 @@ class ProjectorInterfaceModel {
   double original_max_height;
   bool updating;
   bool reseting;
+  float shelf_height;
+  ros::ServiceServer states_service;
 
  public:
   ProjectorInterfaceModel(ros::NodeHandle* nh);

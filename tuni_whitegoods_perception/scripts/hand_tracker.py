@@ -33,6 +33,8 @@ class HandTracker(object):
 
         self.bridge = CvBridge()
 
+        camera_name = rospy.get_param("camera_name")
+
         self.tracking_sub = rospy.Subscriber("/odin/object_detection/set_tracking_confidence", Int32, self.callback_tracking_confidence)
         self.detection_sub = rospy.Subscriber("/odin/object_detection/set_detection_confidence", Int32, self.callback_detection_confidence)
         self.complexity_sub = rospy.Subscriber("/odin/object_detection/set_complexity", Int32, self.callback_complexity)
@@ -40,9 +42,9 @@ class HandTracker(object):
         self.pub_hands_poi = rospy.Publisher("/odin/internal/hand_detection", HandsState, queue_size=20)
 
         # Create message filters for synchronizing the RGB and Depth topics
-        self.rgb_sub = message_filters.Subscriber("/rgb/image_raw", Image)
+        self.rgb_sub = message_filters.Subscriber("/" + camera_name + "/rgb/image_raw", Image)
         self.depth_sub = message_filters.Subscriber(
-            "/depth_to_rgb/image_raw", Image)
+            "/" + camera_name + "/depth_to_rgb/image_raw", Image)
 
         # Use ApproximateTimeSynchronizer to sync the messages based on timestamps
         self.sync = message_filters.ApproximateTimeSynchronizer(

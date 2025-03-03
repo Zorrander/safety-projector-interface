@@ -22,11 +22,12 @@ ButtonProjectionServer::ButtonProjectionServer(
 void ButtonProjectionServer::executeVirtualButtonsGoal(
     const SetVirtualButtonsProjectionGoalConstPtr& goal) {
   controller->addButton(
-      goal->request_id, goal->zone, goal->virtual_button.name,
+      goal->request_id, "table", goal->virtual_button.name,
       goal->virtual_button.text, goal->virtual_button.button_color,
       goal->virtual_button.text_color, goal->virtual_button.center,
       goal->virtual_button.radius);
   bool success = true;
+  ROS_INFO("Projecting button in %s", goal->zone.c_str());
   sendFeedBackButton(goal->request_id);
   if (as_.isPreemptRequested() || !ros::ok()) {
     ROS_INFO("%s: Preempted", action_name_button_.c_str());

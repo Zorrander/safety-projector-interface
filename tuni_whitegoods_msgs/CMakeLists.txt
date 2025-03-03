@@ -15,6 +15,7 @@ add_message_files(
   DynamicArea.msg
   HandsState.msg
   RobotViewElement.msg
+  ZoneState.msg
 )
 
 
@@ -24,7 +25,7 @@ add_service_files(
   TransformPixelTo3D.srv
   TransformMovingTable.srv
   TransformPixelToProjection.srv
-  TransformRobotCameraCoordinates.srv
+  DisplayAreaStates.srv
 )
 
 generate_messages(

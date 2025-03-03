@@ -25,6 +25,7 @@ class RobotView : public View {
   void createRvizMarker(std::vector<geometry_msgs::Point> points,
                         std_msgs::ColorRGBA color, std::string description,
                         int id = 1);
+  void updateRVIZ(const std::vector<std::shared_ptr<Button>>& buttons, std::vector<std::shared_ptr<StaticBorder>> borders);
 };
 
 #endif

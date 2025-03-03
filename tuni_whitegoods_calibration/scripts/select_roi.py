@@ -5,7 +5,7 @@ import numpy as np
 from pathlib import Path
 
 # Load the depthmap
-depthmap = cv2.imread('/home/odin-lms2/depthmap.png', cv2.IMREAD_UNCHANGED)
+depthmap = cv2.imread('/home/odin3/testdepth.png', cv2.IMREAD_UNCHANGED)
 
 # Normalize the depth map to the range 0-255 for better visualization
 depth_normalized = cv2.normalize(depthmap, None, 0, 255, cv2.NORM_MINMAX, dtype=cv2.CV_8U)

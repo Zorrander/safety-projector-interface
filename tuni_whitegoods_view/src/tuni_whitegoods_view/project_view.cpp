@@ -52,11 +52,14 @@ void Projector::init(std::vector<std::shared_ptr<DisplayArea>> zones) {
           true};
     }
   }
+  ROS_INFO("Create backend");
   cv::namedWindow(window_name, cv::WINDOW_NORMAL);
   cv::moveWindow(window_name, shift, 0);
   cv::setWindowProperty(window_name, cv::WND_PROP_FULLSCREEN,
                         cv::WINDOW_FULLSCREEN);
+  ROS_INFO("projecting");
   project_image();
+  ROS_INFO("projected");
 }
 
 void Projector::moveWindow() {
@@ -65,6 +68,17 @@ void Projector::moveWindow() {
                         cv::WINDOW_FULLSCREEN);
   project_image();
 }
+
+
+/*
+
+Recalibrate
+
+Change relative -> to absolute conversion
+
+Stop filling circle 
+
+*/
 
 void Projector::updateButtons(
     const std::vector<std::shared_ptr<Button>> &buttons,
@@ -77,8 +91,11 @@ void Projector::updateButtons(
   auto cr = Cairo::Context::create(surface);
 
   for (auto &button : buttons) {
+    ROS_INFO("found button to update");
     // rectangle around that to see what the projection area would be if
     // straight
+
+    /*
     int top_left_straight_table_x, top_left_straight_table_y,
         top_right_straight_table_x, top_right_straight_table_y;
 
@@ -125,7 +142,8 @@ void Projector::updateButtons(
         angleDegrees = -angleDegrees;
       }
     }
-
+    */
+    
     // Get button's circle properties
     double x = button->center_projected_point.x;
     double y = button->center_projected_point.y;
@@ -141,7 +159,7 @@ void Projector::updateButtons(
     cr->set_source_rgb(red, green, blue);
 
     // Draw and fill the circle (button) in Cairo
-    cr->arc(x, y, radius, 0, 2 * M_PI);  // Circle with center (x, y) and radius
+    cr->arc(x, y, button->radius, 0, 2 * M_PI);  // Circle with center (x, y) and radius
     cr->fill();                          // Fill the circle with color
 
     // Draw the text at the center of the circle

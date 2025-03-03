@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import cv2
+import tf2_ros as tf2
 import rospy
 import math
 import message_filters
@@ -8,22 +9,16 @@ import numpy as np
 from cv_bridge import CvBridge
 from visualization_msgs.msg import Marker
 from geometry_msgs.msg import Point
-from tuni_whitegoods_msgs.srv import TransformRobotCameraCoordinates
-from tuni_whitegoods_msgs.srv import TransformPixelTo3D
-from tuni_whitegoods_msgs.srv import TransformMovingTable
-from tuni_whitegoods_msgs.msg import DynamicArea
 from geometry_msgs.msg import PoseStamped, Transform
 from sensor_msgs.msg import Image
 from std_msgs.msg import Float64MultiArray
 from std_msgs.msg import Int32
 
-class TableTracker(object):
+class MarkerDetector(object):
     def __init__(self):
-        rospy.init_node('moving_table_tracking')
+        rospy.init_node('marker_detector')
         # subscribe to the RGB image
-        # Create message filters for synchronizing the RGB and Depth topics
-
-
+        # Crete message filters for synchronizing the RGB and Depth top
         self.bridge = CvBridge()
         self.arucoDict = cv2.aruco.getPredefinedDictionary(
             cv2.aruco.DICT_6X6_50)
@@ -44,43 +39,12 @@ class TableTracker(object):
         self.vis_pub = rospy.Publisher(
             "visualization_marker", Marker, queue_size=10)
 
-        self.threshold_sub = rospy.Subscriber("/odin/object_detection/set_threshold_detection_table", Int32, self.callback_threshold)
-
-        self.threshold = 5 
-
-        self.zone_msg = DynamicArea()
-        self.zone_pub = rospy.Publisher(
-            "/odin/projector_interface/moving_table/transform", DynamicArea, queue_size=10)
-
-        self.transform_moving_table = rospy.ServiceProxy(
-            'transform_table_server', TransformMovingTable)
-
-        self.transform_world_coordinates = rospy.ServiceProxy(
-            'transform_world_coordinates_frame', TransformRobotCameraCoordinates)
-        self.project_pixel_to_3D = rospy.ServiceProxy(
-            'transform_pixel_to_3D', TransformPixelTo3D)
-        self.in_point_stamped = PoseStamped()
-        self.in_point_stamped.header.frame_id = "rgb_camera_link"
-        self.previous_center_x = 0
-        self.previous_center_y = 0
-
    # subscriber that get the RGB image
     def callback_image(self, msg, depth_msg):
         rgb_img = self.bridge.imgmsg_to_cv2(msg, "bgr8")
         depth_image = self.bridge.imgmsg_to_cv2(depth_msg, "32FC1")
         self.find_dynamic_ui_transform(rgb_img, depth_image)
 
-    def callback_threshold(self, threshold):
-        self.threshold = threshold.data
-
-    def has_moved(self, center_x, center_y):
-        result = False
-        dx = center_x - self.previous_center_x
-        dy = center_y - self.previous_center_y
-        distance = math.sqrt(dx * dx + dy * dy)
-        if (distance > self.threshold):
-            result = True
-        return result
 
     # method called when the display is dynamic like on a moving table.
     # it has to update the transform so it always fit on the table
@@ -121,8 +85,7 @@ class TableTracker(object):
             
             self.previous_center_x = center_x
             self.previous_center_y = center_y
-            
 
 if __name__ == '__main__':
-    table_tracker = TableTracker()
+    marker_detector = MarkerDetector()
     rospy.spin()

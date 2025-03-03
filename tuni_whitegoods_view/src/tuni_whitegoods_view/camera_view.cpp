@@ -5,7 +5,9 @@
 using namespace std;
 
 CameraView::CameraView(ros::NodeHandle* nh) : it_(*nh), nh_(nh) {
-  img_callback = it_.subscribe("/depth_to_rgb/image_raw", 10,
+  //img_callback = it_.subscribe("/depth_to_rgb/image_raw", 10,
+  //                             &CameraView::depthSceneCallback, this);
+  img_callback = it_.subscribe("/camera1/rgb/image_raw", 10,
                                &CameraView::depthSceneCallback, this);
   viz_pub = it_.advertise("/odin/visualization/camera_view", 10);
   ros::param::get("camera_resolution", camera_resolution);
@@ -111,10 +113,13 @@ void CameraView::publish_image() {
 
 void CameraView::depthSceneCallback(
     const sensor_msgs::ImageConstPtr& depth_msg) {
-  bridge_cv_depth =
-      cv_bridge::toCvCopy(depth_msg, sensor_msgs::image_encodings::TYPE_16UC1);
-  cv::normalize(bridge_cv_depth->image, depth_normalized, 0, 255,
-                cv::NORM_MINMAX, CV_8U);
+  //bridge_cv_depth =
+  //    cv_bridge::toCvCopy(depth_msg, sensor_msgs::image_encodings::TYPE_16UC1);
+  //cv::normalize(bridge_cv_depth->image, depth_normalized, 0, 255,
+  //              cv::NORM_MINMAX, CV_8U);
   // cv::applyColorMap(depth_normalized, *layers["background"],
   // cv::COLORMAP_JET);
+
+  bridge_cv_depth = cv_bridge::toCvCopy(depth_msg, sensor_msgs::image_encodings::BGR8);
+  layers["background"] = std::make_shared<cv::Mat>(bridge_cv_depth->image.clone());
 }

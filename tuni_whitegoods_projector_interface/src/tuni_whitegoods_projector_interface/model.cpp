@@ -11,6 +11,7 @@
 #include "tuni_whitegoods_msgs/TransformPixelToProjection.h"
 #include "tuni_whitegoods_msgs/TransformRobotCameraCoordinates.h"
 
+
 ProjectorInterfaceModel::ProjectorInterfaceModel(ros::NodeHandle *nh)
     : nh_(nh) {
   client_world_coordinates =
@@ -66,13 +67,19 @@ ProjectorInterfaceModel::ProjectorInterfaceModel(ros::NodeHandle *nh)
   pub_change_notification =
       nh->advertise<std_msgs::Empty>("/odin/internal/model_changed", 1);
 
+  ros::param::get("shelf_height", shelf_height);
+
+  states_service = nh_->advertiseService(
+        "display_area_states",
+        &ProjectorInterfaceModel::publishStates, this);
+
   original_table_projector_position = {
       cv::Point2f(795, 119), cv::Point2f(856, 141), cv::Point2f(803, 247),
       cv::Point2f(728, 221)};
 
   // Create a timer
-  interaction_timer_ = nh->createTimer(
-      ros::Duration(2), &ProjectorInterfaceModel::reset_interactions, this);
+  //interaction_timer_ = nh->createTimer(
+  //    ros::Duration(2), &ProjectorInterfaceModel::reset_interactions, this);
 
   startTime = ros::Time::now();
   updating = false;
@@ -88,6 +95,35 @@ ProjectorInterfaceModel::ProjectorInterfaceModel(ros::NodeHandle *nh)
   hands_detected = false;
   original_max_width = 0;
   original_max_height = 0;
+}
+
+bool ProjectorInterfaceModel::publishStates(      
+                    tuni_whitegoods_msgs::DisplayAreaStates::Request &req,
+                    tuni_whitegoods_msgs::DisplayAreaStates::Response &res){
+
+  for (auto &zone : zones) {
+    if (zone->name == req.zone){
+      std::vector<std::shared_ptr<StaticBorder>> borders;
+      zone->fetchBorders(borders);
+      tuni_whitegoods_msgs::ZoneState zone_state;
+      for (auto &border : borders) {
+        zone_state.border_ids.push_back(border->getId());
+
+        cv::Point center = border->getCenter();
+
+        geometry_msgs::Point camera_center; 
+        camera_center.x = center.x;
+        camera_center.y = center.y;
+        camera_center.z = shelf_height;
+
+        zone_state.center_poses.push_back(fromPixel2Robot(camera_center));
+      }
+      res.state = zone_state;
+    }
+  }
+
+  return true;
+
 }
 
 void ProjectorInterfaceModel::create_border_layout(
@@ -243,15 +279,26 @@ void ProjectorInterfaceModel::addButton(
     if (z->name == zone) {
       std::shared_ptr<Button> btn = std::make_shared<Button>(
           nh_, request_id, name, text, button_color, text_color, radius);
-      geometry_msgs::Pose transformed_center =
-          z->compute_absolute_world_position(center);
-      btn->center_cam_point = cv::Point(transformed_center.position.x,
-                                        transformed_center.position.y);
-      btn->center = fromPixel2Robot(transformed_center.position);
+
+      // geometry_msgs::Pose transformed_center =
+      //    z->compute_absolute_world_position(center);
+      //TOBECHNAGED
+      geometry_msgs::Pose transformed_center = center;
+           
+      //btn->center_cam_point = cv::Point(transformed_center.position.x,
+      //                                  transformed_center.position.y);
+      
+
+      btn->center = center;
+      btn->center.position.z = 0.009;
+      btn->center_cam_point = fromRobot2Pixel(btn->center);
+      geometry_msgs::Point pixel_button;
+      pixel_button.x = btn->center_cam_point.x;
+      pixel_button.y = btn->center_cam_point.y;
       btn->center_projected_point =
-          fromCamera2SmartInterface(transformed_center.position);
-      btn->setXratio(center.position.x);
-      btn->setYratio(center.position.y);
+          fromCamera2SmartInterface(pixel_button);
+      // btn->setXratio(center.position.x);
+      // btn->setYratio(center.position.y);
       z->addButton(btn);
       break;
     }
@@ -283,6 +330,7 @@ void ProjectorInterfaceModel::addStaticBorder(
       std::shared_ptr<StaticBorder> sb = std::make_shared<StaticBorder>(
           nh_, r_id, pos_row, pos_col, bord, b_topic, b_color, filling, thic,
           life, track);
+
       if (zone->border_layout.rows == 0 && zone->border_layout.cols == 0) {
         ROS_INFO("the old way");
         // Also compute camera coordinates for detections
@@ -352,7 +400,6 @@ void ProjectorInterfaceModel::addStaticBorder(
       }
 
       zone->addBorder(sb);
-
       break;
     }
   }
@@ -655,7 +702,7 @@ cv::Point ProjectorInterfaceModel::fromRobot2Pixel(geometry_msgs::Pose pose) {
   in_point_stamped.pose = pose;
 
   srv_pose.request.in_point_stamped = in_point_stamped;
-  srv_pose.request.target_frame = "rgb_camera_link";
+  srv_pose.request.target_frame = "camera1_rgb_camera_link";
 
   if (!client_world_coordinates.call(srv_pose)) {
     ROS_ERROR("Failed to call service");
@@ -671,7 +718,7 @@ cv::Point ProjectorInterfaceModel::fromRobot2Pixel(geometry_msgs::Pose pose) {
   if (!client_3D_to_pixel.call(srv_3D_to_pixel)) {
     ROS_ERROR("Failed to call service");
   }
-
+  ROS_INFO("Projected pixel coordinates: (u: %d, v: %d)", srv_3D_to_pixel.response.u, srv_3D_to_pixel.response.v);
   cv::Point result(srv_3D_to_pixel.response.u, srv_3D_to_pixel.response.v);
 
   return result;
@@ -692,7 +739,7 @@ geometry_msgs::Pose ProjectorInterfaceModel::fromPixel2Robot(
   projected.z = srv_pixel_to_3D.response.z;
   // Transform to robot coordinates frame
   geometry_msgs::PoseStamped in_point_stamped;
-  in_point_stamped.header.frame_id = "rgb_camera_link";
+  in_point_stamped.header.frame_id = "camera1_rgb_camera_link";
   in_point_stamped.header.stamp = ros::Time(0);
   in_point_stamped.pose.position = projected;
 
