@@ -52,7 +52,7 @@ ProjectorInterfaceController::ProjectorInterfaceController(ros::NodeHandle *nh)
                      &ProjectorInterfaceController::modelUpdateCallback, this);
 
   depth_sub =
-      nh_->subscribe("/camera1/depth_to_rgb/image_raw", 10,
+      nh_->subscribe("/camera1/depth_to_rgb/image", 10,
                      &ProjectorInterfaceController::depthImageCallback, this);
 
   // Subscribe to hand detections

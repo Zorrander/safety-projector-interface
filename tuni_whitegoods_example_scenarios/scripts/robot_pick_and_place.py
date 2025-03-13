@@ -231,11 +231,13 @@ def main():
                 move_group.go(joint_goal_clear, wait=True)
                 move_group.stop()
 
+                '''
                 booking_goal = BookRobotStaticBorderGoal(id=str(box_id))
                 print("Booking border - it should turn red")
                 border_booking_server.send_goal(booking_goal)
                 time.sleep(1)
-
+                '''
+                
                 new_pose = Pose()
                 new_pose.position.x = -box[0]
                 new_pose.position.y = -box[1]
@@ -262,6 +264,7 @@ def main():
                 load_ros_control()
                 time.sleep(1)
                 
+                '''
                 releasing_goal = ReleaseRobotStaticBorderGoal(id=str(box_id))
                 print("Releasing border - it should turn back to green")
                 border_releasing_server.send_goal(releasing_goal)
@@ -270,7 +273,8 @@ def main():
                 print("Booking border - it should turn red")
                 border_booking_server.send_goal(booking_goal)
                 time.sleep(1)
-                
+                '''
+
                 new_pose = Pose()
                 new_pose.position.x = -places[box_id][0]
                 new_pose.position.y = -places[box_id][1]
@@ -295,20 +299,22 @@ def main():
                 load_ros_control()
                 time.sleep(1)
 
+                '''
                 releasing_goal = ReleaseRobotStaticBorderGoal(id=str(box_id+4))
                 print("Releasing border - it should turn back to green")
                 border_releasing_server.send_goal(releasing_goal)
-
+                '''
 
             for place_id, place in enumerate(places):
                 move_group.go(joint_goal_clear, wait=True)
                 move_group.stop()
 
+                '''
                 booking_goal = BookRobotStaticBorderGoal(id=str(place_id+4))
                 print("Booking border - it should turn red")
                 border_booking_server.send_goal(booking_goal)
                 time.sleep(1)
-
+                '''
 
                 new_pose = Pose()
                 new_pose.position.x = -place[0]
@@ -336,6 +342,7 @@ def main():
                 load_ros_control()
                 time.sleep(1)
                 
+                '''
                 releasing_goal = ReleaseRobotStaticBorderGoal(id=str(place_id+4))
                 print("Releasing border - it should turn back to green")
                 border_releasing_server.send_goal(releasing_goal)
@@ -344,7 +351,8 @@ def main():
                 print("Booking border - it should turn red")
                 border_booking_server.send_goal(booking_goal)
                 time.sleep(1)
-                
+                '''
+
                 new_pose = Pose()
                 new_pose.position.x = -boxes[place_id][0]
                 new_pose.position.y = -boxes[place_id][1]
@@ -369,10 +377,11 @@ def main():
                 load_ros_control()
                 time.sleep(1)
 
+                '''
                 releasing_goal = ReleaseRobotStaticBorderGoal(id=str(place_id))
                 print("Releasing border - it should turn back to green")
                 border_releasing_server.send_goal(releasing_goal)
-
+                '''
     
 
     except rospy.ROSException as e:

@@ -89,10 +89,10 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
           &MainWindow::readNodeOutput);
 
   rgb_label = findChild<QLabel*>("RGBLabel");
-  rgb_sub = nh.subscribe("/rgb/image_raw", 1, &MainWindow::rgbCallback, this);
+  rgb_sub = nh.subscribe("/rgb/image_rect_color", 1, &MainWindow::rgbCallback, this);
 
   depth_label = findChild<QLabel*>("depthLabel");
-  depth_sub = nh.subscribe("/depth_to_rgb/image_raw", 1,
+  depth_sub = nh.subscribe("/depth_to_rgb/image", 1,
                            &MainWindow::depthCallback, this);
 
   camera_info_sub = nh.subscribe("/rgb/camera_info", 1,
@@ -106,11 +106,12 @@ void MainWindow::readNodeOutput() {
 }
 
 void MainWindow::on_newCalibrationButton_clicked() {
+  /*
   // Define the command to start the ROS launch file
   QString program = "roslaunch";
   QStringList arguments;
   arguments << "tuni_whitegoods_perception"
-            << "kinect_simple.launch";
+            << "kinect_driver.launch";
 
   // Start the process
   process->start(program, arguments);
@@ -121,6 +122,7 @@ void MainWindow::on_newCalibrationButton_clicked() {
   } else {
     QMessageBox::warning(this, "ROS Launch", "Failed to launch the ROS node.");
   }
+  */
 
   mainWidget->setCurrentIndex(1);
 }

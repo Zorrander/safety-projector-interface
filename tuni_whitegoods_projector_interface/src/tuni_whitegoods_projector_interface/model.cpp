@@ -290,7 +290,7 @@ void ProjectorInterfaceModel::addButton(
       
 
       btn->center = center;
-      btn->center.position.z = 0.009;
+      btn->center.position.z = 0.015;
       btn->center_cam_point = fromRobot2Pixel(btn->center);
       geometry_msgs::Point pixel_button;
       pixel_button.x = btn->center_cam_point.x;

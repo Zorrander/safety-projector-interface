@@ -4,15 +4,18 @@
     <group ns="$(arg camera_name)">
 
         <param name="camera_name" value="$(arg camera_name)" />
+        
+         <!--
 
-    	<include file="$(find tuni_whitegoods_perception)/launch/kinect_simple.launch">
+    	<include file="$(find tuni_whitegoods_perception)/launch/kinect_driver.launch">
             <arg name="tf_prefix" value="$(arg camera_name)_" />
+            <arg name="calibration_url" value="file:///home/odin3/catkin_ws/src/tuni_whitegoods/config/backup"/>
         </include>
 
-        <!-- <include file="$(find tuni_whitegoods_perception)/launch/hand_tracking.launch" /> -->
+  		 <include file="$(find tuni_whitegoods_perception)/launch/hand_tracking.launch" /> -->
 
 
-        <!-- <include file="$(find tuni_whitegoods_perception)/launch/moving_table_tracking.launch" /> -->
+        <include file="$(find tuni_whitegoods_perception)/launch/moving_table_tracking.launch" /> -->
 
     </group>
 </launch>
