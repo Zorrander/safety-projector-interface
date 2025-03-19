@@ -10,7 +10,8 @@ from pathlib import Path
 class RGBImageSaver:
     def __init__(self):
         self.bridge = CvBridge()
-        self.depth_sub = rospy.Subscriber("/rgb/image_raw", Image, self.callback)
+        self.depth_sub = rospy.Subscriber("/rgb/image_rect_color", Image, self.callback)
+        self.cam_sub = rospy.Subscriber("/odin/visualization/camera_view", Image, self.cam_callback)
         self.rgb_image = None
 
     def callback(self, data):
@@ -20,8 +21,15 @@ class RGBImageSaver:
         except CvBridgeError as e:
             rospy.logerr(f"CvBridge Error: {e}")
 
-    def save_rgb_image(self, rgb_image):
-        cv2.imwrite(str(Path.home() / 'rgb_img.png'), rgb_image)
+    def cam_callback(self, data):
+        try:
+            self.rgb_image = self.bridge.imgmsg_to_cv2(data, desired_encoding="passthrough")
+            self.save_rgb_image(self.rgb_image, "cam_")
+        except CvBridgeError as e:
+            rospy.logerr(f"CvBridge Error: {e}")
+
+    def save_rgb_image(self, rgb_image, prefix=""):
+        cv2.imwrite(str(Path.home() / (prefix + 'rgb_img.png')), rgb_image)
         rospy.loginfo("rgb_image saved")
 
 def main():

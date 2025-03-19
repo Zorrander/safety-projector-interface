@@ -60,29 +60,25 @@ def main():
         project_client.wait_for_result()
 
 
-    project_button(0.395, 0.256)
+    project_button(0.445, 0.156)
     time.sleep(1)
-    project_button(0.395, 0.006)
+    project_button(0.445, -0.094)
     time.sleep(1)
-    project_button(0.395, -0.244)
+    project_button(0.445, -0.344)
     time.sleep(1)
-    project_button(0.395, -0.494)
-    time.sleep(1)
-
-    project_button(0.570, 0.256)
-    time.sleep(1)
-    project_button(0.570, 0.006)
-    time.sleep(1)
-    project_button(0.570, -0.244)
-    time.sleep(1)
-    project_button(0.570, -0.494)
+    project_button(0.445, -0.594)
     time.sleep(1)
 
-    project_button(0.745, 0.256)
+    project_button(0.620, 0.156)
     time.sleep(1)
-    project_button(0.745, 0.006)
+    project_button(0.620, -0.094)
     time.sleep(1)
-    project_button(0.745, -0.244)
+    project_button(0.620, -0.344)
+    time.sleep(1)
+
+    project_button(0.795, 0.156)
+    time.sleep(1)
+    project_button(0.795, -0.094)
 
 if __name__ == "__main__":
 	main()

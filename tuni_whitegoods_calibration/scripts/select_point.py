@@ -11,10 +11,10 @@ from pathlib import Path
 def select_point(event,x,y,flags,param):
     if event == cv2.EVENT_LBUTTONDBLCLK: # captures left button double-click
         print(x,y)
-        print(depthmap[y, x])
+        #print(depthmap[y, x])
 
-img = cv2.imread(str(Path.home() / 'rgb_img.png'), cv2.IMREAD_UNCHANGED)
-depthmap = cv2.imread(str(Path.home() / 'depthmap.png'), cv2.IMREAD_UNCHANGED)
+img = cv2.imread('/home/odin3/Documents/calibration_data/robot-proj/run3/circles.png', cv2.IMREAD_UNCHANGED)
+#depthmap = cv2.imread(str(Path.home() / 'depthmap.png'), cv2.IMREAD_UNCHANGED)
 
 cv2.namedWindow('image')
 # bind select_point function to a window that will capture the mouse click

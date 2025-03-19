@@ -59,6 +59,21 @@ class TransformCameraPointServer {
     } else {
       ROS_ERROR("Missing camera calibration parameters.");
     }
+
+    k1 = 0.5090121030807495;
+    k2 = -2.8370401859283447;
+    k3 = 0.00041892516310326755;
+    k4 = -9.842617873800918e-05;
+    k5 = 1.6451900005340576;
+    k6 = 0.3761782646179199; 
+    k7 = -2.630704641342163;
+    k8 = 1.5565040111541748;
+
+    k1= 0.0871772789718933;
+    k2= -0.03671634009934126;
+    k3= 0.0;
+    p1= -0.001524745921348349 ;
+    p2= 0.0002844683976229544;
   }
 
  private:
@@ -76,8 +91,49 @@ class TransformCameraPointServer {
   bool transform3DToPixelCallback(
       tuni_whitegoods_msgs::Transform3DToPixel::Request &req,
       tuni_whitegoods_msgs::Transform3DToPixel::Response &res) {
-    res.u = fx * (req.x / req.z) + cx;
-    res.v = fy * (req.y / req.z) + cy;
+
+  
+    // Normalize the 3D point
+    float x_d = req.x / req.z;
+    float y_d = req.y / req.z;
+
+    // Calculate the radial distance squared (r^2)
+    float r2 = x_d * x_d + y_d * y_d;
+    float r4 = r2 * r2;
+    float r6 = r4 * r2;
+    float r8 = r6 * r2;
+
+    float radial_distortion = 1 + k1 * r2 + k2 * r4 + k3 * r6;
+    float x_radial = x_d * radial_distortion;
+    float y_radial = y_d * radial_distortion;
+
+    // Step 4: Apply tangential distortion
+    float x_tangential = 2 * p1 * x_d * y_d + p2 * (r2 + 2 * x_d * x_d);
+    float y_tangential = p1 * (r2 + 2 * y_d * y_d) + 2 * p2 * x_d * y_d;
+
+    float x_distorted = x_radial + x_tangential;
+    float y_distorted = y_radial + y_tangential;
+
+    // Step 5: Convert to pixel coordinates using the intrinsic matrix
+    res.u = fx * x_distorted + cx;
+    res.v = fy * y_distorted + cy;
+
+    /*
+    // Apply the rational polynomial distortion model
+    // Coefficients D[0..7] are the rational polynomial distortion coefficients
+    float distortion_numerator = 1 + k1 * r2 + k2 * r4 + k3 * r6 + k4 * r8;
+    float distortion_denominator = 1 + k5 * r2 + k6 * r4 + k7 * r6 + k8 * r8;
+    
+    float distortion_factor = distortion_numerator / distortion_denominator;
+
+    // Step 4: Apply distortion to normalized coordinates
+    float x_distorted = x_d * distortion_factor;
+    float y_distorted = y_d * distortion_factor;
+
+    // Step 5: Convert to pixel coordinates using the intrinsic matrix
+    res.u = fx * x_distorted + cx;
+    res.v = fy * y_distorted + cy;
+    */
 
     return true;
   }
@@ -109,6 +165,19 @@ class TransformCameraPointServer {
   double fy;
   double cx;
   double cy;
+
+
+  // Rational polynomial distortion coefficients
+  double k1;
+  double k2;
+  double k3;
+  double k4;
+  double k5;
+  double k6;
+  double k7;
+  double k8;
+  double p1;
+  double p2;
 };
 
 /**

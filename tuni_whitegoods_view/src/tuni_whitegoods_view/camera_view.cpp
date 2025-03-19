@@ -7,7 +7,7 @@ using namespace std;
 CameraView::CameraView(ros::NodeHandle* nh) : it_(*nh), nh_(nh) {
   //img_callback = it_.subscribe("/depth_to_rgb/image_raw", 10,
   //                             &CameraView::depthSceneCallback, this);
-  img_callback = it_.subscribe("/camera1/rgb/image_raw", 10,
+  img_callback = it_.subscribe("/camera1/rgb/image_rect_color", 10,
                                &CameraView::depthSceneCallback, this);
   viz_pub = it_.advertise("/odin/visualization/camera_view", 10);
   ros::param::get("camera_resolution", camera_resolution);

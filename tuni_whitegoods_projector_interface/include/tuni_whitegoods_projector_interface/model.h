@@ -15,6 +15,7 @@
 #include "tuni_whitegoods_projector_interface/static_border.h"
 
 #include "tuni_whitegoods_msgs/DisplayAreaStates.h"
+#include "tuni_whitegoods_msgs/TransformPixelTo3D.h"
 
 class ProjectorInterfaceModel {
  private:
@@ -33,6 +34,9 @@ class ProjectorInterfaceModel {
   bool publishStates(tuni_whitegoods_msgs::DisplayAreaStates::Request &req,
                      tuni_whitegoods_msgs::DisplayAreaStates::Response &res);
 
+  bool pixel2robotservice(tuni_whitegoods_msgs::TransformPixelTo3D::Request &req,
+                          tuni_whitegoods_msgs::TransformPixelTo3D::Response &res);
+
   std::vector<cv::Point2f> original_table_projector_position;
 
   bool right_hand_detected, left_hand_detected, action_triggered,
@@ -45,7 +49,7 @@ class ProjectorInterfaceModel {
   bool updating;
   bool reseting;
   float shelf_height;
-  ros::ServiceServer states_service;
+  ros::ServiceServer states_service, pixel_transformation_service;
 
  public:
   ProjectorInterfaceModel(ros::NodeHandle* nh);

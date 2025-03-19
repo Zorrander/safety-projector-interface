@@ -73,6 +73,10 @@ ProjectorInterfaceModel::ProjectorInterfaceModel(ros::NodeHandle *nh)
         "display_area_states",
         &ProjectorInterfaceModel::publishStates, this);
 
+  pixel_transformation_service = nh_->advertiseService(
+        "pixel_2_robot",
+        &ProjectorInterfaceModel::pixel2robotservice, this);
+
   original_table_projector_position = {
       cv::Point2f(795, 119), cv::Point2f(856, 141), cv::Point2f(803, 247),
       cv::Point2f(728, 221)};
@@ -95,6 +99,25 @@ ProjectorInterfaceModel::ProjectorInterfaceModel(ros::NodeHandle *nh)
   hands_detected = false;
   original_max_width = 0;
   original_max_height = 0;
+}
+
+bool ProjectorInterfaceModel::pixel2robotservice(tuni_whitegoods_msgs::TransformPixelTo3D::Request &req,
+                          tuni_whitegoods_msgs::TransformPixelTo3D::Response &res){
+
+  geometry_msgs::Point camera_center; 
+  camera_center.x = req.u;
+  camera_center.y = req.v;
+  camera_center.z = 1.310;
+
+  ROS_INFO("Camera Center: x = %f, y = %f, z = %f", camera_center.x, camera_center.y, camera_center.z);
+
+  geometry_msgs::Pose transformedPoint;
+  transformedPoint = fromPixel2Robot(camera_center);
+  res.x = transformedPoint.position.x; 
+  res.y = transformedPoint.position.y; 
+  res.z = transformedPoint.position.z; 
+
+  return true;
 }
 
 bool ProjectorInterfaceModel::publishStates(      
@@ -693,6 +716,7 @@ ProjectorInterfaceModel::getDisplayAreas() {
 }
 
 cv::Point ProjectorInterfaceModel::fromRobot2Pixel(geometry_msgs::Pose pose) {
+
   geometry_msgs::PoseStamped in_point_stamped;
   tuni_whitegoods_msgs::TransformRobotCameraCoordinates srv_pose;
   tuni_whitegoods_msgs::Transform3DToPixel srv_3D_to_pixel;
@@ -737,6 +761,9 @@ geometry_msgs::Pose ProjectorInterfaceModel::fromPixel2Robot(
   projected.x = srv_pixel_to_3D.response.x;
   projected.y = srv_pixel_to_3D.response.y;
   projected.z = srv_pixel_to_3D.response.z;
+  ROS_INFO("Camera projected: x = %f, y = %f, z = %f", projected.x, projected.y, projected.z);
+
+
   // Transform to robot coordinates frame
   geometry_msgs::PoseStamped in_point_stamped;
   in_point_stamped.header.frame_id = "camera1_rgb_camera_link";
