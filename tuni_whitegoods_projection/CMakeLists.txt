@@ -11,6 +11,7 @@ find_package(rclcpp REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(cv_bridge REQUIRED)
 find_package(OpenCV REQUIRED)
+find_package(task_manager_msg REQUIRED)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -29,7 +30,8 @@ ament_target_dependencies(projection_node
   rclcpp
   sensor_msgs
   cv_bridge
-  OpenCV)
+  OpenCV
+  task_manager_msg)
 
 install(TARGETS
   projection_node

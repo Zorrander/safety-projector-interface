@@ -16,6 +16,7 @@
   <depend>sensor_msgs</depend>
   <depend>cv_bridge</depend>
   <depend>opencv</depend>
+  <depend>task_manager_msg</depend>
 
   <export>
     <build_type>ament_cmake</build_type>
