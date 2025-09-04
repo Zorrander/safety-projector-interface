@@ -65,15 +65,21 @@ class TransformCameraPointServer {
     k3 = 0.00041892516310326755;
     k4 = -9.842617873800918e-05;
     k5 = 1.6451900005340576;
-    k6 = 0.3761782646179199; 
+    k6 = 0.3761782646179199;
     k7 = -2.630704641342163;
     k8 = 1.5565040111541748;
 
-    k1= 0.0871772789718933;
-    k2= -0.03671634009934126;
-    k3= 0.0;
-    p1= -0.001524745921348349 ;
-    p2= 0.0002844683976229544;
+    k1 = 0.0871772789718933;
+    k2 = -0.03671634009934126;
+    k3 = 0.0;
+    p1 = -0.001524745921348349;
+    p2 = 0.0002844683976229544;
+
+    k1 = 0.094592;
+    k2 = -0.027569;
+    p1 = 0.002634;
+    p2 = -0.000245;
+    k3 = 0.0;
   }
 
  private:
@@ -91,8 +97,6 @@ class TransformCameraPointServer {
   bool transform3DToPixelCallback(
       tuni_whitegoods_msgs::Transform3DToPixel::Request &req,
       tuni_whitegoods_msgs::Transform3DToPixel::Response &res) {
-
-  
     // Normalize the 3D point
     float x_d = req.x / req.z;
     float y_d = req.y / req.z;
@@ -118,12 +122,15 @@ class TransformCameraPointServer {
     res.u = fx * x_distorted + cx;
     res.v = fy * y_distorted + cy;
 
+    //res.u = fx * x_d + cx;
+    //res.v = fy * y_d + cy;
+
     /*
     // Apply the rational polynomial distortion model
     // Coefficients D[0..7] are the rational polynomial distortion coefficients
     float distortion_numerator = 1 + k1 * r2 + k2 * r4 + k3 * r6 + k4 * r8;
     float distortion_denominator = 1 + k5 * r2 + k6 * r4 + k7 * r6 + k8 * r8;
-    
+
     float distortion_factor = distortion_numerator / distortion_denominator;
 
     // Step 4: Apply distortion to normalized coordinates
@@ -165,7 +172,6 @@ class TransformCameraPointServer {
   double fy;
   double cx;
   double cy;
-
 
   // Rational polynomial distortion coefficients
   double k1;

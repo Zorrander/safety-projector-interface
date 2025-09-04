@@ -14,7 +14,16 @@ from integration.msg import *
 from controller_manager_msgs.srv import SwitchController, SwitchControllerRequest
 
 
+go_pressed = False
+stop_pressed = False
+border_violated = False
+
+
+
 def main():
+    global border_violated
+    global go_pressed
+    global stop_pressed 
     moveit_commander.roscpp_initialize([])
     rospy.init_node('pick_and_place_test')
 
@@ -71,6 +80,102 @@ def main():
 
     rospy.wait_for_service("/controller_manager/switch_controller")
     switch_controller = rospy.ServiceProxy("/controller_manager/switch_controller", SwitchController)
+
+    button_projection_server_name = rospy.get_param("button_projection_server_name") 
+    project_client = actionlib.SimpleActionClient(button_projection_server_name, SetVirtualButtonsProjectionAction)
+    project_client.wait_for_server()
+
+    button_color_server_name = rospy.get_param("button_color_server_name") 
+    color_client = actionlib.SimpleActionClient(button_color_server_name, SetVirtualButtonChangeColorAction)
+    color_client.wait_for_server()
+
+
+    def border__violation_callback(msg):
+        global border_violated
+        print("Border violated")
+        print(msg)
+        border_violated = True if msg.violation_active else False
+
+
+    def button_pressed_callback(msg):
+        global go_pressed 
+        global stop_pressed 
+        print("button pressed")
+        print(msg)
+        event = msg.virtual_button_events[0]
+        if (event.virtual_button_id == "go_button" and event.event_type == -1):
+            go_pressed = True 
+            stop_pressed = False
+        else if (event.virtual_button_id == "stop_button" and event.event_type == -1):
+            stop_pressed = True 
+            go_pressed = False
+
+    rospy.Subscriber("/execution/projector_interface/integration/topics/safety_border_violation", SafetyBorderViolation, border__violation_callback)
+
+    rospy.Subscriber("execution/projector_interface/integration/topics/virtual_button_event_array", VirtualButtonEventArray, button_pressed_callback)
+
+    ## Project button 
+    goal = SetVirtualButtonsProjectionGoal()
+    goal.request_id = "go_button"
+    goal.zone = "table"
+    goal.virtual_button = VirtualButtonReference()
+    goal.virtual_button.id = "go";
+    goal.virtual_button.zone = "table";
+    goal.virtual_button.name = "go";
+    goal.virtual_button.description = "button go"
+    goal.virtual_button.text = "GO"
+    goal.virtual_button.button_color.r = 0.0
+    goal.virtual_button.button_color.g = 1.0
+    goal.virtual_button.button_color.b = 0.0
+    goal.virtual_button.button_color.a = 1.0
+    goal.virtual_button.text_color.r = 1.0
+    goal.virtual_button.text_color.g = 1.0
+    goal.virtual_button.text_color.b = 1.0
+    goal.virtual_button.text_color.a = 1.0
+
+    goal.virtual_button.center.position.x = 0.85
+    goal.virtual_button.center.position.y = 0
+    goal.virtual_button.center.position.z = 0
+
+    goal.virtual_button.radius = 75.0
+    goal.virtual_button.hidden = False
+
+    # Sends the goal to the action server.
+    project_client.send_goal(goal)
+
+    # Waits for the server to finish performing the action.
+    project_client.wait_for_result()
+
+
+    ## Project button 2
+    goal = SetVirtualButtonsProjectionGoal()
+    goal.request_id = "stop_button"
+    goal.zone = "table"
+    goal.virtual_button = VirtualButtonReference()
+    goal.virtual_button.id = "stop";
+    goal.virtual_button.zone = "table";
+    goal.virtual_button.name = "stop";
+    goal.virtual_button.description = "button stop"
+    goal.virtual_button.text = "STOP"
+    goal.virtual_button.button_color.r = 1.0
+    goal.virtual_button.button_color.g = 0.0
+    goal.virtual_button.button_color.b = 0.0
+    goal.virtual_button.button_color.a = 1.0
+    goal.virtual_button.text_color.r = 1.0
+    goal.virtual_button.text_color.g = 1.0
+    goal.virtual_button.text_color.b = 1.0
+    goal.virtual_button.text_color.a = 1.0
+    goal.virtual_button.center.position.x = 0.85
+    goal.virtual_button.center.position.y = 0.2
+    goal.virtual_button.center.position.z = 0
+    goal.virtual_button.radius = 75.0
+    goal.virtual_button.hidden = False
+
+    project_client.send_goal(goal)
+
+    project_client.wait_for_result()
+
+
 
     box1 = [0.30, -0.15, 0.01]
     box2 = [0.30, -0.30, 0.01]
@@ -213,7 +318,12 @@ def main():
 
         initial_pose = move_group.get_current_pose().pose
         move_group.stop()
-        
+
+
+        rate = rospy.Rate(5)  
+        while not rospy.is_shutdown() and not go_pressed:
+            rospy.loginfo("Press go to start.")
+            rate.sleep()
 
         while not rospy.is_shutdown():
 
@@ -231,12 +341,11 @@ def main():
                 move_group.go(joint_goal_clear, wait=True)
                 move_group.stop()
 
-                '''
                 booking_goal = BookRobotStaticBorderGoal(id=str(box_id))
                 print("Booking border - it should turn red")
                 border_booking_server.send_goal(booking_goal)
                 time.sleep(1)
-                '''
+                
                 
                 new_pose = Pose()
                 new_pose.position.x = -box[0]
@@ -256,7 +365,7 @@ def main():
                 move_group.stop()
                 move_group.clear_pose_targets()
                 
-                #hand_back_control_srv()
+                hand_back_control_srv()
 
                 close_gripper()
                 time.sleep(1)
@@ -264,7 +373,7 @@ def main():
                 load_ros_control()
                 time.sleep(1)
                 
-                '''
+                
                 releasing_goal = ReleaseRobotStaticBorderGoal(id=str(box_id))
                 print("Releasing border - it should turn back to green")
                 border_releasing_server.send_goal(releasing_goal)
@@ -273,7 +382,7 @@ def main():
                 print("Booking border - it should turn red")
                 border_booking_server.send_goal(booking_goal)
                 time.sleep(1)
-                '''
+                
 
                 new_pose = Pose()
                 new_pose.position.x = -places[box_id][0]
@@ -299,23 +408,21 @@ def main():
                 load_ros_control()
                 time.sleep(1)
 
-                '''
+                
                 releasing_goal = ReleaseRobotStaticBorderGoal(id=str(box_id+4))
                 print("Releasing border - it should turn back to green")
                 border_releasing_server.send_goal(releasing_goal)
-                '''
+                
 
             for place_id, place in enumerate(places):
                 move_group.go(joint_goal_clear, wait=True)
                 move_group.stop()
 
-                '''
                 booking_goal = BookRobotStaticBorderGoal(id=str(place_id+4))
                 print("Booking border - it should turn red")
                 border_booking_server.send_goal(booking_goal)
                 time.sleep(1)
-                '''
-
+                
                 new_pose = Pose()
                 new_pose.position.x = -place[0]
                 new_pose.position.y = -place[1]
@@ -334,7 +441,7 @@ def main():
                 move_group.stop()
                 move_group.clear_pose_targets()
                 
-                #hand_back_control_srv()
+                hand_back_control_srv()
 
                 close_gripper()
                 time.sleep(1)
@@ -342,7 +449,6 @@ def main():
                 load_ros_control()
                 time.sleep(1)
                 
-                '''
                 releasing_goal = ReleaseRobotStaticBorderGoal(id=str(place_id+4))
                 print("Releasing border - it should turn back to green")
                 border_releasing_server.send_goal(releasing_goal)
@@ -351,8 +457,7 @@ def main():
                 print("Booking border - it should turn red")
                 border_booking_server.send_goal(booking_goal)
                 time.sleep(1)
-                '''
-
+                
                 new_pose = Pose()
                 new_pose.position.x = -boxes[place_id][0]
                 new_pose.position.y = -boxes[place_id][1]
@@ -377,11 +482,10 @@ def main():
                 load_ros_control()
                 time.sleep(1)
 
-                '''
                 releasing_goal = ReleaseRobotStaticBorderGoal(id=str(place_id))
                 print("Releasing border - it should turn back to green")
                 border_releasing_server.send_goal(releasing_goal)
-                '''
+                
     
 
     except rospy.ROSException as e:

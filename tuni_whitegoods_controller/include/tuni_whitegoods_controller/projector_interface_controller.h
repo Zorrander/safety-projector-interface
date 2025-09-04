@@ -15,13 +15,15 @@
 #include "tuni_whitegoods_msgs/DynamicArea.h"
 #include "tuni_whitegoods_msgs/HandsState.h"
 #include "tuni_whitegoods_perception/object_detector.h"
+#include "tuni_whitegoods_perception/template_matcher.h"
 #include "tuni_whitegoods_projector_interface/model.h"
 
 class ProjectorInterfaceController {
  protected:
   ros::NodeHandle *nh_;
 
-  std::shared_ptr<ObjectDetector> detector;
+  // std::shared_ptr<ObjectDetector> detector;
+  std::shared_ptr<TemplateMatcher> detector;
 
   ros::Subscriber hand_pose_sub, moving_table_pose_sub, model_update_sub,
       depth_sub, transform_callback;
@@ -35,6 +37,7 @@ class ProjectorInterfaceController {
   std::vector<int> camera_resolution;
   bool init_done;
   cv::Matx33d moving_table_homography;
+  ros::Timer interaction_timer_;
 
  public:
   ProjectorInterfaceController(ros::NodeHandle *nh);
@@ -79,9 +82,9 @@ class ProjectorInterfaceController {
   // unity_msgs::ElementUI &msg); void callback_button_color(const
   // unity_msgs::ElementUI::ConstPtr &msg);
 
-  std::shared_ptr<View> projector_view, second_projector_view, camera_view,
-      robot_view;
   std::unique_ptr<ProjectorInterfaceModel> model_;
-  std::vector<std::shared_ptr<View>> views;
+
+  void run();
+  // void run(const ros::TimerEvent &);
 };
 #endif

@@ -13,12 +13,15 @@ def select_point(event,x,y,flags,param):
         print(x,y)
         #print(depthmap[y, x])
 
-img = cv2.imread('/home/odin3/Documents/calibration_data/robot-proj/run3/circles.png', cv2.IMREAD_UNCHANGED)
+
+image_path = Path.home() / 'data_calib' / 'rawrgb_img.png'
+img = cv2.imread(str(image_path))
+
 #depthmap = cv2.imread(str(Path.home() / 'depthmap.png'), cv2.IMREAD_UNCHANGED)
 
 cv2.namedWindow('image')
 # bind select_point function to a window that will capture the mouse click
 cv2.setMouseCallback('image', select_point)
-cv2.imshow('image',img)
+cv2.imshow('image', img)
 cv2.waitKey(0)   
 cv2.destroyAllWindows()

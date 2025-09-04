@@ -70,6 +70,14 @@ target_link_libraries(view
 
 add_dependencies(view ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
+add_executable(views_node src/tuni_whitegoods_view/view_node.cpp)
+target_link_libraries(views_node 
+      view
+      ${catkin_LIBRARIES}
+)
+add_dependencies(views_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
+
 install(TARGETS view
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}

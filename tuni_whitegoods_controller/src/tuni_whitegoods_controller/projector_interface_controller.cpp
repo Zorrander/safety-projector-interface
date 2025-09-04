@@ -1,9 +1,6 @@
 #include "tuni_whitegoods_controller/projector_interface_controller.h"
 
 #include <std_msgs/Empty.h>
-#include <tuni_whitegoods_view/camera_view.h>
-#include <tuni_whitegoods_view/project_view.h>
-#include <tuni_whitegoods_view/robot_view.h>
 #include <yaml-cpp/yaml.h>
 
 /**
@@ -19,7 +16,9 @@ ProjectorInterfaceController::ProjectorInterfaceController(ros::NodeHandle *nh)
   // Initialize model
   model_ = std::make_unique<ProjectorInterfaceModel>(nh_);
 
-  detector = std::make_shared<ObjectDetector>(nh_);
+  // detector = std::make_shared<ObjectDetector>(nh_);
+  detector =
+      std::make_shared<TemplateMatcher>("/home/odin3/baselines/baseline");
 
   // Subscribe to commands coming from OpenFlow or custom scheduler
   service_borders = nh_->advertiseService(
@@ -27,32 +26,18 @@ ProjectorInterfaceController::ProjectorInterfaceController(ros::NodeHandle *nh)
       "list_static_border_status",
       &ProjectorInterfaceController::getBordersService, this);
 
-  projector_view = std::make_shared<Projector>(nh_, 1);
-  projector_view->window_name = "Projector 1";
-
-  // second_projector_view = std::make_shared<Projector>(nh_, 2);
-  // projector_view->window_name = "Projector 2";
-
-  camera_view = std::make_shared<CameraView>(nh_);
-
-  robot_view = std::make_shared<RobotView>(nh_);
-
-  // Initialize views
-  views.push_back(projector_view);
-  // views.push_back(second_projector_view);
-  views.push_back(camera_view);
-  // views.push_back(robot_view);
-
-  init_sub = nh_->subscribe("/odin/start", 1,
-                            &ProjectorInterfaceController::initCallback, this);
+  // init_sub = nh_->subscribe("/odin/start", 1,
+  //                          &ProjectorInterfaceController::initCallback,
+  //                          this);
 
   // Subscribe to model updates
-  model_update_sub =
-      nh_->subscribe("/odin/internal/model_changed", 10,
-                     &ProjectorInterfaceController::modelUpdateCallback, this);
+  // model_update_sub =
+  //    nh_->subscribe("/odin/internal/model_changed", 10,
+  //                   &ProjectorInterfaceController::modelUpdateCallback,
+  //                   this);
 
   depth_sub =
-      nh_->subscribe("/camera1/depth_to_rgb/image", 10,
+      nh_->subscribe("/camera1/rgb/image_rect_color", 10,
                      &ProjectorInterfaceController::depthImageCallback, this);
 
   // Subscribe to hand detections
@@ -66,6 +51,14 @@ ProjectorInterfaceController::ProjectorInterfaceController(ros::NodeHandle *nh)
 
   ros::param::get("projector_resolution", projector_resolution);
   ros::param::get("camera_resolution", camera_resolution);
+
+  // interaction_timer_ = nh->createTimer(
+  //    ros::Duration(0.5), &ProjectorInterfaceController::run, this);
+  //
+
+  // ros::Duration(2).sleep();
+
+  // init();
 
   ROS_INFO("ProjectorInterfaceController running");
 }
@@ -130,8 +123,9 @@ void ProjectorInterfaceController::init() {
 
   ROS_INFO("init 2");
 
-  std::for_each(views.begin(), views.end(),
-                [this](auto &view) { view->init(model_->getDisplayAreas()); });
+  // std::for_each(views.begin(), views.end(),
+  //              [this](auto &view) { view->init(model_->getDisplayAreas());
+  //              });
 
   ROS_INFO("done");
   /*
@@ -143,22 +137,21 @@ void ProjectorInterfaceController::init() {
 void ProjectorInterfaceController::transformCallback(
     const tuni_whitegoods_msgs::DynamicArea::ConstPtr &msg) {
   model_->updateMovingTable(*msg);
-
+  /*
   std::for_each(views.begin(), views.end(), [this](auto &view) {
     view->updateDisplayAreas(model_->getDisplayAreas());
-  });
+  });*/
 }
 
 void ProjectorInterfaceController::depthImageCallback(
     const sensor_msgs::ImageConstPtr &depth_msg) {
   try {
-    cv_bridge_depth = cv_bridge::toCvCopy(
-        depth_msg, sensor_msgs::image_encodings::TYPE_16UC1);
+    cv_bridge_depth =
+        cv_bridge::toCvCopy(depth_msg, sensor_msgs::image_encodings::BGR8);
   } catch (cv_bridge::Exception &e) {
     ROS_ERROR("cv_bridge exception: %s", e.what());
     return;
   }
-
   cv_depth = cv_bridge_depth->image;
 }
 /**
@@ -182,20 +175,18 @@ void ProjectorInterfaceController::createBorderLayout(
 
 void ProjectorInterfaceController::handTrackerCallback(
     const tuni_whitegoods_msgs::HandsState &msg) {
-  bool result = false;
   for (int i = 0; i < msg.name.size(); i++) {
-    if (model_->updateHandPose(msg.name[i], msg.position[i])) {
-      result = true;
-    }
+    model_->updateHandPose(msg.name[i], msg.position[i]);
   }
 }
 
+/*
 void ProjectorInterfaceController::modelUpdateCallback(
     const std_msgs::Empty &msg) {
   std::for_each(views.begin(), views.end(), [this](auto &view) {
     view->updateDisplayAreas(model_->getDisplayAreas());
   });
-}
+}*/
 
 void ProjectorInterfaceController::addInstructions(
     std::string zone, std::string title, std_msgs::ColorRGBA title_color) {
@@ -253,8 +244,8 @@ void ProjectorInterfaceController::addStaticBorder(
     geometry_msgs::PolygonStamped bord, std::string b_topic,
     std_msgs::ColorRGBA b_color, bool filling, int thic, ros::Duration life,
     bool track) {
-  model_->addStaticBorder(cv_depth, r_id, z, pos_row, pos_col, bord, b_topic,
-                          b_color, filling, thic, life, track);
+  model_->addStaticBorder(r_id, z, pos_row, pos_col, bord, b_topic, b_color,
+                          filling, thic, life, track);
 }
 
 /**
@@ -333,8 +324,10 @@ bool ProjectorInterfaceController::getBordersService(
     integration::StaticBorderStatus sbs;
     sbs.id = border->getId();
     ROS_INFO("Border %s", sbs.id.c_str());
-    if (detector->scan(cv_depth(border->roi_rect), border->baseline) ||
-        border->operator_booked) {
+    // if (detector->scan(cv_depth(border->roi_rect), border->baseline) ||
+    //    border->operator_booked) {
+    if (detector->scan(cv_depth, border->roi_rect) || border->operator_booked) {
+      
       sbs.status = 2;
       border->changeThickness(6);
     } else if (border->robot_booked) {
@@ -348,10 +341,9 @@ bool ProjectorInterfaceController::getBordersService(
     ROS_INFO("border %s status: %d", sbs.id.c_str(), sbs.status);
     res.status_borders.push_back(sbs);
   }
-  std::for_each(views.begin(), views.end(), [this](auto &view) {
-    view->updateDisplayAreas(model_->getDisplayAreas());
-  });
 
   ROS_INFO("Border status check complete.");
   return true;
 }
+
+void ProjectorInterfaceController::run() { model_->checkForInteractions(); }

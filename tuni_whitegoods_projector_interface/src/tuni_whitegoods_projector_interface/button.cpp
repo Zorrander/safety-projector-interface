@@ -54,10 +54,9 @@ bool Button::checkForInteractions(const std::string& name,
   bool result = false;
   float distance = cv::norm(hand_position - center_cam_point);
 
-  bool is_crossed = distance < radius * 1.5;
+  bool is_crossed = distance < radius * 1.2;
 
   if (is_crossed) {
-    btn_color = cv::Scalar(255, 0, 0);
     result = true;
   }
   return result;

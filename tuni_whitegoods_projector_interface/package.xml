@@ -13,10 +13,15 @@
   <build_depend>roscpp</build_depend>
   <build_depend>integration</build_depend>
   <build_depend>tuni_whitegoods_msgs</build_depend>
-  <build_depend>opencv4</build_depend>
+
+  <build_export_depend>roscpp</build_export_depend>
+  <build_export_depend>integration</build_export_depend>
+  <build_export_depend>tuni_whitegoods_msgs</build_export_depend>
 
   <exec_depend>roscpp</exec_depend>
   <exec_depend>integration</exec_depend>
   <exec_depend>tuni_whitegoods_msgs</exec_depend>
+
+  <exec_depend>message_runtime</exec_depend>
 
 </package>

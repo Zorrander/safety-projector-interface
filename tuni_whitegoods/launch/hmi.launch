@@ -8,20 +8,23 @@
     <rosparam file="$(find tuni_whitegoods)/config/tuni_parameters.yaml" />
     <rosparam file="$(find tuni_whitegoods_openflow_interface)/config/openflow_interface_params.yaml" /> 
 
+    <!--
+    <group if="$(arg use_camera)">
+        <include file="$(find tuni_whitegoods_perception)/launch/whitegoods_perception.launch" >
+            <arg name="camera_name" value="$(arg camera_name)" />
+        </include>
+    </group> -->
+
     <include file="$(find tuni_whitegoods_transformations)/launch/transformation_servers.launch" />
 
     <include file="$(find tuni_whitegoods_openflow_interface)/launch/projector_interface.launch" /> 
-
-    <group if="$(arg use_camera)">
-    	<include file="$(find tuni_whitegoods_perception)/launch/whitegoods_perception.launch" >
-            <arg name="camera_name" value="$(arg camera_name)" />
-        </include>
-    </group>
 
     <group if="$(arg use_robot)">
     	<include file="$(find tuni_whitegoods_openflow_interface)/launch/robot_interface.launch" />
     </group>
 
-    <!-- <include file="$(find tuni_whitegoods_calibration)/launch/tuni_tf.launch" /> -->
+    <!-- <include file="$(find tuni_whitegoods_calibration)/launch/tuni_tf.launch"/> --> 
+
+    <include file="$(find tuni_whitegoods_view)/launch/views.launch" />
 
 </launch>

@@ -25,6 +25,8 @@ DisplayArea::DisplayArea(ros::NodeHandle *nh, std::string name,
   if (name == "cell_left" || name == "cell_right") {
     color = cv::Scalar(0, 255 / 2, 255);
     instructions = "Watch out|light curtain";
+  } else {
+    color = cv::Scalar(0, 255, 0);
   }
 
   last_detection_time = ros::Time::now();
@@ -51,10 +53,9 @@ void DisplayArea::create_border_layout(int rows, int cols, float sf_factor,
                                        std_msgs::ColorRGBA status_operator) {
   border_layout = {rows,          cols,        sf_factor,      adjacent,
                    status_booked, status_free, status_operator};
-  if (rows != 0 && cols != 0){
+  if (rows != 0 && cols != 0) {
     compute_border_dimensions(rows, cols);
   }
-  
 }
 
 void DisplayArea::compute_border_dimensions(int rows, int columns) {
@@ -147,11 +148,19 @@ std::vector<cv::Point> DisplayArea::generate_border(int row, int column) {
   return result;
 }
 
-bool DisplayArea::checkForInteractions(
-    const std::string &name, const geometry_msgs::Point &hand_position) {
+bool DisplayArea::checkForInteractions(std::shared_ptr<Hand> hand) {
   bool result = false;
-  cv::Point cv_hand_position(static_cast<int>(hand_position.x),
-                             static_cast<int>(hand_position.y));
+  std::string name = hand->name;
+
+  cv::Point cv_hand_position(static_cast<int>(hand->pixel_position.x),
+                             static_cast<int>(hand->pixel_position.y));
+
+  if (display_rect.contains(cv_hand_position)) {
+    color = cv::Scalar(255, 0, 0);
+  } else {
+    color = cv::Scalar(0, 255, 0);
+  }
+
   for (auto &border : borders_) {
     bool interaction = border->checkForInteractions(name, cv_hand_position);
     bool past_interaction = border->isAlreadyCrossed();
@@ -195,25 +204,25 @@ bool DisplayArea::checkForInteractions(
     ros::Duration diff = ros::Time::now() - last_detection_time;
     bool interaction = button->checkForInteractions(name, cv_hand_position);
     if (last_button_pressed != button->getId() && diff.toSec() > 2.0 &&
-        hand_position.z > 2100 && interaction) {
-      if (!button->isAlreadyPressed()) {
-        if (name == "left") {
-          button->left_hand_press = true;
-        } else if (name == "right") {
-          button->right_hand_press = true;
-        }
-        result = true;
-        button->setAlreadyPressed(true);
-        last_button_pressed = button->getId();
-        last_detection_time = ros::Time::now();
-        integration::VirtualButtonEvent msg_event;
-        ROS_INFO("button pressed");
-        msg_event.virtual_button_id = button->getId();
-        msg_event.event_type = msg_event.PRESSED;
-        events.virtual_button_events.push_back(msg_event);
-        pub_button_event.publish(events);
-        break;
+        interaction && !button->isAlreadyPressed()) {
+      if (name == "left") {
+        button->left_hand_press = true;
+      } else if (name == "right") {
+        button->right_hand_press = true;
       }
+      result = true;
+      button->btn_color = cv::Scalar(255, 0, 0);
+      button->setAlreadyPressed(true);
+      last_button_pressed = button->getId();
+      last_detection_time = ros::Time::now();
+      integration::VirtualButtonEvent msg_event;
+      ROS_INFO("button pressed");
+      msg_event.virtual_button_id = button->getId();
+      msg_event.event_type = msg_event.PRESSED;
+      events.virtual_button_events.push_back(msg_event);
+      pub_button_event.publish(events);
+      break;
+
     } else {
       if (!interaction && button->isAlreadyPressed()) {
         bool reset = false;
@@ -240,6 +249,8 @@ bool DisplayArea::checkForInteractions(
 }
 
 void DisplayArea::resetInteractions() {
+  color = cv::Scalar(0, 255, 0);
+
   for (auto &border : borders_) {
     border->resetInteractions();
   }
@@ -418,6 +429,12 @@ void DisplayArea::setRobotFrame(
 void DisplayArea::setCameraFrame(
     std::vector<geometry_msgs::Point> camera_frame) {
   camera_frame_area = camera_frame;
+  cv::Point top_left(static_cast<int>(camera_frame[0].x),
+                     static_cast<int>(camera_frame[0].y));
+  cv::Point bottom_right(static_cast<int>(camera_frame[2].x),
+                         static_cast<int>(camera_frame[2].y));
+
+  display_rect = cv::Rect(top_left, bottom_right);
 }
 
 void DisplayArea::setProjectorFrame(std::vector<cv::Point> projector_frame) {

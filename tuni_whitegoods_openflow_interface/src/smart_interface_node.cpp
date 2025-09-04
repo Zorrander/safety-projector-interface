@@ -12,7 +12,7 @@
 #include "projector_interface/unset_projection_server.h"
 #include "projector_interface/user_interface_server.h"
 #include "tuni_whitegoods_controller/projector_interface_controller.h"
-#include "user_interface/gui.h"
+//#include "user_interface/gui.h"
 
 /**
  * @mainpage ODIN %Projector Interface Documentation
@@ -67,7 +67,7 @@ int main(int argc, char** argv) {
   std::shared_ptr<ProjectorInterfaceController> controller =
       std::make_shared<ProjectorInterfaceController>(&nh);
 
-  std::shared_ptr<GUI> gui = std::make_shared<GUI>(&nh, controller);
+  // std::shared_ptr<GUI> gui = std::make_shared<GUI>(&nh, controller);
 
   // Create an action server object and spin ROS
   UserInterfaceServer srv4(&nh, user_interface_server_name, controller);
@@ -93,10 +93,14 @@ int main(int argc, char** argv) {
   SafetyBorderServer safety_border_server(&nh, safety_border_server_name,
                                           controller);
 
+  controller->init();
+  ros::Rate loop_rate(5);
   ROS_INFO("PROJECTOR INTERFACE NODE RUNNING");
   while (ros::ok()) {
-    gui->update_imgui();
+    // gui->update_imgui();
+    controller->run();
     ros::spinOnce();
+    loop_rate.sleep();
   }
 
   return 0;

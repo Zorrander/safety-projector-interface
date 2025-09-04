@@ -124,13 +124,12 @@ cv::Point StaticBorder::getCenter() {
   return p;
 }
 
-
 bool StaticBorder::checkForInteractions(const std::string& name,
                                         const cv::Point& hand_position) {
   bool result = false;
   if (robot_booked) {
     float distance = cv::norm(hand_position - getCenter());
-    bool is_crossed = distance < getBorderDiagonal() * 0.4;
+    bool is_crossed = distance < getBorderDiagonal() * 1.2;
 
     if (is_crossed) {
       result = true;

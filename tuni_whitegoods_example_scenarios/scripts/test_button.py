@@ -46,8 +46,10 @@ def main():
         goal.virtual_button.text_color.b = 1.0
         goal.virtual_button.text_color.a = 1.0
 
-        goal.virtual_button.center.position.x = x
-        goal.virtual_button.center.position.y = y
+        goal.virtual_button.center.position.x = x + 0.029
+        #goal.virtual_button.center.position.x = x + 0.03962
+        #goal.virtual_button.center.position.y = y - 0.00184
+        goal.virtual_button.center.position.y = y - 0.007
         goal.virtual_button.center.position.z = 0
 
         goal.virtual_button.radius = 40.0
@@ -59,27 +61,53 @@ def main():
         # Waits for the server to finish performing the action.
         project_client.wait_for_result()
 
-
-    project_button(0.445, 0.156)
+    
+    project_button(0.45, 0.225)
     time.sleep(1)
-    project_button(0.445, -0.094)
+    project_button(0.45, -0.025)
     time.sleep(1)
-    project_button(0.445, -0.344)
+    project_button(0.45, -0.275)
     time.sleep(1)
-    project_button(0.445, -0.594)
-    time.sleep(1)
-
-    project_button(0.620, 0.156)
-    time.sleep(1)
-    project_button(0.620, -0.094)
-    time.sleep(1)
-    project_button(0.620, -0.344)
+    project_button(0.45, -0.525)
     time.sleep(1)
 
-    project_button(0.795, 0.156)
+    project_button(0.625, 0.225)
     time.sleep(1)
-    project_button(0.795, -0.094)
+    project_button(0.625, -0.025)
+    time.sleep(1)
+    project_button(0.625, -0.275)
+    time.sleep(1)
+    project_button(0.625, -0.525)
 
+    project_button(0.80, 0.225)
+    time.sleep(1)
+    project_button(0.825, -0.025)
+    '''
+
+    project_button(0.40, 0.25)
+    time.sleep(1)
+    project_button(0.40, -0.0)
+    time.sleep(1)
+    project_button(0.40, -0.25)
+    time.sleep(1)
+    project_button(0.40, -0.50)
+    time.sleep(1)
+
+    project_button(0.575, 0.25)
+    time.sleep(1)
+    project_button(0.575, -0.0)
+    time.sleep(1)
+    project_button(0.575, -0.25)
+    time.sleep(1)
+    project_button(0.575, -0.50)
+    time.sleep(1)
+
+    project_button(0.75, 0.25)
+    time.sleep(1)
+    project_button(0.75, -0.0)
+    time.sleep(1)
+    project_button(0.75, -0.25)
+    '''
 if __name__ == "__main__":
 	main()
 

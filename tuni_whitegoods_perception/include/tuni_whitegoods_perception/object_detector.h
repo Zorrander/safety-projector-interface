@@ -28,7 +28,10 @@ class ObjectDetector {
   void thresholdCallback(const std_msgs::Int32::ConstPtr& msg);
   void nonZeroThresholdCallback(const std_msgs::Int32::ConstPtr& msg);
   void noiseReductionCallback(const std_msgs::Int32::ConstPtr& msg);
+  bool fileExists(const std::string& filename);
 
+  void saveImageWithUniqueName(const cv::Mat& image, const std::string& dirPath,
+                               const std::string& baseName);
   int threshold_value;
   int non_zero_count_threshold;
   int kernel_size;

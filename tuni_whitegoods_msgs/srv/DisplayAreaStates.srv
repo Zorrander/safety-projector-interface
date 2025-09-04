@@ -1,3 +1,3 @@
-string zone
+
 ---
-tuni_whitegoods_msgs/ZoneState state
+tuni_whitegoods_msgs/ZoneState[] zones

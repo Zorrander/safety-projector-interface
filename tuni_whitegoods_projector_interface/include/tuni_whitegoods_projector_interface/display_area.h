@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "tuni_whitegoods_projector_interface/button.h"
+#include "tuni_whitegoods_projector_interface/hand.h"
 #include "tuni_whitegoods_projector_interface/static_border.h"
 
 struct BorderLayout {
@@ -18,6 +19,38 @@ struct BorderLayout {
   std_msgs::ColorRGBA status_booked;
   std_msgs::ColorRGBA status_free;
   std_msgs::ColorRGBA status_operator;
+
+  BorderLayout() {
+    // Default color: Red for booked
+    status_booked.r = 1.0f;
+    status_booked.g = 0.0f;
+    status_booked.b = 0.0f;
+    status_booked.a = 1.0f;
+
+    // Default color: Green for free
+    status_free.r = 0.0f;
+    status_free.g = 1.0f;
+    status_free.b = 0.0f;
+    status_free.a = 1.0f;
+
+    // Default color: Blue for operator
+    status_operator.r = 0.0f;
+    status_operator.g = 0.0f;
+    status_operator.b = 1.0f;
+    status_operator.a = 1.0f;
+  }
+
+  BorderLayout(int r, int c, float sf, bool adj,
+               const std_msgs::ColorRGBA& booked,
+               const std_msgs::ColorRGBA& free,
+               const std_msgs::ColorRGBA& operator_color)
+      : rows(r),
+        cols(c),
+        sf_factor(sf),
+        adjacent(adj),
+        status_booked(booked),
+        status_free(free),
+        status_operator(operator_color) {}
 };
 
 class DisplayArea {
@@ -47,6 +80,7 @@ class DisplayArea {
   bool filling;
   std::string instructions;
   cv::Scalar color;
+  cv::Rect display_rect;
   std::vector<geometry_msgs::Point> robot_frame_area;
   std::vector<geometry_msgs::Point> camera_frame_area;
   std::vector<cv::Point> projector_frame_area, inner_projector_frame_area;
@@ -57,8 +91,7 @@ class DisplayArea {
                            std_msgs::ColorRGBA button_color);
   void fetchButtons(std::vector<std::shared_ptr<Button>>& buttons);
   void fetchBorders(std::vector<std::shared_ptr<StaticBorder>>& borders);
-  bool checkForInteractions(const std::string& name,
-                            const geometry_msgs::Point& hand_position);
+  bool checkForInteractions(std::shared_ptr<Hand> hand);
   void resetInteractions();
   void create_border_layout(int rows, int cols, float sf_factor, bool adjacent,
                             std_msgs::ColorRGBA status_booked,

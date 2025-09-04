@@ -34,6 +34,7 @@ include_directories(
 
 add_library(object_detection
   src/tuni_whitegoods_perception/object_detection_node.cpp
+  src/tuni_whitegoods_perception/template_matcher.cpp
 )
 target_link_libraries(object_detection
   ${catkin_LIBRARIES} 

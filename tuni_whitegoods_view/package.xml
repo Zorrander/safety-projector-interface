@@ -44,6 +44,8 @@
   <build_depend>libglfw3-dev</build_depend>
   <build_depend>libglew-dev</build_depend>
 
+  <exec_depend>message_runtime</exec_depend>
+
 
 
 </package>

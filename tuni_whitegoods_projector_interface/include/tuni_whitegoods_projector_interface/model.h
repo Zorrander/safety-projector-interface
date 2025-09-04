@@ -8,14 +8,13 @@
 #include <string>
 #include <vector>
 
+#include "tuni_whitegoods_msgs/DisplayAreaStates.h"
 #include "tuni_whitegoods_msgs/DynamicArea.h"
+#include "tuni_whitegoods_msgs/TransformPixelTo3D.h"
 #include "tuni_whitegoods_projector_interface/button.h"
 #include "tuni_whitegoods_projector_interface/display_area.h"
 #include "tuni_whitegoods_projector_interface/hand.h"
 #include "tuni_whitegoods_projector_interface/static_border.h"
-
-#include "tuni_whitegoods_msgs/DisplayAreaStates.h"
-#include "tuni_whitegoods_msgs/TransformPixelTo3D.h"
 
 class ProjectorInterfaceModel {
  private:
@@ -29,13 +28,13 @@ class ProjectorInterfaceModel {
       client_pixel_to_3D, client_projector_point,
       client_reverse_projector_point, client_projector_smart_interface;
   ros::Time startTime;
-  ros::Timer interaction_timer_;
 
-  bool publishStates(tuni_whitegoods_msgs::DisplayAreaStates::Request &req,
-                     tuni_whitegoods_msgs::DisplayAreaStates::Response &res);
+  bool publishStates(tuni_whitegoods_msgs::DisplayAreaStates::Request& req,
+                     tuni_whitegoods_msgs::DisplayAreaStates::Response& res);
 
-  bool pixel2robotservice(tuni_whitegoods_msgs::TransformPixelTo3D::Request &req,
-                          tuni_whitegoods_msgs::TransformPixelTo3D::Response &res);
+  bool pixel2robotservice(
+      tuni_whitegoods_msgs::TransformPixelTo3D::Request& req,
+      tuni_whitegoods_msgs::TransformPixelTo3D::Response& res);
 
   std::vector<cv::Point2f> original_table_projector_position;
 
@@ -49,10 +48,14 @@ class ProjectorInterfaceModel {
   bool updating;
   bool reseting;
   float shelf_height;
+  ros::Time last_seen_left;
+  ros::Time last_seen_right;
+  ros::Duration timeout;
   ros::ServiceServer states_service, pixel_transformation_service;
 
  public:
   ProjectorInterfaceModel(ros::NodeHandle* nh);
+  void checkForInteractions();
   void create_border_layout(int rows, int cols, float sf_factor, bool adjacent,
                             std_msgs::ColorRGBA status_booked,
                             std_msgs::ColorRGBA status_free,
@@ -68,17 +71,16 @@ class ProjectorInterfaceModel {
                            std_msgs::ColorRGBA button_color);
   void addInstructions(std::string zone, std::string title,
                        std_msgs::ColorRGBA title_color);
-  void addStaticBorder(cv::Mat depth_img, std::string r_id, std::string z,
-                       int pos_row, int pos_col,
-                       geometry_msgs::PolygonStamped bord, std::string b_topic,
-                       std_msgs::ColorRGBA b_color, bool filling, int thic,
-                       ros::Duration life, bool track);
+  void addStaticBorder(std::string r_id, std::string z, int pos_row,
+                       int pos_col, geometry_msgs::PolygonStamped bord,
+                       std::string b_topic, std_msgs::ColorRGBA b_color,
+                       bool filling, int thic, ros::Duration life, bool track);
   void addDynamicBorder(std::string r_id, std::string z, std::string b_topic,
                         std_msgs::ColorRGBA b_color, bool filling, int thic,
                         ros::Duration life, bool track);
   void notify();
 
-  bool updateHandPose(const std::string& name,
+  void updateHandPose(const std::string& name,
                       const geometry_msgs::Point& position);
 
   void updateMovingTable(const tuni_whitegoods_msgs::DynamicArea& moving_table);

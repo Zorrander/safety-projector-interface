@@ -6,14 +6,12 @@
 #include <string>
 
 class Hand {
- private:
-  std::string name;
-
  public:
   Hand(std::string name);
   void set_position(geometry_msgs::Point pixel_position,
                     geometry_msgs::Point robot_frame_position);
   geometry_msgs::Point pixel_position, robot_frame_position;
+  std::string name;
 };
 
 #endif

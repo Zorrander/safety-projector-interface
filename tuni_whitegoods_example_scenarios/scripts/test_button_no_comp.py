@@ -59,7 +59,7 @@ def main():
         # Waits for the server to finish performing the action.
         project_client.wait_for_result()
 
-
+    '''
     project_button(0.40, 0.250)
     time.sleep(1)
     project_button(0.40, 0.0)
@@ -83,7 +83,27 @@ def main():
     project_button(0.75, 0.0)
     time.sleep(1)
     project_button(0.75, -0.25)
+    '''
 
+    project_button(0.44, 0.16)
+    time.sleep(1)
+    project_button(0.44, -0.09)
+    time.sleep(1)
+    project_button(0.44, -0.34)
+    time.sleep(1)
+    project_button(0.44, -0.59)
+    time.sleep(1)
+
+    project_button(0.615, 0.16)
+    time.sleep(1)
+    project_button(0.615, -0.09)
+    time.sleep(1)
+    project_button(0.615, -0.34)
+    time.sleep(1)
+
+    project_button(0.790, 0.16)
+    time.sleep(1)
+    project_button(0.790, -0.09)
 if __name__ == "__main__":
 	main()
 

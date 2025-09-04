@@ -112,6 +112,10 @@ class TransformProjectorPointServer {
     cv::perspectiveTransform(cameraPoint, projectorPoint, border_homography);
     res.u_prime = inboundPixel(projectorPoint[0].x, projector_resolution[0]);
     res.v_prime = inboundPixel(projectorPoint[0].y, projector_resolution[1]);
+    float dx = -0.0591 * res.u_prime + 0.0078 * res.v_prime;
+    float dy = -0.0141 * res.u_prime - 0.0261 * res.v_prime;
+    res.u_prime=res.u_prime+dx;
+    res.v_prime=res.v_prime+dy;
 
     return true;
   }
@@ -127,6 +131,10 @@ class TransformProjectorPointServer {
     cv::perspectiveTransform(cameraPoint, projectorPoint, button_homography);
     res.u_prime = inboundPixel(projectorPoint[0].x, projector_resolution[0]);
     res.v_prime = inboundPixel(projectorPoint[0].y, projector_resolution[1]);
+    float dx = -0.0591 * res.v_prime + 0.0078 * res.u_prime;
+    float dy =  -0.0141 * res.v_prime - 0.0261 * res.u_prime;
+    res.u_prime=res.u_prime+dx;
+    res.v_prime=res.v_prime+dy;
 
     return true;
   }

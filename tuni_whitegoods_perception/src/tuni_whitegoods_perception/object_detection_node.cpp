@@ -1,8 +1,11 @@
+#include <fstream>
+#include <sstream>
+
 #include "tuni_whitegoods_perception/object_detector.h"
 
 ObjectDetector::ObjectDetector(ros::NodeHandle* nh) : nh_(nh) {
   non_zero_count_threshold = 10;
-  threshold_value = 10;
+  threshold_value = 70;
   kernel_size = 3;
   threshold_sub = nh_->subscribe("/odin/object_detection/set_threshold", 1,
                                  &ObjectDetector::thresholdCallback, this);
@@ -16,6 +19,7 @@ ObjectDetector::ObjectDetector(ros::NodeHandle* nh) : nh_(nh) {
 
 bool ObjectDetector::scan(cv::Mat depth_image, cv::Mat baseline) {
   bool result = false;
+
   ROS_INFO("comparing...");
   cv::Mat difference;
   cv::absdiff(depth_image, baseline, difference);
@@ -29,7 +33,10 @@ bool ObjectDetector::scan(cv::Mat depth_image, cv::Mat baseline) {
   cv::morphologyEx(thresh, thresh, cv::MORPH_OPEN, kernel);
   cv::morphologyEx(thresh, thresh, cv::MORPH_CLOSE, kernel);
 
-  int non_zero_count = cv::countNonZero(thresh);
+  cv::Mat gray_image;
+  cv::cvtColor(thresh, gray_image,
+               cv::COLOR_BGR2GRAY);  // or cv::COLOR_RGB2GRAY
+  int non_zero_count = cv::countNonZero(gray_image);
 
   if (non_zero_count > non_zero_count_threshold) {
     ROS_INFO("Object detected! Changed pixels: ");
@@ -52,8 +59,9 @@ bool ObjectDetector::scan(cv::Mat depth_image, cv::Mat baseline) {
   cv::applyColorMap(difference_normalized, difference_colormap,
                     cv::COLORMAP_JET);
 
-  std::vector<cv::Mat> images = {depth_colormap, baseline_colormap,
-                                 difference_colormap};
+  saveImageWithUniqueName(baseline_normalized, "/home/odin3", "baseline");
+
+  std::vector<cv::Mat> images = {depth_image, baseline, difference};
   cv::Mat combined;
   cv::hconcat(images, combined);
   cv::namedWindow("Object detection", cv::WINDOW_AUTOSIZE);
@@ -64,6 +72,27 @@ bool ObjectDetector::scan(cv::Mat depth_image, cv::Mat baseline) {
   return result;
 }
 
+bool ObjectDetector::fileExists(const std::string& filename) {
+  std::ifstream file(filename);
+  return file.good();
+}
+
+void ObjectDetector::saveImageWithUniqueName(const cv::Mat& image,
+                                             const std::string& dirPath,
+                                             const std::string& baseName) {
+  int index = 0;
+  std::string filepath;
+
+  do {
+    std::ostringstream ss;
+    ss << dirPath << "/" << baseName << "_" << index << ".png";
+    filepath = ss.str();
+    ++index;
+  } while (fileExists(filepath));
+
+  cv::imwrite(filepath, image);
+  std::cout << "Saved image to: " << filepath << std::endl;
+}
 void ObjectDetector::thresholdCallback(const std_msgs::Int32::ConstPtr& msg) {
   threshold_value = msg->data;
 }

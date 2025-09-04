@@ -1,0 +1,5 @@
+<launch>
+     
+   <node pkg="tuni_whitegoods_view" type="views_node" name="views_node" output="screen"/>  
+             	                       	                                                              
+</launch>

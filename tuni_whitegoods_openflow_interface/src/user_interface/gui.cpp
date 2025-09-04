@@ -170,10 +170,10 @@ void GUI::update_imgui() {
   }
 
   // show_projected_image();
-  show_projector_manager();
+  // show_projector_manager();
   show_layer_manager();
   show_element_creator();
-  //show_debug_borders();
+  // show_debug_borders();
 
   if (!goalQueue.empty()) {
     // Get the next goal from the queue
@@ -197,9 +197,9 @@ void GUI::update_imgui() {
     buttonQueue.pop();
   }
 
-  //show_debug_hands();
-  //show_debug_object_detection();
-  //show_moving_table();
+  // show_debug_hands();
+  show_debug_object_detection();
+  // show_moving_table();
   if (scan) {
     integration::ListStaticBordersStatus srv;
 
@@ -389,7 +389,7 @@ void GUI::show_projector_manager() {
 
 void GUI::show_debug_object_detection() {
   ImGui::Begin("Object dection");
-  static int thresholdValueSlider = 10;
+  static int thresholdValueSlider = 70;
   static int nonZeroThresholdValueSlider = 10;
   static int noiseReductionValueSlider = 3;
   ImGui::SliderInt("Depth object threshold", &thresholdValueSlider, 0, 200);

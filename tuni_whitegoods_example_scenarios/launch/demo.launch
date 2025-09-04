@@ -1,0 +1,5 @@
+<launch>
+  <arg name="reset_projections" default="true" />
+  <param name="reset_projections" value="$(arg reset_projections)" />
+  <node name="pick_and_place_node" pkg="tuni_whitegoods_example_scenarios" type="demo.py" output="screen" />
+</launch>

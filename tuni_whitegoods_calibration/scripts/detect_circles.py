@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import sys
 import cv2 as cv
 import numpy as np
@@ -54,8 +56,8 @@ def detect(path):
     
     rows = gray.shape[0]
     circles = cv.HoughCircles(gray, cv.HOUGH_GRADIENT, 1, rows / 16,
-                               param1=130, param2=30,
-                               minRadius=21, maxRadius=30)
+                               param1=60, param2=20,
+                               minRadius=20, maxRadius=30)
     
     original_pts = []
     if circles is not None:
@@ -133,10 +135,10 @@ def sort(center_i, center_j, filename):
 
 def main(argv):
     #detect('/home/odin3/Documents/calibration_data/robot-cam/first/compare.png')
-    img, original_pts = detect('/home/odin3/Documents/calibration_data/robot-proj/run7/circle.png')
-    img, reprojected_pts = detect('/home/odin3/Documents/calibration_data/robot-proj/run7/only_projections.png')
+    img, original_pts = detect('/home/odin3/data_calib/1/drawings/rectrgb_img.png')
+    img, reprojected_pts = detect('/home/odin3/data_calib/1/offset/rectrgb_img.png')
     #img, reprojected_pts = detect('/home/odin3/catkin_ws/left0000.jpg')
-    original_pts, reprojected_pts = sort(original_pts, reprojected_pts, '/home/odin3/Documents/calibration_data/robot-proj/run7/circle.png')
+    original_pts, reprojected_pts = sort(original_pts, reprojected_pts, '/home/odin3/data_calib/1/drawings/rectrgb_img.png')
     
     original_pts = [x[0] for x in original_pts]
     reprojected_pts = [x[0] for x in reprojected_pts]

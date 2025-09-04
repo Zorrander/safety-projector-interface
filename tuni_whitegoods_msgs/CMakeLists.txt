@@ -7,6 +7,7 @@ find_package(catkin REQUIRED
     message_generation
     geometry_msgs
     sensor_msgs
+    std_msgs
 )
 
 add_message_files(
@@ -16,6 +17,8 @@ add_message_files(
   HandsState.msg
   RobotViewElement.msg
   ZoneState.msg
+  Button.msg
+  StaticBorder.msg
 )
 
 
@@ -25,6 +28,7 @@ add_service_files(
   TransformPixelTo3D.srv
   TransformMovingTable.srv
   TransformPixelToProjection.srv
+  TransformRobotCameraCoordinates.srv
   DisplayAreaStates.srv
 )
 
@@ -32,6 +36,7 @@ generate_messages(
   DEPENDENCIES
   geometry_msgs
   sensor_msgs
+  std_msgs
 )
 
 catkin_package(

@@ -66,6 +66,8 @@
   <exec_depend>tuni_whitegoods_msgs</exec_depend>
   <exec_depend>tuni_whitegoods_view</exec_depend>
   <exec_depend>tuni_whitegoods_perception</exec_depend>
+
+  <exec_depend>message_runtime</exec_depend>
   
   <!-- The export tag contains other, unspecified, tags -->
   <export>
